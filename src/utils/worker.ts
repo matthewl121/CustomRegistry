@@ -1,34 +1,79 @@
-const { parentPort } = require('worker_threads');
+// src/utils/worker.ts
+import { ApiResponse, GraphQLResponse } from '../types';
+
+const { Worker, parentPort } = require('worker_threads');
 const { logToFile } = require('./log');
-const { calcBusFactor, calcCorrectness, calcResponsiveness, calcLicense, calcRampUp } = require('../metricCalcs');
+const { calcBusFactor } = require('../metrics/busFactorMetric');
+const { calcCorrectness } = require('../metrics/correctnessMetric');
+const { calcResponsiveness } = require('../metrics/responsivenessMetric');
+const { calcLicense } = require('../metrics/licenseMetric');
+const { calcRampUp } = require('../metrics/rampUpMetric');
 
+interface WorkerParams {
+    owner: string;
+    repo: string;
+    token: string;
+    repoURL: string;
+    repoData: ApiResponse<GraphQLResponse | null>;
+    metric: string;
+}
 
-// Worker function that computes something
-parentPort?.on('message', async (params) => {
-    const begin = Date.now();
+interface WorkerResponse {
+    score: number;
+    latency: number;
+    error?: string;
+}
 
-    // PARSE PARAMETERS
-    const { owner, repo, token, repoURL, repoData, metric } = params;
-    logToFile(`Worker: ${owner}, ${repo}, ${repoURL}, ${metric}`, 2);
-    
-    // COMPUTE SOMETHING
-    let result;
-    if (metric == "busFactor") {
-        result = await calcBusFactor(owner, repo, token);
-    } else if (metric == "correctness") {
-        result = calcCorrectness(repoData);
-    } else if (metric == "rampUp") {
-        result = await calcRampUp(repoData);
-    } else if (metric == "responsiveness") {
-        result = calcResponsiveness(repoData);
-    } else { // license
-        result = await calcLicense(owner, repo, repoURL);
+if (!parentPort) {
+    throw new Error('This module must be run as a worker');
+}
+
+parentPort.on('message', async (params: WorkerParams) => {
+    try {
+        const begin = Date.now();
+        const { owner, repo, token, repoURL, repoData, metric } = params;
+        
+        logToFile(`Worker: ${owner}, ${repo}, ${repoURL}, ${metric}`, 2);
+        
+        let result: number;
+        
+        switch (metric) {
+            case "busFactor":
+                result = await calcBusFactor(owner, repo, token);
+                break;
+            case "correctness":
+                result = calcCorrectness(repoData);
+                break;
+            case "rampUp":
+                result = await calcRampUp(repoData);
+                break;
+            case "responsiveness":
+                result = calcResponsiveness(repoData);
+                break;
+            case "license":
+                result = await calcLicense(owner, repo, repoURL);
+                break;
+            default:
+                throw new Error(`Unknown metric: ${metric}`);
+        }
+
+        const end = Date.now();
+        
+        const response: WorkerResponse = {
+            score: result,
+            latency: (end - begin) / 1000
+        };
+        
+        parentPort.postMessage(response);
+    } catch (error) {
+        console.error('Worker error:', error);
+        
+        const errorResponse: WorkerResponse = {
+            score: -1,
+            latency: 0,
+            error: error instanceof Error ? error.message : String(error)
+        };
+        
+        parentPort.postMessage(errorResponse);
     }
-
-    const end = Date.now();
-    // RETURN SOMETHING
-    parentPort?.postMessage({
-        score: result,
-        latency: (end - begin) / 1000 // in seconds
-    });
 });
