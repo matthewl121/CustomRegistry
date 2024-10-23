@@ -4,11 +4,6 @@
  */
 
 import { logToFile } from '../utils/log';
-import { calcBusFactor, calcBusFactorScore } from './busFactor';
-import { calcCorrectness, calcCorrectnessScore } from './correctness';
-import { calcResponsiveness, calcResponsivenessScore } from './responsiveMaintainer';
-import { calcLicense, calcLicenseScore } from './license';
-import { calcRampUp } from './rampUp';
 import { ApiResponse, GraphQLResponse, Metrics } from '../types';
 import { runWorker } from '../index';
 import { calculateNetScore, validateMetricScores } from './netScore';
@@ -108,18 +103,18 @@ export const metricsCalculator: MetricsCalculator = {
     }
 };
 
-// Export individual metric functions for standalone use
-export {
-    calcBusFactor,
-    calcBusFactorScore,
-    calcCorrectness,
-    calcCorrectnessScore,
-    calcResponsiveness,
-    calcResponsivenessScore,
-    calcLicense,
-    calcLicenseScore,
-    calcRampUp
-};
+// // Export individual metric functions for standalone use
+// export {
+//     calcBusFactor,
+//     calcBusFactorScore,
+//     calcCorrectness,
+//     calcCorrectnessScore,
+//     calcResponsiveness,
+//     calcResponsivenessScore,
+//     calcLicense,
+//     calcLicenseScore,
+//     calcRampUp
+// };
 
 // Export the main calculateMetrics function
 export const { calculateMetrics } = metricsCalculator;
