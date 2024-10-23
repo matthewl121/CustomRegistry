@@ -103,18 +103,5 @@ export const metricsCalculator: MetricsCalculator = {
     }
 };
 
-// // Export individual metric functions for standalone use
-// export {
-//     calcBusFactor,
-//     calcBusFactorScore,
-//     calcCorrectness,
-//     calcCorrectnessScore,
-//     calcResponsiveness,
-//     calcResponsivenessScore,
-//     calcLicense,
-//     calcLicenseScore,
-//     calcRampUp
-// };
-
 // Export the main calculateMetrics function
 export const { calculateMetrics } = metricsCalculator;
