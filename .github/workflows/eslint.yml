@@ -39,13 +39,15 @@ jobs:
         run: mkdir -p results
 
       - name: Run ESLint to TypeScript
-        run: tsc src/index.ts
+        run: npx eslint src/index.ts
+          --config eslint.config.mjs
           --format @microsoft/eslint-formatter-sarif
           --output-file results/eslint-results.sarif
         continue-on-error: true
 
       - name: Run Node to JavaScript on Test
         run: node src/index.js
+          --config eslint.config.mjs
           --format @microsoft/eslint-formatter-sarif
           --output-file results/eslint-results.sarif
         continue-on-error: true
