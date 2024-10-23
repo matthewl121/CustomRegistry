@@ -11,7 +11,7 @@ name: ESLint
 
 on:
   push:
-    branches: [ "main", "dev" ]
+    branches: [ "main", "dev", "matt_branch", "julianne_branch", "aidan_branch" ]
   pull_request:
     # The branches below must be a subset of the branches above
     branches: [ "main", "dev" ]
