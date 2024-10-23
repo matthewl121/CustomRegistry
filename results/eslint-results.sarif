@@ -8,22 +8,47 @@
           "name": "ESLint",
           "informationUri": "https://eslint.org",
           "rules": [],
-          "version": "8.57.0"
+          "version": "8.57.1"
         }
       },
       "artifacts": [
         {
           "location": {
-            "uri": "file:///Users/matthewli/Source/ECE461/eslint.config.mjs"
-          }
-        },
-        {
-          "location": {
-            "uri": "file:///Users/matthewli/Source/ECE461/src/index.ts"
+            "uri": "file:///home/shay/a/mcli/Desktop/CustomRegistry/src/index.ts"
           }
         }
       ],
-      "results": []
+      "results": [],
+      "invocations": [
+        {
+          "toolConfigurationNotifications": [
+            {
+              "level": "error",
+              "message": {
+                "text": "Parsing error: Unexpected token :"
+              },
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "file:///home/shay/a/mcli/Desktop/CustomRegistry/src/index.ts",
+                      "index": 0
+                    },
+                    "region": {
+                      "startLine": 18,
+                      "startColumn": 32
+                    }
+                  }
+                }
+              ],
+              "descriptor": {
+                "id": "ESL0999"
+              }
+            }
+          ],
+          "executionSuccessful": false
+        }
+      ]
     }
   ]
 }
