@@ -1,12 +1,6 @@
 node_modules
 .env
-*.js
 !run.js
 *.json
 *.txt
 repos/
-!src/index.js
-!src/api/githubApi.js
-!src/utils/urlHandler.js
-!src/utils/log.js
-!metricCalcs.js
