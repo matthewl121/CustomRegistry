@@ -38,6 +38,7 @@ jobs:
       - name: Create results directory
         run: mkdir -p results
 
+      # Run ESLint on the codebase to test for linting errors
       - name: Run ESLint to TypeScript
         run: npx eslint src/index.ts
           --config eslint.config.mjs
@@ -45,6 +46,7 @@ jobs:
           --output-file results/eslint-results.sarif
         continue-on-error: true
 
+      # Run ESLint on the codebase to test for linting errors
       - name: Run Node to JavaScript on Test
         run: node src/index.js
           --config eslint.config.mjs

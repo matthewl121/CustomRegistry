@@ -17,6 +17,21 @@ try {
     process.exit(1);
 }
 
+try {
+    // Execute the bash command and capture the output
+    const output = execSync('bash -c "set -a; source .env; set +a; env"', { encoding: 'utf-8' });
+    
+    // Split the output by lines and assign each line to process.env
+    output.split('\n').forEach(line => {
+        const [key, value] = line.split('=');
+        if (key && value) {
+            process.env[key] = value;
+        }
+    });
+} catch (error) {
+    console.error('Error: Failed to load environment variables from .env file');
+    process.exit(1);
+}
 
 const {Command} = require('commander');
 
@@ -82,6 +97,12 @@ program
     .command('test')
     .description('run tests, compile TypeScript, and execute compiled JavaScript')
     .action(() => {
+        try {
+            execSync('tsc src/index.ts', { stdio: 'ignore' });
+        } catch(error) {
+            continueOnError = true;
+        }
+
         try {
             // Run Jest tests and output results to a file
             // console.log('Running Jest tests...');
