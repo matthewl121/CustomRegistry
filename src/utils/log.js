@@ -6,7 +6,7 @@ exports.metricsLogToStdout = metricsLogToStdout;
 var fs = require('fs');
 var path = require('path');
 function initLogFile() {
-    var logDir = path.dirname(process.env.LOG_FILE); 
+    var logDir = path.dirname(process.env.LOG_FILE);
     if (!fs.existsSync(logDir)) {
         fs.mkdirSync(logDir, { recursive: true });
     }
