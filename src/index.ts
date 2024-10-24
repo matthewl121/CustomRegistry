@@ -77,3 +77,11 @@ export const main = async (url: string) => {
     // print metrics to stdout
     metricsLogToStdout(metrics, 1);
 }
+
+// main("https://www.npmjs.com/package/ts-node");
+// main("https://github.com/nodists/nodist");
+// main("https://www.npmjs.com/package/socket.io");
+// main("https://github.com/cloudinary/cloudinary_npm");
+// main("https://github.com/jonschlinkert/even");
+
+// main("https://github.com/mrdoob/three.js/");
