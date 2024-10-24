@@ -13,7 +13,7 @@ export interface NpmApiResponse {
     };
 }
 
-// Generic API response interface
+// API response interface
 export interface ApiResponse<T> {
     data: T | null;
     error: string | null;
