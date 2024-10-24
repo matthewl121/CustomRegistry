@@ -4,8 +4,8 @@ import config from "eslint-config-standard";
 export default [
   {
     files: [
-      "**/*.ts",
-      "**/*.js"
+      "**/*.ts", // TypeScript files
+      "**/*.js" // JavaScript files
     ]
   }  
 ];
