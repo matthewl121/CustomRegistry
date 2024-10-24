@@ -1,3 +1,7 @@
+export interface PullRequestDetails {
+    additions: number;
+}
+
 export interface ContributorResponse {
     total: number;
     author: {
@@ -53,6 +57,7 @@ export interface PullRequestNode {
     createdAt: string;
     updatedAt: string;
     closedAt: string | null;
+    codeReview?: boolean;
 }
 
 export interface PullRequests {
