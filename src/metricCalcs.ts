@@ -3,13 +3,28 @@ import * as fs from 'fs';
 import http from 'isomorphic-git/http/node';
 import { ContributorResponse, ClosedIssueNode, PullRequestNode, OpenIssueNode } from "./types";
 import { hasLicenseHeading, writeFile } from "./utils/utils";
-import { fetchContributorActivity, fetchRepoData, getReadmeDetails, checkFolderExists } from "./api/githubApi";
+import { fetchCodeReviewActivity, fetchContributorActivity, fetchRepoData, getReadmeDetails, checkFolderExists } from "./api/githubApi";
 import { ApiResponse, GraphQLResponse } from './types';
 import { runWorker } from './index';
 import { Metrics, WorkerResult } from './types'
 import * as path from 'path';
 import { logToFile } from './utils/log';
 
+
+export const calcCodeReviewScore = (linesIntroduced: number, totalLines: number): number => {
+    // the bigger the fraction, the better
+
+    let linesPulledFraction = linesIntroduced / totalLines;
+
+    // Define a constant to control the curve's steepness
+    const k = Math.log(2); // ≈ 0.69314718056
+
+    // Calculate the score using an exponential growth formula
+    const score = 1 - Math.exp(-k * linesPulledFraction);
+
+    // Ensure the score is bounded between 0 and 1
+    return Math.min(Math.max(score, 0), 1);
+};
 
 export const calcBusFactorScore = (contributorActivity: ContributorResponse[]): number => {
     if (!contributorActivity) {
@@ -147,6 +162,23 @@ export async function calcBusFactor(owner: string, repo: string, token: string):
     }
 
     return busFactor;
+}
+
+// THIS HAS TO BE CALLED AFTER CACULATING LICENSE SCORE
+// because this calculation uses the cloned repo to count the number of total lines
+export async function calcCodeReview(owner: string, repo: string, token: string): Promise<number> {
+    let codeReview;
+
+    // get number of lines introduced and total lines in repo
+    const codeReviewActivity = await fetchCodeReviewActivity(owner, repo, token);
+    if (!codeReviewActivity.linesIntroduced || !codeReviewActivity.totalLines) {
+        return 0;
+    }
+    
+    // get score
+    codeReview = calcCodeReviewScore(codeReviewActivity.linesIntroduced, codeReviewActivity.totalLines);
+
+    return codeReview;
 }
 
 export function calcCorrectness(repoData: ApiResponse<GraphQLResponse | null>): number {
@@ -377,6 +409,13 @@ export async function calculateMetrics(owner: string, repo: string, token: strin
     const licenseWorker = runWorker(owner, repo, token, repoURL, repoData, "license");
 
     const results = await Promise.all([busFactorWorker, correctnessWorker, rampUpWorker, responsivenessWorker, licenseWorker]);
+
+    // To test codeReviewScore:
+    // let beginTime = Date.now();
+    // const codeReviewScore = await calcCodeReview(owner, repo, token);
+    // console.log(codeReviewScore);
+    // let endTime = Date.now();
+    // console.log((endTime - beginTime) / 1000);
 
     // parse metric scores and latencies
     let busFactor = results[0].score;
