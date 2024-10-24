@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@jest/globals": "^29.7.0",
     "@microsoft/eslint-formatter-sarif": "^2.1.7",
     "aws-sdk": "^2.1691.0",
     "axios": "^1.7.7",

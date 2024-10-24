@@ -264,7 +264,7 @@ describe('Test suite', () => {
         
         const results = await Promise.all([busFactorWorker, correctnessWorker, rampUpWorker, responsivenessWorker, licenseWorker]);
         
-        expect(parseFloat(results[0].score.toFixed(2) ?? '0')).toBe(0.05); // bus factor score
+        expect(parseFloat((results[0] as { score: number }).score.toFixed(2) ?? '0')).toBe(0.05); // bus factor score
     });
 
     test('apiGetRequest', async () => {
