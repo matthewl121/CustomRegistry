@@ -9,6 +9,7 @@ import { ContributorResponse, ApiResponse, GraphQLResponse } from '../src/types'
 import { writeFile, hasLicenseHeading } from '../src/utils/utils';
 import { fetchGithubUrlFromNpm } from '../src/api/npmApi';
 import { getRepoDataQuery } from '../src/api/graphqlQueries';
+const { expect, describe, it } = require('@jest/globals');
 
 
 describe('Test suite', () => {
