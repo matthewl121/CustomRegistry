@@ -1,8 +1,22 @@
+<<<<<<< HEAD
 import { Worker } from 'worker_threads';
 import { fetchRepoData } from './api/githubApi';
 import { getRepoDetails } from './utils/urlHandler';
 import { initLogFile, logToFile, metricsLogToStdout } from './utils/log';
 import { calculateMetrics } from './metrics/metric';
+=======
+/*
+    This file is an example logical flow from a URL to
+    fetching and parsing repo data and calculating some metrics
+*/
+
+import 'dotenv/config';
+import { fetchRepoData } from "./api/githubApi";
+import { getRepoDetails } from './utils/urlHandler';
+import { initLogFile, logToFile, metricsLogToStdout } from './utils/log';
+import { Worker } from 'worker_threads';
+import { calculateMetrics } from './metricCalcs';
+>>>>>>> 37bb102 (reconstruction complete Reconstruct YML File and config file for Successful Compile #43)
 
 // CommonJS-style import for dotenv
 const dotenv = require('dotenv');
