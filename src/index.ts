@@ -11,6 +11,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 // Function to create and manage worker threads
+<<<<<<< HEAD
 export function runWorker(
     owner: string, 
     repo: string, 
@@ -41,11 +42,30 @@ export function runWorker(
             });
         } catch (error) {
             console.error('Error creating worker:', error);
+=======
+export function runWorker(owner, repo, token, repoURL, repoData, metric) {
+    return new Promise((resolve, reject) => {
+        // PATH TO WORKER SCRIPT
+        const worker = new Worker('./src/utils/worker.ts');
+        
+        // SEND DATA TO WORKER AND START THE WORKER
+        worker.postMessage({owner, repo, token, repoURL, repoData, metric});
+
+        // GET THE WORKER'S RESULT
+        worker.on('message', (result) => {
+            resolve(result);
+            worker.terminate();
+        });
+
+        // HANDLE ERRORS
+        worker.on('error', (error) => {
+>>>>>>> 7700049 (fixed all syntax for concurrency and main Reconstruct YML File and config file for Successful Compile #43)
             reject(error);
         }
     });
 }
 
+<<<<<<< HEAD
 // Main function to calculate the metrics
 export const main = async (url: string): Promise<void> => {
     const token = process.env.GITHUB_TOKEN || "";
@@ -56,6 +76,19 @@ export const main = async (url: string): Promise<void> => {
     try {
         const repoDetails = await getRepoDetails(token, inputURL);
         const [owner, repo, repoURL] = repoDetails;
+=======
+
+export const main = async (url) => {
+    const token = process.env.GITHUB_TOKEN || "";
+    const inputURL = url;
+    
+    // get repoDetails
+
+    initLogFile();
+
+    const repoDetails = await getRepoDetails(token, inputURL);
+    const [owner, repo, repoURL] = repoDetails;
+>>>>>>> 7700049 (fixed all syntax for concurrency and main Reconstruct YML File and config file for Successful Compile #43)
 
         const repoData = await fetchRepoData(owner, repo, token);
         if (!repoData.data) {
