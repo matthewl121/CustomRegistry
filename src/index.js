@@ -1,8 +1,4 @@
 "use strict";
-/*
-    This file is an example logical flow from a URL to
-    fetching and parsing repo data and calculating some metrics
-*/
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -41,70 +37,90 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 exports.__esModule = true;
 exports.main = exports.runWorker = void 0;
-require("dotenv/config");
+var worker_threads_1 = require("worker_threads");
 var githubApi_1 = require("./api/githubApi");
 var urlHandler_1 = require("./utils/urlHandler");
 var log_1 = require("./utils/log");
-var worker_threads_1 = require("worker_threads");
-var metricCalcs_1 = require("./metricCalcs");
+var metric_1 = require("./metrics/metric");
+// CommonJS-style import for dotenv
+var dotenv = require('dotenv');
+// Load environment variables from .env file
+dotenv.config();
 // Function to create and manage worker threads
 function runWorker(owner, repo, token, repoURL, repoData, metric) {
     return new Promise(function (resolve, reject) {
-        // PATH TO WORKER SCRIPT
-        var worker = new worker_threads_1.Worker('./src/utils/worker.ts');
-        // SEND DATA TO WORKER AND START THE WORKER
-        worker.postMessage({ owner: owner, repo: repo, token: token, repoURL: repoURL, repoData: repoData, metric: metric });
-        // GET THE WORKER'S RESULT
-        worker.on('message', function (result) {
-            resolve(result);
-            worker.terminate();
-        });
-        // HANDLE ERRORS
-        worker.on('error', function (error) {
+        try {
+            var worker_1 = new worker_threads_1.Worker('./src/utils/worker.ts', {
+                execArgv: ['--require', 'ts-node/register']
+            });
+            worker_1.postMessage({ owner: owner, repo: repo, token: token, repoURL: repoURL, repoData: repoData, metric: metric });
+            worker_1.on('message', function (result) {
+                resolve(result);
+                worker_1.terminate();
+            });
+            worker_1.on('error', function (error) {
+                console.error('Worker error:', error);
+                reject(error);
+                worker_1.terminate();
+            });
+            worker_1.on('exit', function (code) {
+                if (code !== 0) {
+                    reject(new Error("Worker stopped with exit code ".concat(code)));
+                }
+            });
+        }
+        catch (error) {
+            console.error('Error creating worker:', error);
             reject(error);
-            worker.terminate();
-        });
-        // EXIT
-        worker.on('exit', function (code) {
-            if (code !== 0) {
-                reject(new Error("Worker stopped with exit code ".concat(code)));
-            }
-        });
+        }
     });
 }
 exports.runWorker = runWorker;
+// Main function to calculate the metrics
 var main = function (url) { return __awaiter(void 0, void 0, void 0, function () {
-    var token, inputURL, repoDetails, owner, repo, repoURL, repoData, metrics;
+    var token, inputURL, repoDetails, owner, repo, repoURL, repoData, metrics, error_1;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 token = process.env.GITHUB_TOKEN || "";
                 inputURL = url;
-                // get repoDetails
                 (0, log_1.initLogFile)();
-                return [4 /*yield*/, (0, urlHandler_1.getRepoDetails)(token, inputURL)];
+                _a.label = 1;
             case 1:
+                _a.trys.push([1, 5, , 6]);
+                return [4 /*yield*/, (0, urlHandler_1.getRepoDetails)(token, inputURL)];
+            case 2:
                 repoDetails = _a.sent();
                 owner = repoDetails[0], repo = repoDetails[1], repoURL = repoDetails[2];
                 return [4 /*yield*/, (0, githubApi_1.fetchRepoData)(owner, repo, token)];
-            case 2:
+            case 3:
                 repoData = _a.sent();
                 if (!repoData.data) {
                     (0, log_1.logToFile)("Error fetching repo data", 1);
                     return [2 /*return*/];
                 }
-                return [4 /*yield*/, (0, metricCalcs_1.calculateMetrics)(owner, repo, token, repoURL, repoData, inputURL)];
-            case 3:
+                return [4 /*yield*/, (0, metric_1.calculateMetrics)(owner, repo, token, repoURL, repoData, inputURL)];
+            case 4:
                 metrics = _a.sent();
                 if (metrics == null) {
                     return [2 /*return*/];
                 }
-                // logMetrics
                 (0, log_1.logToFile)(JSON.stringify(metrics, null, 2), 1);
-                // print metrics to stdout
                 (0, log_1.metricsLogToStdout)(metrics, 1);
-                return [2 /*return*/];
+                return [3 /*break*/, 6];
+            case 5:
+                error_1 = _a.sent();
+                (0, log_1.logToFile)("Error in main: ".concat(error_1 instanceof Error ? error_1.message : String(error_1)), 1);
+                return [3 /*break*/, 6];
+            case 6: return [2 /*return*/];
         }
     });
 }); };
 exports.main = main;
+// Entry point when the script is run directly
+if (require.main === module) {
+    var args = process.argv.slice(2);
+    if (args.length > 0) {
+        (0, exports.main)(args[0]);
+    }
+}
