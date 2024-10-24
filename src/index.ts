@@ -6,16 +6,13 @@
 import 'dotenv/config';
 import { fetchRepoData } from "./api/githubApi";
 import { getRepoDetails } from './utils/urlHandler';
-import { WorkerResult } from './types';
 import { initLogFile, logToFile, metricsLogToStdout } from './utils/log';
-import { ApiResponse, GraphQLResponse } from './types';
 import { Worker } from 'worker_threads';
 import { calculateMetrics } from './metricCalcs';
-import { init } from 'isomorphic-git';
 
 
 // Function to create and manage worker threads
-export function runWorker(owner: string, repo: string, token: string, repoURL: string, repoData: ApiResponse<GraphQLResponse | null>, metric: string): Promise<WorkerResult> {
+export function runWorker(owner, repo, token, repoURL, repoData, metric) {
     return new Promise((resolve, reject) => {
         // PATH TO WORKER SCRIPT
         const worker = new Worker('./src/utils/worker.ts');
@@ -24,7 +21,7 @@ export function runWorker(owner: string, repo: string, token: string, repoURL: s
         worker.postMessage({owner, repo, token, repoURL, repoData, metric});
 
         // GET THE WORKER'S RESULT
-        worker.on('message', (result: WorkerResult) => {
+        worker.on('message', (result) => {
             resolve(result);
             worker.terminate();
         });
@@ -45,16 +42,16 @@ export function runWorker(owner: string, repo: string, token: string, repoURL: s
 }
 
 
-export const main = async (url: string) => {
-    const token: string = process.env.GITHUB_TOKEN || "";
-    const inputURL: string = url;
+export const main = async (url) => {
+    const token = process.env.GITHUB_TOKEN || "";
+    const inputURL = url;
     
     // get repoDetails
 
     initLogFile();
 
     const repoDetails = await getRepoDetails(token, inputURL);
-    const [owner, repo, repoURL]: [string, string, string] = repoDetails;
+    const [owner, repo, repoURL] = repoDetails;
 
     /* 
         Now that the repo owner (owner) and repo name (repo) have

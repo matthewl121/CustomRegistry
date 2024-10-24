@@ -1,6 +1,5 @@
 node_modules
 .env
-*.js
 !run.js
 *.json
 *.txt
