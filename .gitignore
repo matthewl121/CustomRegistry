@@ -6,7 +6,7 @@ node_modules
 *.txt
 repos/
 !src/index.js
-!api/githubApi.js
-!utils/urlHandler.js
-!utils/log.js
+!src/api/githubApi.js
+!src/utils/urlHandler.js
+!src/utils/log.js
 !metricCalcs.js
