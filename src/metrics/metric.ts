@@ -44,6 +44,7 @@ export const metricsCalculator: MetricsCalculator = {
             const responsivenessWorker = runWorker(owner, repo, token, repoURL, repoData, "responsiveness");
             const licenseWorker = runWorker(owner, repo, token, repoURL, repoData, "license");
             const dependencyPinningWorker = runWorker(owner, repo, token, repoURL, repoData, "dependencyPinning");
+            const codeReviewWorker = runWorker(owner, repo, token, repoURL, repoData, "codeReview");
 
             // Wait for all metric calculations to complete
             const results = await Promise.all([
@@ -52,7 +53,8 @@ export const metricsCalculator: MetricsCalculator = {
                 rampUpWorker,
                 responsivenessWorker,
                 licenseWorker,
-                dependencyPinningWorker
+                dependencyPinningWorker,
+                codeReviewWorker
             ]);
 
             // Destructure results into scores and latencies
@@ -62,7 +64,8 @@ export const metricsCalculator: MetricsCalculator = {
                 { score: rampUp, latency: rampUpLatency },
                 { score: responsiveness, latency: responsivenessLatency },
                 { score: license, latency: licenseLatency },
-                { score: dependencyPinning, latency: dependencyPinningLatency } 
+                { score: dependencyPinning, latency: dependencyPinningLatency },
+                { score: codeReview, latency: codeReviewLatency } 
             ] = results;
 
             // Validate metrics
@@ -72,7 +75,8 @@ export const metricsCalculator: MetricsCalculator = {
                 rampUp,
                 responsiveness,
                 license,
-                dependencyPinning
+                dependencyPinning,
+                codeReview
             };
 
             if (!validateMetricScores(scores)) {
@@ -98,8 +102,10 @@ export const metricsCalculator: MetricsCalculator = {
                 ResponsiveMaintainer_Latency: responsivenessLatency,
                 License: license,
                 License_Latency: licenseLatency,
-                DependencyPinning: dependencyPinning,         // Add new metric
-                DependencyPinning_Latency: dependencyPinningLatency  // Add new metric
+                DependencyPinning: dependencyPinning,                // Add new metric
+                DependencyPinning_Latency: dependencyPinningLatency,  // Add new metric
+                CodeReview: codeReview,                              // Add new metric
+                CodeReview_Latency: codeReviewLatency                // Add new metric
             };
 
             return metrics;

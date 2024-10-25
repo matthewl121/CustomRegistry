@@ -1,11 +1,17 @@
 import { apiGetRequest, apiPostRequest } from './apiUtils'
 import { ApiResponse, GraphQLResponse } from '../types';
-import { ContributorResponse } from '../types';
+import { ContributorResponse, PullRequestDetails } from '../types';
 import { getRepoDataQuery } from './graphqlQueries';
 import { writeFile } from '../utils/utils';
 import { StringLiteral } from 'typescript';
+import {logToFile} from '../utils/log';
+import * as path from 'path';
+import * as fs from 'fs';
+import pLimit = require('p-limit');
+import { sleep } from '../../repos/socketio_socket.io/packages/socket.io-adapter/test/util';
 
 const GITHUB_BASE_URL: string = "https://api.github.com"
+const LOCAL_REPO_PATH = path.join(__dirname, '../../repos');
 
 /*  Fetches contributor commit activity for the given repository.
     Metrics Used: Bus Factor 
@@ -19,6 +25,84 @@ const GITHUB_BASE_URL: string = "https://api.github.com"
         },
     }
 */
+
+// Function to count total lines in the repository
+const countLinesInRepo = (dir: string): number => {
+    let totalLines = 0;
+
+    const files = fs.readdirSync(dir);
+    for (const file of files) {
+        const filePath = path.join(dir, file);
+        const stat = fs.statSync(filePath);
+
+        if (stat.isDirectory()) {
+            totalLines += countLinesInRepo(filePath); // Recursively count lines in subdirectories
+        } else if (stat.isFile() && filePath.endsWith('.js')) { // Adjust file extension as needed
+            const fileContent = fs.readFileSync(filePath, 'utf-8');
+            totalLines += fileContent.split('\n').length; // Count lines in the file
+        }
+    }
+
+    return totalLines;
+};
+
+// Function to fetch additions for a single PR
+const fetchPrAdditions = async (prNumber: number, owner: string, repo: string, token: string): Promise<number> => {
+    const prDetailsUrl = `${GITHUB_BASE_URL}/repos/${owner}/${repo}/pulls/${prNumber}`;
+    const prDetailsResponse = await apiGetRequest<PullRequestDetails>(prDetailsUrl, token);
+
+    if (prDetailsResponse.error || !prDetailsResponse.data) {
+        logToFile(`Error fetching PR #${prNumber}: ${prDetailsResponse.error}`, 1);
+        return 0; // Treat errors as 0 additions
+    }
+
+    return prDetailsResponse.data.additions;
+};
+
+// NEED TO HAVE REPO GIT CLONED TO `repo` DIRECTORY BEFORE CALLING THIS
+// our calculating the license in Phase 1 does this ^
+export const fetchCodeReviewActivity = async (
+    owner: string,
+    repo: string,
+    token: string
+): Promise<{ linesIntroduced: number; totalLines: number; error: string | null }> => {
+    // Fetch all pull requests
+    const pullRequestsUrl = `${GITHUB_BASE_URL}/repos/${owner}/${repo}/pulls?state=all&per_page=100`;
+    const pullRequestsResponse = await apiGetRequest(pullRequestsUrl, token);
+
+    if (pullRequestsResponse.error) {
+        logToFile(`Error fetching pull requests: ${pullRequestsResponse.error}`, 1);
+        return { linesIntroduced: 0, totalLines: 0, error: pullRequestsResponse.error };
+    }
+
+    // Initialize line count
+    let linesIntroduced = 0;
+
+    // Limit concurrency to 10 simultaneous requests
+    const limit = pLimit(10);
+
+    const pullRequests = pullRequestsResponse.data as { number: number; additions: number }[] || []; // Ensure it's an array
+    const additionPromises = pullRequests.map(pr =>
+        limit(() => fetchPrAdditions(pr.number, owner, repo, token))
+    );
+
+    // Wait for all promises to resolve
+    const additions = await Promise.all(additionPromises);
+
+    // Sum up all additions
+    linesIntroduced = additions.reduce((acc, curr) => acc + curr, 0);
+
+    // Get the path to the cloned repository
+    const repoPath = path.join(LOCAL_REPO_PATH, owner + '_' + repo);
+
+    // Count total lines in the cloned repository
+    const totalLines = countLinesInRepo(repoPath);
+    // console.log(linesIntroduced);
+    // console.log(totalLines);
+
+    return { linesIntroduced, totalLines, error: null };
+};
+
 export const fetchContributorActivity = async (
     owner: string, 
     repo: string, 
@@ -28,7 +112,7 @@ export const fetchContributorActivity = async (
     const response = await apiGetRequest<ContributorResponse[]>(url, token);
 
     if (response.error) {
-        console.error('Error fetching contributor commit activity', response.error);
+        logToFile(`Error fetching contributor commit activity: ${response.error}`, 1);
         return { data: null, error: response.error };
     }
 
@@ -48,7 +132,7 @@ export const fetchRepoData = async (
     // await writeFile(response, "response1.json")
 
     if (response.error || !response.data) {
-        console.error('Error fetching repository data:', response.error);
+        logToFile(`Error fetching repository data: ${response.error}`, 1);
         return { data: null, error: response.error };
     }
 
@@ -212,7 +296,7 @@ export const checkFolderExists = async (
         return false
       }
     } catch (error) {
-      console.error("Request failed:", error);
+        logToFile(`Request failed: ${error}`, 1);
       return false
     }
 }
@@ -253,7 +337,7 @@ export const getReadmeDetails = async (
             return 0.5;
         }
     } catch (error) {
-        console.error(error)
+        logToFile(`${error}`, 1);
         return -1;
     }
 }
