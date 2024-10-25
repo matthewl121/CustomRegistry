@@ -1,3 +1,4 @@
+[![ESLint](https://github.com/matthewl121/CustomRegistry/actions/workflows/eslint.yml/badge.svg?branch=main)](https://github.com/matthewl121/CustomRegistry/actions/workflows/eslint.yml)
 # ACME Corp CLI Interface for Module Reuse
 
 ## Project Overview
