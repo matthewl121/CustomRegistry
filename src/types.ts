@@ -99,19 +99,21 @@ export interface GraphQLResponse {
 
 // Interface for metrics data
 export interface Metrics {
-    URL: string | null; // Added URL field to the Metrics class
-    NetScore: number | null;
-    NetScore_Latency: number | null;
-    RampUp: number | null;
-    RampUp_Latency: number | null;
-    Correctness: number | null;
-    Correctness_Latency: number | null;
-    BusFactor: number | null;
-    BusFactor_Latency: number | null;
-    ResponsiveMaintainer: number | null;
-    ResponsiveMaintainer_Latency: number | null;
-    License: number | null;
-    License_Latency: number | null;
+    URL: string;
+    NetScore: number;
+    NetScore_Latency: number;
+    RampUp: number;
+    RampUp_Latency: number;
+    Correctness: number;
+    Correctness_Latency: number;
+    BusFactor: number;
+    BusFactor_Latency: number;
+    ResponsiveMaintainer: number;
+    ResponsiveMaintainer_Latency: number;
+    License: number;
+    License_Latency: number;
+    DependencyPinning: number;         // New metric
+    DependencyPinning_Latency: number; // New metric
 }
 
 // Interface for worker result

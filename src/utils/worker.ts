@@ -8,6 +8,7 @@ const { calcCorrectness } = require('../metrics/correctness');
 const { calcResponsiveness } = require('../metrics/responsiveMaintainer');
 const { calcLicense } = require('../metrics/license');
 const { calcRampUp } = require('../metrics/rampUp');
+const { calcDependencyPinning } = require('../metrics/dependencyPinning');
 
 interface WorkerParams {
     owner: string;
@@ -52,6 +53,9 @@ parentPort.on('message', async (params: WorkerParams) => {
                 break;
             case "license":
                 result = await calcLicense(owner, repo, repoURL);
+                break;
+            case "dependencyPinning":  // Add new case
+                result = await calcDependencyPinning(owner, repo, token); 
                 break;
             default:
                 throw new Error(`Unknown metric: ${metric}`);
