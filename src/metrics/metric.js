@@ -51,41 +51,39 @@ var netScore_1 = require("./netScore");
 exports.metricsCalculator = {
     calculateMetrics: function (owner, repo, token, repoURL, repoData, inputURL) {
         return __awaiter(this, void 0, void 0, function () {
-            var busFactorWorker, correctnessWorker, rampUpWorker, responsivenessWorker, licenseWorker, dependencyPinningWorker, results, _a, busFactor, busFactorLatency, _b, correctness, correctnessLatency, _c, rampUp, rampUpLatency, _d, responsiveness, responsivenessLatency, _e, license, licenseLatency, _f, dependencyPinning, dependencyPinningLatency, scores, _g, netScore, netScoreLatency, metrics, error_1;
-            return __generator(this, function (_h) {
-                switch (_h.label) {
+            var busFactorWorker, correctnessWorker, rampUpWorker, responsivenessWorker, licenseWorker, results, _a, busFactor, busFactorLatency, _b, correctness, correctnessLatency, _c, rampUp, rampUpLatency, _d, responsiveness, responsivenessLatency, _e, license, licenseLatency, scores, _f, netScore, netScoreLatency, metrics, error_1;
+            return __generator(this, function (_g) {
+                switch (_g.label) {
                     case 0:
-                        _h.trys.push([0, 2, , 3]);
+                        _g.trys.push([0, 2, , 3]);
                         busFactorWorker = (0, index_1.runWorker)(owner, repo, token, repoURL, repoData, "busFactor");
                         correctnessWorker = (0, index_1.runWorker)(owner, repo, token, repoURL, repoData, "correctness");
                         rampUpWorker = (0, index_1.runWorker)(owner, repo, token, repoURL, repoData, "rampUp");
                         responsivenessWorker = (0, index_1.runWorker)(owner, repo, token, repoURL, repoData, "responsiveness");
                         licenseWorker = (0, index_1.runWorker)(owner, repo, token, repoURL, repoData, "license");
-                        dependencyPinningWorker = (0, index_1.runWorker)(owner, repo, token, repoURL, repoData, "dependencyPinning");
                         return [4 /*yield*/, Promise.all([
                                 busFactorWorker,
                                 correctnessWorker,
                                 rampUpWorker,
                                 responsivenessWorker,
-                                licenseWorker,
-                                dependencyPinningWorker
+                                licenseWorker //,
+                                //dependencyPinningWorker
                             ])];
                     case 1:
-                        results = _h.sent();
-                        _a = results[0], busFactor = _a.score, busFactorLatency = _a.latency, _b = results[1], correctness = _b.score, correctnessLatency = _b.latency, _c = results[2], rampUp = _c.score, rampUpLatency = _c.latency, _d = results[3], responsiveness = _d.score, responsivenessLatency = _d.latency, _e = results[4], license = _e.score, licenseLatency = _e.latency, _f = results[5], dependencyPinning = _f.score, dependencyPinningLatency = _f.latency;
+                        results = _g.sent();
+                        _a = results[0], busFactor = _a.score, busFactorLatency = _a.latency, _b = results[1], correctness = _b.score, correctnessLatency = _b.latency, _c = results[2], rampUp = _c.score, rampUpLatency = _c.latency, _d = results[3], responsiveness = _d.score, responsivenessLatency = _d.latency, _e = results[4], license = _e.score, licenseLatency = _e.latency;
                         scores = {
                             busFactor: busFactor,
                             correctness: correctness,
                             rampUp: rampUp,
                             responsiveness: responsiveness,
-                            license: license,
-                            dependencyPinning: dependencyPinning
+                            license: license
                         };
                         if (!(0, netScore_1.validateMetricScores)(scores)) {
                             (0, log_1.logToFile)("One or more critical metrics could not be calculated", 1);
                             return [2 /*return*/, null];
                         }
-                        _g = (0, netScore_1.calculateNetScore)(scores), netScore = _g.score, netScoreLatency = _g.latency;
+                        _f = (0, netScore_1.calculateNetScore)(scores), netScore = _f.score, netScoreLatency = _f.latency;
                         metrics = {
                             URL: inputURL,
                             NetScore: netScore,
@@ -99,13 +97,11 @@ exports.metricsCalculator = {
                             ResponsiveMaintainer: responsiveness,
                             ResponsiveMaintainer_Latency: responsivenessLatency,
                             License: license,
-                            License_Latency: licenseLatency,
-                            DependencyPinning: dependencyPinning,
-                            DependencyPinning_Latency: dependencyPinningLatency // Add new metric
+                            License_Latency: licenseLatency
                         };
                         return [2 /*return*/, metrics];
                     case 2:
-                        error_1 = _h.sent();
+                        error_1 = _g.sent();
                         (0, log_1.logToFile)("Error in calculateMetrics: ".concat(error_1 instanceof Error ? error_1.message : String(error_1)), 1);
                         return [2 /*return*/, null];
                     case 3: return [2 /*return*/];

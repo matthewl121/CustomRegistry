@@ -112,8 +112,8 @@ export interface Metrics {
     ResponsiveMaintainer_Latency: number;
     License: number;
     License_Latency: number;
-    DependencyPinning: number;         // New metric
-    DependencyPinning_Latency: number; // New metric
+    //DependencyPinning: number;         // New metric
+    //DependencyPinning_Latency: number; // New metric
 }
 
 // Interface for worker result

@@ -7,14 +7,13 @@ import { logToFile } from '../utils/log';
 import { ApiResponse, GraphQLResponse, Metrics } from '../types';
 import { runWorker } from '../index';
 import { calculateNetScore, validateMetricScores } from './netScore';
-import { calcDependencyPinning } from './dependencyPinning';
 
 /**
  * Interface defining the contract for metrics calculation
  */
 export interface MetricsCalculator {
     calculateMetrics(
-        owner: string,           // Repository owner
+        owner: string,          // Repository owner
         repo: string,           // Repository name
         token: string,          // GitHub API token
         repoURL: string,        // Repository URL
@@ -43,7 +42,7 @@ export const metricsCalculator: MetricsCalculator = {
             const rampUpWorker = runWorker(owner, repo, token, repoURL, repoData, "rampUp");
             const responsivenessWorker = runWorker(owner, repo, token, repoURL, repoData, "responsiveness");
             const licenseWorker = runWorker(owner, repo, token, repoURL, repoData, "license");
-            const dependencyPinningWorker = runWorker(owner, repo, token, repoURL, repoData, "dependencyPinning");
+            //const dependencyPinningWorker = runWorker(owner, repo, token, repoURL, repoData, "dependencyPinning");
 
             // Wait for all metric calculations to complete
             const results = await Promise.all([
@@ -51,8 +50,8 @@ export const metricsCalculator: MetricsCalculator = {
                 correctnessWorker,
                 rampUpWorker,
                 responsivenessWorker,
-                licenseWorker,
-                dependencyPinningWorker
+                licenseWorker//,
+                //dependencyPinningWorker
             ]);
 
             // Destructure results into scores and latencies
@@ -61,8 +60,8 @@ export const metricsCalculator: MetricsCalculator = {
                 { score: correctness, latency: correctnessLatency },
                 { score: rampUp, latency: rampUpLatency },
                 { score: responsiveness, latency: responsivenessLatency },
-                { score: license, latency: licenseLatency },
-                { score: dependencyPinning, latency: dependencyPinningLatency } 
+                { score: license, latency: licenseLatency }//,
+                //{ score: dependencyPinning, latency: dependencyPinningLatency } 
             ] = results;
 
             // Validate metrics
@@ -72,7 +71,7 @@ export const metricsCalculator: MetricsCalculator = {
                 rampUp,
                 responsiveness,
                 license,
-                dependencyPinning
+                //dependencyPinning
             };
 
             if (!validateMetricScores(scores)) {
@@ -98,8 +97,8 @@ export const metricsCalculator: MetricsCalculator = {
                 ResponsiveMaintainer_Latency: responsivenessLatency,
                 License: license,
                 License_Latency: licenseLatency,
-                DependencyPinning: dependencyPinning,         // Add new metric
-                DependencyPinning_Latency: dependencyPinningLatency  // Add new metric
+                //DependencyPinning: dependencyPinning,         // Add new metric
+                //DependencyPinning_Latency: dependencyPinningLatency  // Add new metric
             };
 
             return metrics;
