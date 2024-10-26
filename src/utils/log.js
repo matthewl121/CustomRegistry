@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.initLogFile = initLogFile;
@@ -55,4 +53,3 @@ function metricsLogToStdout(message, message_level) {
 // Usage examples:
 // logToFile('Informational messages', 1);
 // logToFile('Debug messages', 2);
->>>>>>> 52e6a47 (working test)

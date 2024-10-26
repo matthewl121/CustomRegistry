@@ -37,13 +37,13 @@ export const metricsCalculator: MetricsCalculator = {
     ): Promise<Metrics | null> {
         try {
             // Launch parallel workers for each metric calculation
-            const busFactorWorker = runWorker(owner, repo, token, repoURL, repoData, "busFactor");
-            const correctnessWorker = runWorker(owner, repo, token, repoURL, repoData, "correctness");
-            const rampUpWorker = runWorker(owner, repo, token, repoURL, repoData, "rampUp");
-            const responsivenessWorker = runWorker(owner, repo, token, repoURL, repoData, "responsiveness");
-            const licenseWorker = runWorker(owner, repo, token, repoURL, repoData, "license");
-            const dependencyPinningWorker = runWorker(owner, repo, token, repoURL, repoData, "dependencyPinning");
-            const codeReviewWorker = runWorker(owner, repo, token, repoURL, repoData, "codeReview");
+            const busFactorWorker = runWorker(owner, repo, token, repoURL, repoData, "busFactor"); // Calculate Bus Factor
+            const correctnessWorker = runWorker(owner, repo, token, repoURL, repoData, "correctness"); // Calculate Correctness
+            const rampUpWorker = runWorker(owner, repo, token, repoURL, repoData, "rampUp"); // Calculate Ramp Up
+            const responsivenessWorker = runWorker(owner, repo, token, repoURL, repoData, "responsiveness"); // Calculate Responsiveness
+            const licenseWorker = runWorker(owner, repo, token, repoURL, repoData, "license"); // Calculate License 
+            const dependencyPinningWorker = runWorker(owner, repo, token, repoURL, repoData, "dependencyPinning"); // Calculate Dependency Pinning
+            const codeReviewWorker = runWorker(owner, repo, token, repoURL, repoData, "codeReview"); // Calculate Code Review
 
             // Wait for all metric calculations to complete
             const results = await Promise.all([
