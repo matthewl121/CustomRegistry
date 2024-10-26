@@ -4,4 +4,4 @@ node_modules
 *.json
 *.txt
 repos/
-*.js
+**/*.js
