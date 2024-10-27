@@ -1,6 +1,13 @@
-import { fetchContributorActivity, fetchRepoData, checkFolderExists, getReadmeDetails } from "../src/api/githubApi";
+import { fetchCodeReviewActivity, fetchContributorActivity, fetchRepoData, checkFolderExists, getReadmeDetails } from "../src/api/githubApi";
 import { getRepoDetails, extractDomainFromUrl, extractNpmPackageName, extractGithubOwnerAndRepo } from '../src/utils/urlHandler';
-import { calcBusFactorScore, calcCorrectnessScore, calcResponsivenessScore, calcLicenseScore, calculateMetrics, calcBusFactor, calcCorrectness, calcResponsiveness, calcLicense, calcRampUp } from "../src/metricCalcs";
+import { calculateMetrics} from "../src/metrics/metric";
+import { calcBusFactor, calcBusFactorScore } from '../src/metrics/busFactor';
+import { calcCorrectness, calcCorrectnessScore } from '../src/metrics/correctness';
+import { calcResponsiveness, calcResponsivenessScore } from '../src/metrics/responsiveMaintainer';
+import { calcLicense, calcLicenseScore } from '../src/metrics/license';
+import { calcRampUp } from '../src/metrics/rampUp';
+//import { calcDependencyPinning, calcDependencyPinningScore, isVersionPinned } from '../src/metrics/dependencyPinning';
+import { calcCodeReview, calcCodeReviewScore } from '../src/metrics/codeReview';
 import { initLogFile, logToFile, metricsLogToStdout } from "../src/utils/log";
 import * as path from 'path';
 import { runWorker } from '../src/index';
@@ -10,8 +17,10 @@ import { writeFile, hasLicenseHeading } from '../src/utils/utils';
 import { fetchGithubUrlFromNpm } from '../src/api/npmApi';
 import { getRepoDataQuery } from '../src/api/graphqlQueries';
 
+const {expect, describe, it} = require('@jest/globals');
 
 describe('Test suite', () => {
+    // Testing all metrics with github/jspec
     test('github/jspec, bus factor', async () => {
         const token = process.env.GITHUB_TOKEN || "";
         const inputURL = "https://github.com/wycats/jspec";
@@ -72,7 +81,32 @@ describe('Test suite', () => {
 
         expect(parseFloat(metrics?.License?.toFixed(2) ?? '0')).toBe(1.00);
     });
+    // test('github/jspec, dependency pinning', async () => {
+    //     const token = process.env.GITHUB_TOKEN || "";
+    //     const inputURL = "https://github.com/wycats/jspec";
 
+    //     const repoDetails = await getRepoDetails(token, inputURL);
+    //     const [owner, repo, repoURL]: [string, string, string] = repoDetails;
+    //     const repoData = await fetchRepoData(owner, repo, token);
+
+    //     let metrics = await calculateMetrics(owner, repo, token, repoURL, repoData, inputURL);
+
+    //     expect(parseFloat(metrics?.DependencyPinning?.toFixed(2) ?? '0')).toBe(1.00);
+    // });
+    test('github/jspec, code review fraction', async () => {
+        const token = process.env.GITHUB_TOKEN || "";
+        const inputURL = "https://github.com/wycats/jspec";
+
+        const repoDetails = await getRepoDetails(token, inputURL);
+        const [owner, repo, repoURL]: [string, string, string] = repoDetails;
+        const repoData = await fetchRepoData(owner, repo, token);
+
+        let metrics = await calculateMetrics(owner, repo, token, repoURL, repoData, inputURL);
+
+        expect(parseFloat(metrics?.CodeReview?.toFixed(2) ?? '0')).toBe(0.25);
+    });
+
+    // Testing log file functions
     test('logging messages to log file', async () => {
         initLogFile();
         logToFile("Informational log from test", 1);
@@ -113,6 +147,7 @@ describe('Test suite', () => {
         expect(logContent.trim()).not.toBe('');
     });
 
+    // Testing all metric score functions
     test('calcBusFactorScore', async () => {
         const token = process.env.GITHUB_TOKEN || "";
         const inputURL = "https://github.com/defunkt/zippy";
@@ -184,7 +219,134 @@ describe('Test suite', () => {
         
         expect(parseFloat((license).toFixed(2) ?? '0')).toBe(0.00);
     });
+    // test('calcDependencyPinningScore', async () => {
+    //     // Test case 1: No dependencies
+    //     expect(calcDependencyPinningScore({})).toBe(1.0);
+        
+    //     // Test case 2: All dependencies pinned
+    //     const allPinned = {
+    //         dependencies: {
+    //             "react": "17.0.2",
+    //             "lodash": "4.17.21"
+    //         },
+    //         devDependencies: {
+    //             "typescript": "4.5.4"
+    //         }
+    //     };
+    //     expect(calcDependencyPinningScore(allPinned)).toBe(1.0);
+        
+    //     // Test case 3: Mixed pinned and unpinned
+    //     const mixed = {
+    //         dependencies: {
+    //             "react": "^17.0.0",
+    //             "lodash": "4.17.21"
+    //         }
+    //     };
+    //     expect(calcDependencyPinningScore(mixed)).toBe(0.5);
+        
+    //     // Test case 4: None pinned
+    //     const nonePinned = {
+    //         dependencies: {
+    //             "react": "^17.0.0",
+    //             "lodash": "^4.0.0"
+    //         }
+    //     };
+    //     expect(calcDependencyPinningScore(nonePinned)).toBe(0.0);
+    // });
+    // Update these test cases in index.test.ts
 
+    // test('calcDependencyPinningScore', () => {  // Remove async
+    //     // Test case 1: No dependencies
+    //     expect(calcDependencyPinningScore({})).toBe(1.0);
+        
+    //     // Test case 2: All dependencies pinned
+    //     const allPinned = {
+    //         dependencies: {
+    //             "react": "17.0.2",
+    //             "lodash": "4.17.21"
+    //         },
+    //         devDependencies: {
+    //             "typescript": "4.5.4"
+    //         }
+    //     };
+    //     expect(calcDependencyPinningScore(allPinned)).toBe(1.0);
+        
+    //     // Test case 3: Mixed pinned and unpinned
+    //     const mixed = {
+    //         dependencies: {
+    //             "react": "^17.0.0",
+    //             "lodash": "4.17.21"
+    //         }
+    //     };
+    //     expect(calcDependencyPinningScore(mixed)).toBe(0.5);
+        
+    //     // Test case 4: None pinned
+    //     const nonePinned = {
+    //         dependencies: {
+    //             "react": "^17.0.0",
+    //             "lodash": "^4.0.0"
+    //         }
+    //     };
+    //     expect(calcDependencyPinningScore(nonePinned)).toBe(0.0);
+    // });
+
+    // test('isVersionPinned', () => {
+    //     // Test exact versions
+    //     expect(isVersionPinned("1.2.3")).toBe(true);
+    //     expect(isVersionPinned("17.0.2")).toBe(true);
+        
+    //     // Test minor version ranges
+    //     expect(isVersionPinned("1.2.x")).toBe(true);
+    //     expect(isVersionPinned("1.2.*")).toBe(true);
+        
+    //     // Test tilde ranges
+    //     expect(isVersionPinned("~1.2.0")).toBe(true);
+        
+    //     // Test unpinned versions
+    //     expect(isVersionPinned("^1.0.0")).toBe(false);
+    //     expect(isVersionPinned("*")).toBe(false);
+    //     expect(isVersionPinned("latest")).toBe(false);
+    // });
+
+    // test('calcDependencyPinning', async () => {
+    //     const token = process.env.GITHUB_TOKEN || "";
+    //     const inputURL = "https://github.com/defunkt/zippy";
+
+    //     const repoDetails = await getRepoDetails(token, inputURL);
+    //     const [owner, repo, repoURL]: [string, string, string] = repoDetails;
+    //     const repoData = await fetchRepoData(owner, repo, token);
+
+    //     const score = calcDependencyPinning(repoData);
+        
+    //     // Should be a number between 0 and 1
+    //     expect(typeof score).toBe('number');
+    //     expect(score).toBeGreaterThanOrEqual(0);
+    //     expect(score).toBeLessThanOrEqual(1);
+    //     expect(Number.isFinite(score)).toBe(true);
+    // });
+    test('calcCodeReviewScore', async () => {
+        const token = process.env.GITHUB_TOKEN || "";
+        const inputURL = "https://github.com/defunkt/zippy";
+
+        const repoDetails = await getRepoDetails(token, inputURL);
+        const [owner, repo, repoURL]: [string, string, string] = repoDetails;
+        const repoData = await fetchRepoData(owner, repo, token);
+
+        let codeReview;
+
+        // get number of lines introduced and total lines in repo
+        const codeReviewActivity = await fetchCodeReviewActivity(owner, repo, token);
+        if (!codeReviewActivity.linesIntroduced || !codeReviewActivity.totalLines) {
+            return 0;
+        }
+        
+        // get score
+        codeReview = calcCodeReviewScore(codeReviewActivity.linesIntroduced, codeReviewActivity.totalLines);
+        
+        expect(parseFloat((codeReview).toFixed(2) ?? '0')).toBe(0.00);
+    });
+
+    // Testing all metric functions
     test('calcBusFactor', async () => {
         const token = process.env.GITHUB_TOKEN || "";
         const inputURL = "https://github.com/defunkt/zippy";
@@ -245,7 +407,32 @@ describe('Test suite', () => {
         
         expect(parseFloat((rampUp).toFixed(2) ?? '0')).toBe(0.80);
     });
+    // test('calcDependencyPinning', async () => {
+    //     const token = process.env.GITHUB_TOKEN || "";
+    //     const inputURL = "https://github.com/defunkt/zippy";
 
+    //     const repoDetails = await getRepoDetails(token, inputURL);
+    //     const [owner, repo, repoURL]: [string, string, string] = repoDetails;
+    //     const repoData = await fetchRepoData(owner, repo, token);
+
+    //     //const dependencyPinning = calcDependencyPinning(repoData);
+        
+    //     //expect(parseFloat((dependencyPinning).toFixed(2) ?? '0')).toBe(1.00);
+    // });
+    test('calcCodeReview', async () => {
+        const token = process.env.GITHUB_TOKEN || "";
+        const inputURL = "https://github.com/defunkt/zippy";
+
+        const repoDetails = await getRepoDetails(token, inputURL);
+        const [owner, repo, repoURL]: [string, string, string] = repoDetails;
+        const repoData = await fetchRepoData(owner, repo, token);
+
+        const codeReview = await calcCodeReview(owner, repo, repoURL);
+        
+        expect(parseFloat((codeReview).toFixed(2) ?? '0')).toBe(0.00);
+    });
+
+    // Testing workers
     test('workers', async () => {
         const token = process.env.GITHUB_TOKEN || "";
         const inputURL = "https://github.com/defunkt/zippy";
@@ -259,12 +446,22 @@ describe('Test suite', () => {
         const rampUpWorker = runWorker(owner, repo, token, repoURL, repoData, "rampUp");
         const responsivenessWorker = runWorker(owner, repo, token, repoURL, repoData, "responsiveness");
         const licenseWorker = runWorker(owner, repo, token, repoURL, repoData, "license");
+        //const dependencyPinningWorker = runWorker(owner, repo, token, repoURL, repoData, "dependencyPinning");
         
-        const results = await Promise.all([busFactorWorker, correctnessWorker, rampUpWorker, responsivenessWorker, licenseWorker]);
+        const results = await Promise.all([
+            busFactorWorker, 
+            correctnessWorker, 
+            rampUpWorker, 
+            responsivenessWorker, 
+            licenseWorker//,
+            //dependencyPinningWorker
+        ]);
         
         expect(parseFloat(results[0].score.toFixed(2) ?? '0')).toBe(0.05); // bus factor score
+        //expect(parseFloat(results[5].score.toFixed(2) ?? '0')).toBe(1.00); // dependency pinning score
     });
 
+    // Testing GitHub API requests
     test('apiGetRequest', async () => {
         const GITHUB_BASE_URL: string = "https://api.github.com"
         const token = process.env.GITHUB_TOKEN || "";
@@ -296,23 +493,8 @@ describe('Test suite', () => {
         
         expect(response).not.toBe(null);
     });
-    // test('apiGetRequest_NoOutput', async () => {
-    //     const GITHUB_BASE_URL: string = "https://api.github.com"
-    //     const token = process.env.GITHUB_TOKEN || "";
-    //     const inputURL = "https://github.com/anotherjesse/foxtracs";
 
-    //     const repoDetails = await getRepoDetails(token, inputURL);
-    //     const [owner, repo, repoURL]: [string, string, string] = repoDetails;
-    //     const repoData = await fetchRepoData(owner, repo, token);
-
-    //     const q = `repo:${owner}/${repo}+filename:readme`;
-    //     const url = `${GITHUB_BASE_URL}/search/code?q=${q}`;
-
-    //     const response = await apiGetRequest_NoOutput<IssueSearchResponse>(url, token);
-        
-    //     expect(response).not.toBe(null);
-    // });
-
+    // Testing writing to file
     test('writeFile', async () => {
         await writeFile("testing writeFile from test suite", process.env.LOG_FILE!);
 
@@ -322,12 +504,31 @@ describe('Test suite', () => {
         // check that log file is not empty
         expect(logContent.trim()).not.toBe('');
     });
+
+    // Testing helper functions for license metric
     test('hasLicenseHeading', async () => {
         let match = hasLicenseHeading("this should not match anything");
-
         expect(match).toBe(false);
     });
 
+    // Testing helper functions for dependency pinning metric
+    // test('isVersionPinned', () => {
+    //     // Test exact versions
+    //     expect(isVersionPinned("1.2.3")).toBe(true);
+    //     expect(isVersionPinned("v1.2.3")).toBe(true);
+        
+    //     // Test minor version ranges
+    //     expect(isVersionPinned("1.2.x")).toBe(true);
+    //     expect(isVersionPinned("1.2.*")).toBe(true);
+    //     expect(isVersionPinned("~1.2.0")).toBe(true);
+        
+    //     // Test unpinned versions
+    //     expect(isVersionPinned("^1.0.0")).toBe(false);
+    //     expect(isVersionPinned("*")).toBe(false);
+    //     expect(isVersionPinned("latest")).toBe(false);
+    // });
+
+    // Testing urlHandler.ts functions
     test('extractDomainFromUrl, extractNpmPackageName, fetchGithubUrlFromNpm, extractGithubOwnerAndRepo', async () => {
         const token = process.env.GITHUB_TOKEN || "";
         const inputURL = "https://github.com/wycats/jspec";
@@ -355,6 +556,7 @@ describe('Test suite', () => {
         expect(repoDetails).not.toBe(null);
     });
 
+    // Testing existence of folder (I THINK THIS IS NEVER CALLED FROM ANYWHERE)
     test('checkFolderExists', async () => {
         const token = process.env.GITHUB_TOKEN || "";
         const inputURL = "https://github.com/wycats/jspec";
