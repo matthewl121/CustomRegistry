@@ -4,9 +4,13 @@ on:
     push:
         branches:
             - aws_cd_branch
+            - main
+            - dev
     pull_request:
         branches:
             - aws_cd_branch
+            - main
+            - dev
 
 # linter for the cloudformation template
 jobs:
