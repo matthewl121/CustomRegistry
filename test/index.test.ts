@@ -16,6 +16,8 @@ import { writeFile, hasLicenseHeading } from '../src/utils/utils';
 import { fetchGithubUrlFromNpm } from '../src/api/npmApi';
 import { getRepoDataQuery } from '../src/api/graphqlQueries';
 
+const {expect, describe, it} = require('@jest/globals');
+
 describe('Test suite', () => {
     test('github/jspec, bus factor', async () => {
         const token = process.env.GITHUB_TOKEN || "";
