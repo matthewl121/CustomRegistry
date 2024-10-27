@@ -1,4 +1,4 @@
-import { fetchContributorActivity, fetchRepoData, checkFolderExists, getReadmeDetails } from "../src/api/githubApi";
+import { fetchCodeReviewActivity, fetchContributorActivity, fetchRepoData, checkFolderExists, getReadmeDetails } from "../src/api/githubApi";
 import { getRepoDetails, extractDomainFromUrl, extractNpmPackageName, extractGithubOwnerAndRepo } from '../src/utils/urlHandler';
 import { calculateMetrics} from "../src/metrics/metric";
 import { calcBusFactor, calcBusFactorScore } from '../src/metrics/busFactor';
@@ -7,6 +7,7 @@ import { calcResponsiveness, calcResponsivenessScore } from '../src/metrics/resp
 import { calcLicense, calcLicenseScore } from '../src/metrics/license';
 import { calcRampUp } from '../src/metrics/rampUp';
 //import { calcDependencyPinning, calcDependencyPinningScore, isVersionPinned } from '../src/metrics/dependencyPinning';
+import { calcCodeReview, calcCodeReviewScore } from '../src/metrics/codeReview';
 import { initLogFile, logToFile, metricsLogToStdout } from "../src/utils/log";
 import * as path from 'path';
 import { runWorker } from '../src/index';
@@ -19,6 +20,7 @@ import { getRepoDataQuery } from '../src/api/graphqlQueries';
 const {expect, describe, it} = require('@jest/globals');
 
 describe('Test suite', () => {
+    // Testing all metrics with github/jspec
     test('github/jspec, bus factor', async () => {
         const token = process.env.GITHUB_TOKEN || "";
         const inputURL = "https://github.com/wycats/jspec";
@@ -91,7 +93,20 @@ describe('Test suite', () => {
 
     //     expect(parseFloat(metrics?.DependencyPinning?.toFixed(2) ?? '0')).toBe(1.00);
     // });
+    test('github/jspec, code review fraction', async () => {
+        const token = process.env.GITHUB_TOKEN || "";
+        const inputURL = "https://github.com/wycats/jspec";
 
+        const repoDetails = await getRepoDetails(token, inputURL);
+        const [owner, repo, repoURL]: [string, string, string] = repoDetails;
+        const repoData = await fetchRepoData(owner, repo, token);
+
+        let metrics = await calculateMetrics(owner, repo, token, repoURL, repoData, inputURL);
+
+        expect(parseFloat(metrics?.CodeReview?.toFixed(2) ?? '0')).toBe(0.25);
+    });
+
+    // Testing log file functions
     test('logging messages to log file', async () => {
         initLogFile();
         logToFile("Informational log from test", 1);
@@ -132,6 +147,7 @@ describe('Test suite', () => {
         expect(logContent.trim()).not.toBe('');
     });
 
+    // Testing all metric score functions
     test('calcBusFactorScore', async () => {
         const token = process.env.GITHUB_TOKEN || "";
         const inputURL = "https://github.com/defunkt/zippy";
@@ -308,7 +324,29 @@ describe('Test suite', () => {
     //     expect(score).toBeLessThanOrEqual(1);
     //     expect(Number.isFinite(score)).toBe(true);
     // });
+    test('calcCodeReviewScore', async () => {
+        const token = process.env.GITHUB_TOKEN || "";
+        const inputURL = "https://github.com/defunkt/zippy";
 
+        const repoDetails = await getRepoDetails(token, inputURL);
+        const [owner, repo, repoURL]: [string, string, string] = repoDetails;
+        const repoData = await fetchRepoData(owner, repo, token);
+
+        let codeReview;
+
+        // get number of lines introduced and total lines in repo
+        const codeReviewActivity = await fetchCodeReviewActivity(owner, repo, token);
+        if (!codeReviewActivity.linesIntroduced || !codeReviewActivity.totalLines) {
+            return 0;
+        }
+        
+        // get score
+        codeReview = calcCodeReviewScore(codeReviewActivity.linesIntroduced, codeReviewActivity.totalLines);
+        
+        expect(parseFloat((codeReview).toFixed(2) ?? '0')).toBe(0.00);
+    });
+
+    // Testing all metric functions
     test('calcBusFactor', async () => {
         const token = process.env.GITHUB_TOKEN || "";
         const inputURL = "https://github.com/defunkt/zippy";
@@ -381,7 +419,20 @@ describe('Test suite', () => {
         
     //     //expect(parseFloat((dependencyPinning).toFixed(2) ?? '0')).toBe(1.00);
     // });
+    test('calcCodeReview', async () => {
+        const token = process.env.GITHUB_TOKEN || "";
+        const inputURL = "https://github.com/defunkt/zippy";
 
+        const repoDetails = await getRepoDetails(token, inputURL);
+        const [owner, repo, repoURL]: [string, string, string] = repoDetails;
+        const repoData = await fetchRepoData(owner, repo, token);
+
+        const codeReview = await calcCodeReview(owner, repo, repoURL);
+        
+        expect(parseFloat((codeReview).toFixed(2) ?? '0')).toBe(0.00);
+    });
+
+    // Testing workers
     test('workers', async () => {
         const token = process.env.GITHUB_TOKEN || "";
         const inputURL = "https://github.com/defunkt/zippy";
@@ -410,6 +461,7 @@ describe('Test suite', () => {
         //expect(parseFloat(results[5].score.toFixed(2) ?? '0')).toBe(1.00); // dependency pinning score
     });
 
+    // Testing GitHub API requests
     test('apiGetRequest', async () => {
         const GITHUB_BASE_URL: string = "https://api.github.com"
         const token = process.env.GITHUB_TOKEN || "";
@@ -424,7 +476,6 @@ describe('Test suite', () => {
         
         expect(response).not.toBe(null);
     });
-
     test('apiPostRequest', async () => {
         const GITHUB_BASE_URL: string = "https://api.github.com"
         const token = process.env.GITHUB_TOKEN || "";
@@ -443,6 +494,7 @@ describe('Test suite', () => {
         expect(response).not.toBe(null);
     });
 
+    // Testing writing to file
     test('writeFile', async () => {
         await writeFile("testing writeFile from test suite", process.env.LOG_FILE!);
 
@@ -453,11 +505,13 @@ describe('Test suite', () => {
         expect(logContent.trim()).not.toBe('');
     });
 
+    // Testing helper functions for license metric
     test('hasLicenseHeading', async () => {
         let match = hasLicenseHeading("this should not match anything");
         expect(match).toBe(false);
     });
 
+    // Testing helper functions for dependency pinning metric
     // test('isVersionPinned', () => {
     //     // Test exact versions
     //     expect(isVersionPinned("1.2.3")).toBe(true);
@@ -474,6 +528,7 @@ describe('Test suite', () => {
     //     expect(isVersionPinned("latest")).toBe(false);
     // });
 
+    // Testing urlHandler.ts functions
     test('extractDomainFromUrl, extractNpmPackageName, fetchGithubUrlFromNpm, extractGithubOwnerAndRepo', async () => {
         const token = process.env.GITHUB_TOKEN || "";
         const inputURL = "https://github.com/wycats/jspec";
@@ -501,6 +556,7 @@ describe('Test suite', () => {
         expect(repoDetails).not.toBe(null);
     });
 
+    // Testing existence of folder (I THINK THIS IS NEVER CALLED FROM ANYWHERE)
     test('checkFolderExists', async () => {
         const token = process.env.GITHUB_TOKEN || "";
         const inputURL = "https://github.com/wycats/jspec";
