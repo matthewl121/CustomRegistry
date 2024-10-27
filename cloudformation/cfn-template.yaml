@@ -34,18 +34,38 @@ Resources:
       CidrBlock: !Ref VpcCIDR
       EnableDnsSupport: true
       EnableDnsHostnames: true
-    DeletionPolicy: Retain
+      Tags:
+        - Key: Name
+          Value: Main VPC
 
   InternetGateway:
     Type: AWS::EC2::InternetGateway
-    DeletionPolicy: Retain
+    Properties:
+      Tags:
+        - Key: Name
+          Value: Main IGW
 
   InternetGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
       InternetGatewayId: !Ref InternetGateway
       VpcId: !Ref VPC
-    DeletionPolicy: Retain
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: Public Route Table
+
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
 
   PublicSubnet1:
     Type: AWS::EC2::Subnet
@@ -57,7 +77,6 @@ Resources:
       Tags:
         - Key: Name
           Value: Public Subnet (AZ1)
-    DeletionPolicy: Retain
 
   PublicSubnet2:
     Type: AWS::EC2::Subnet
@@ -69,7 +88,33 @@ Resources:
       Tags:
         - Key: Name
           Value: Public Subnet (AZ2)
-    DeletionPolicy: Retain
+
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet1
+
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet2
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: Private Route Table
+
+  DefaultPrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway1
 
   PrivateSubnet1:
     Type: AWS::EC2::Subnet
@@ -81,7 +126,6 @@ Resources:
       Tags:
         - Key: Name
           Value: Private Subnet (AZ1)
-    DeletionPolicy: Retain
 
   PrivateSubnet2:
     Type: AWS::EC2::Subnet
@@ -93,21 +137,33 @@ Resources:
       Tags:
         - Key: Name
           Value: Private Subnet (AZ2)
-    DeletionPolicy: Retain
+
+  PrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnet1
+
+  PrivateSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnet2
 
   NatGateway1EIP:
     Type: AWS::EC2::EIP
     DependsOn: InternetGatewayAttachment
     Properties:
       Domain: vpc
-    DeletionPolicy: Retain
 
   NatGateway1:
     Type: AWS::EC2::NatGateway
     Properties:
       AllocationId: !GetAtt NatGateway1EIP.AllocationId
       SubnetId: !Ref PublicSubnet1
-    DeletionPolicy: Retain
+      Tags:
+        - Key: Name
+          Value: NAT Gateway 1
 
   WebappDeploymentBucket:
     Type: AWS::S3::Bucket
@@ -121,47 +177,49 @@ Resources:
         BlockPublicPolicy: true
         IgnorePublicAcls: true
         RestrictPublicBuckets: true
-    DeletionPolicy: Retain
+      Tags:
+        - Key: Name
+          Value: Webapp Deployment Bucket
 
 Outputs:
   VPCId:
     Description: VPC ID
     Value: !Ref VPC
     Export:
-      Name: VPCId
+      Name: !Sub ${AWS::StackName}-VPCId
 
   PublicSubnet1Id:
     Description: Public Subnet 1 ID
     Value: !Ref PublicSubnet1
     Export:
-      Name: PublicSubnet1Id
+      Name: !Sub ${AWS::StackName}-PublicSubnet1Id
 
   PublicSubnet2Id:
     Description: Public Subnet 2 ID
     Value: !Ref PublicSubnet2
     Export:
-      Name: PublicSubnet2Id
+      Name: !Sub ${AWS::StackName}-PublicSubnet2Id
 
   PrivateSubnet1Id:
     Description: Private Subnet 1 ID
     Value: !Ref PrivateSubnet1
     Export:
-      Name: PrivateSubnet1Id
+      Name: !Sub ${AWS::StackName}-PrivateSubnet1Id
 
   PrivateSubnet2Id:
     Description: Private Subnet 2 ID
     Value: !Ref PrivateSubnet2
     Export:
-      Name: PrivateSubnet2Id
+      Name: !Sub ${AWS::StackName}-PrivateSubnet2Id
 
   NatGateway1Id:
     Description: NAT Gateway ID
     Value: !Ref NatGateway1
     Export:
-      Name: NatGateway1Id
+      Name: !Sub ${AWS::StackName}-NatGateway1Id
 
   WebappDeploymentBucketName:
     Description: S3 Bucket name for web app deployment
     Value: !Ref WebappDeploymentBucket
     Export:
-      Name: WebappDeploymentBucketName
+      Name: !Sub ${AWS::StackName}-WebappDeploymentBucketName
