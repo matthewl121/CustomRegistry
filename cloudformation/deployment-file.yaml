@@ -1,4 +1,4 @@
-template-file-path: ./cloudformation/cfn-template.yaml
+template-file-path: cloudformation/cfn-template.yaml
 tags:
     Name: 'gitsync'
     Project: 'CustomRegistry'
