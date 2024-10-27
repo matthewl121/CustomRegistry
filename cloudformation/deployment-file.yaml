@@ -1,4 +1,4 @@
-template-file-path: ./ template.yaml
+template-file-path: ./cfn-template.yaml
 tags:
     Name: 'gitsync'
     Project: 'CustomRegistry'
