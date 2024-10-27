@@ -1,0 +1,4 @@
+template-file-path: ./ template.yaml
+tags:
+    Name: 'gitsync'
+    Project: 'CustomRegistry'
