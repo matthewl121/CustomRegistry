@@ -27,7 +27,6 @@ Metadata:
           - GithubRepoName
           - ThumbprintList   
 Parameters:
-
   VpcCIDR:
     Description: Please enter the IP range (CIDR notation) for this VPC
     Type: String
