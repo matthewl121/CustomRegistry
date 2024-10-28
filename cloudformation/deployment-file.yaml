@@ -3,3 +3,5 @@ parameters: {}
 tags:
     Name: 'gitsync'
     Project: 'CustomRegistry'
+
+    # The following tags are required for the AWS CDK to deploy the stack
