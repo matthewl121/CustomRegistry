@@ -1,5 +1,3 @@
 template-file-path: cloudformation/cfn-template.yaml
 parameters: {}
-tags:
-    Name: 'gitsync'
-    Project: 'CustomRegistry'
+tags: {}
