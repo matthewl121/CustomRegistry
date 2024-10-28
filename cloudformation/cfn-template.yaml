@@ -577,4 +577,4 @@ Outputs:
   GithubIAMRoleArn:
     Description: IAM role for GitHub
     Value: !GetAtt GitHubIAMRole.Arn
-    # The following outputs are required for the AWS CDK to deploy the stack
+    # The following outputs are required for the AWS CDK to deploy the stacks
