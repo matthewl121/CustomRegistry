@@ -78,6 +78,7 @@ Parameters:
   GithubRepoName:
     Type: String 
     Description: GitHub repository name Ex-TestUser/TestCodeDeploy
+    Default: matthewl121/CustomRegistry
 
 Resources: 
   VPC:
