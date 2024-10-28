@@ -81,6 +81,19 @@ Parameters:
     Default: matthewl121/CustomRegistry
 
 Resources: 
+  AutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AutoScalingGroupName: !Sub ${AWS::StackName}-asg
+      VPCZoneIdentifier:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      MinSize: !Ref AutoScalingGroupMinSize
+      MaxSize: !Ref AutoScalingGroupMaxSize
+      DesiredCapacity: !Ref AutoScalingGroupDesiredCapacity
+      LaunchTemplate:
+        LaunchTemplateId: !Ref WebappLaunchTemplate
+        Version: !GetAtt WebappLaunchTemplate.LatestVersionNumber
   VPC:
     Type: AWS::EC2::VPC
     Properties:
