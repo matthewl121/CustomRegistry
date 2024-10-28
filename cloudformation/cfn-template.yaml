@@ -502,7 +502,7 @@ Resources:
                 systemctl enable amazon-ssm-agent
                 systemctl start amazon-ssm-agent
 
-  AutoScalingGroup:
+  AutoScalingGroup: 
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
       HealthCheckType: ELB
