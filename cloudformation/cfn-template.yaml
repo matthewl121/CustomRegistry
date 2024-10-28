@@ -426,7 +426,7 @@ Resources:
     Properties:
       Roles:
         - Ref: WebappRole
-        
+
   WebappLaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
     Properties:
@@ -512,6 +512,7 @@ Resources:
       MaxSize: !Ref AutoScalingGroupMaxSize
       LaunchTemplate:
         LaunchTemplateId: !Ref WebappLaunchTemplate
+        Version: $Latest
       VPCZoneIdentifier:
         - Ref: PrivateSubnet1
         - Ref: PrivateSubnet2
