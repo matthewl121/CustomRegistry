@@ -426,25 +426,22 @@ Resources:
     Properties:
       Roles:
         - Ref: WebappRole
-  WebappLaunchConfig:
-    Type: AWS::AutoScaling::LaunchConfiguration
-    Properties:
-      AssociatePublicIpAddress: true
-      ImageId:
-        Ref: ImageId
-      InstanceType: 
-        Ref: InstanceType
-      SecurityGroups:
-        - Ref: WebappSecurityGroup
+  WebappLaunchTemplate:
+  Type: AWS::EC2::LaunchTemplate
+  Properties:
+    LaunchTemplateData:
+      InstanceType: !Ref InstanceType
+      ImageId: !Ref ImageId
+      SecurityGroupIds:
+        - !Ref WebappSecurityGroup
       IamInstanceProfile:
-        Ref: WebappInstanceProfile
+        Arn: !GetAtt WebappInstanceProfile.Arn
       UserData:
         "Fn::Base64":
           !Sub |
-              #!/bin/bash
-
-              yum  install -y java-1.8.0-openjdk-devel wget
-              java -version
+            #!/bin/bash
+            yum  install -y java-1.8.0-openjdk-devel wget
+            java -version
               cd /usr/local
               wget https://archive.apache.org/dist/tomcat/tomcat-9/v9.0.43/bin/apache-tomcat-9.0.43.zip
               wget https://archive.apache.org/dist/tomcat/tomcat-9/v9.0.43/bin/apache-tomcat-9.0.43.zip.asc
@@ -512,17 +509,19 @@ Resources:
       DesiredCapacity: !Ref AutoScalingGroupDesiredCapacity
       MinSize: !Ref AutoScalingGroupMinSize
       MaxSize: !Ref AutoScalingGroupMaxSize
-      LaunchConfigurationName:
-        Ref: WebappLaunchConfig
+      LaunchTemplate:
+        LaunchTemplateId: !Ref WebappLaunchTemplate
       VPCZoneIdentifier:
-        - Ref: PrivateSubnet1 
-        - Ref: PrivateSubnet2 
+        - Ref: PrivateSubnet1
+        - Ref: PrivateSubnet2
       TargetGroupARNs:
         - Ref: ALBTargetGroup
       Tags:
         - Key: Name
           Value: webapp-example
           PropagateAtLaunch: true
+
+
   ALBListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
