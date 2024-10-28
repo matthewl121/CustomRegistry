@@ -40,7 +40,7 @@ const program = new Command();
 program
     .command('install')
     .description('install all dependencies')
-    .action(() => {
+    .action(() => { 
         //npm install --save-dev && tsc --init to terminal
         exec('npm install --save-dev && tsc --init', (error, stdout, stderr) => {
             if (error) {
