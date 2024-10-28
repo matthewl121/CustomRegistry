@@ -27,13 +27,13 @@ Metadata:
           - GithubRepoName
           - ThumbprintList   
 Parameters:
-  # Add these parameters to the existing ones
-  # AvailabilityZone1:
-  #   Type: AWS::EC2::AvailabilityZone::Name
-  #   Description: First Availability Zone
-  # AvailabilityZone2:
-  #   Type: AWS::EC2::AvailabilityZone::Name
-  #   Description: Second Availability Zone
+  # new parameters
+  AvailabilityZone1:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Description: First Availability Zone
+  AvailabilityZone2:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Description: Second Availability Zone
 
   VpcCIDR:
     Description: Please enter the IP range (CIDR notation) for this VPC
