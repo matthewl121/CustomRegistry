@@ -80,7 +80,6 @@ Parameters:
   GithubRepoName:
     Type: String 
     Default: matthewl121/CustomRegistry
-    Description: Repo Name
 
 Resources:
   VPC:
