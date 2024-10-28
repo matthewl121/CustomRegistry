@@ -27,13 +27,6 @@ Metadata:
           - GithubRepoName
           - ThumbprintList   
 Parameters:
-  # new parameters
-  AvailabilityZone1:
-    Type: AWS::EC2::AvailabilityZone::Name
-    Description: First Availability Zone
-  AvailabilityZone2:
-    Type: AWS::EC2::AvailabilityZone::Name
-    Description: Second Availability Zone
 
   VpcCIDR:
     Description: Please enter the IP range (CIDR notation) for this VPC
@@ -86,7 +79,7 @@ Parameters:
     Description: A thumbprint of an Open ID Connector is a SHA1 hash of the public certificate of the host
   GithubRepoName:
     Type: String 
-    Description: GitHub repository name Ex-TestUser/TestCodeDeploy
+    Description:  matthewl121/CustomRegistry
 
 Resources:
   VPC:
@@ -105,49 +98,92 @@ Resources:
       InternetGatewayId: !Ref InternetGateway
       VpcId: !Ref VPC
 
+  # PublicSubnet1:
+  #   Type: AWS::EC2::Subnet
+  #   Properties:
+  #     VpcId: !Ref VPC
+  #     AvailabilityZone: !Ref AvailabilityZone1
+  #     CidrBlock: !Ref PublicSubnet1CIDR
+  #     MapPublicIpOnLaunch: true
+  #     Tags:
+  #       - Key: Name
+  #         Value: Public Subnet (AZ1)
+
+  # PublicSubnet2:
+  #   Type: AWS::EC2::Subnet
+  #   Properties:
+  #     VpcId: !Ref VPC
+  #     AvailabilityZone: !Ref AvailabilityZone2
+  #     CidrBlock: !Ref PublicSubnet2CIDR
+  #     MapPublicIpOnLaunch: true
+  #     Tags:
+  #       - Key: Name
+  #         Value:  Public Subnet (AZ2)
+
+  # PrivateSubnet1:
+  #   Type: AWS::EC2::Subnet
+  #   Properties:
+  #     VpcId: !Ref VPC
+  #     AvailabilityZone: !Ref AvailabilityZone1
+  #     CidrBlock: !Ref PrivateSubnet1CIDR
+  #     MapPublicIpOnLaunch: false
+  #     Tags:
+  #       - Key: Name
+  #         Value: Private Subnet (AZ1)
+
+  # PrivateSubnet2:
+  #   Type: AWS::EC2::Subnet
+  #   Properties:
+  #     VpcId: !Ref VPC
+  #     AvailabilityZone: !Ref AvailabilityZone2
+  #     CidrBlock: !Ref PrivateSubnet2CIDR
+  #     MapPublicIpOnLaunch: false
+  #     Tags:
+  #       - Key: Name
+  #         Value: Private Subnet (AZ2)
   PublicSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      AvailabilityZone: !Ref AvailabilityZone1
+      AvailabilityZone: us-east-1a
       CidrBlock: !Ref PublicSubnet1CIDR
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: Public Subnet (AZ1)
+          Value: !Sub ${AWS::StackName}-Public-Subnet-1
 
   PublicSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      AvailabilityZone: !Ref AvailabilityZone2
+      AvailabilityZone: us-east-1b
       CidrBlock: !Ref PublicSubnet2CIDR
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value:  Public Subnet (AZ2)
+          Value: !Sub ${AWS::StackName}-Public-Subnet-2
 
   PrivateSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      AvailabilityZone: !Ref AvailabilityZone1
+      AvailabilityZone: us-east-1a
       CidrBlock: !Ref PrivateSubnet1CIDR
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: Private Subnet (AZ1)
+          Value: !Sub ${AWS::StackName}-Private-Subnet-1
 
   PrivateSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      AvailabilityZone: !Ref AvailabilityZone2
+      AvailabilityZone: us-east-1b
       CidrBlock: !Ref PrivateSubnet2CIDR
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: Private Subnet (AZ2)
+          Value: !Sub ${AWS::StackName}-Private-Subnet-2
 
   NatGateway1EIP:
     Type: AWS::EC2::EIP
