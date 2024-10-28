@@ -79,7 +79,7 @@ Parameters:
     Description: A thumbprint of an Open ID Connector is a SHA1 hash of the public certificate of the host
   GithubRepoName:
     Type: String 
-    Description:  matthewl121/CustomRegistry
+    Default: matthewl121/CustomRegistry
 
 Resources:
   VPC:
