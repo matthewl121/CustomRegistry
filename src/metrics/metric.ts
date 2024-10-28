@@ -7,6 +7,13 @@ import { logToFile } from '../utils/log';
 import { ApiResponse, GraphQLResponse, Metrics } from '../types';
 import { runWorker } from '../index';
 import { calculateNetScore, validateMetricScores } from './netScore';
+import './busFactor';
+import './codeReview';
+import './correctness';
+import './dependencyPinning';
+import './license';
+import './rampUp';
+import './responsiveMaintainer';
 
 /**
  * Interface defining the contract for metrics calculation

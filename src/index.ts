@@ -3,6 +3,7 @@ import { fetchRepoData } from './api/githubApi';
 import { getRepoDetails } from './utils/urlHandler';
 import { initLogFile, logToFile, metricsLogToStdout } from './utils/log';
 import { calculateMetrics } from './metrics/metric';
+import * as workers from './utils/worker';
 
 // CommonJS-style import for dotenv
 const dotenv = require('dotenv');
@@ -12,13 +13,13 @@ dotenv.config();
 
 // Function to create and manage worker threads
 export function runWorker(
-    owner: string, 
-    repo: string, 
-    token: string, 
-    repoURL: string, 
-    repoData: any, 
-    metric: string
-): Promise<any> {
+    owner, 
+    repo, 
+    token, 
+    repoURL, 
+    repoData, 
+    metric
+) {
     return new Promise((resolve, reject) => {
         try {
             const worker = new Worker('./src/utils/worker.ts', {
@@ -47,7 +48,7 @@ export function runWorker(
 }
 
 // Main function to calculate the metrics
-export const main = async (url: string): Promise<void> => {
+export const main = async (url) => {
     const token = process.env.GITHUB_TOKEN || "";
     const inputURL = url;
 

@@ -1,4 +1,4 @@
-/**
+/** 
  * @fileoverview Handles the calculation of the weighted net score for repository metrics.
  * Combines individual metric scores using defined weights to produce an overall quality score.
  * 

@@ -1,0 +1,8 @@
+template-file-path: cloudformation/cfn-template.yaml
+parameters: {}
+tags:
+    Name: 'gitsync'
+    Project: 'CustomRegistry'
+
+    # The following tags are required for the AWS CDK to deploy the stack
+
