@@ -457,7 +457,7 @@ describe('Test suite', () => {
             //dependencyPinningWorker
         ]);
         
-        expect(parseFloat(results[0].score.toFixed(2) ?? '0')).toBe(0.05); // bus factor score
+        expect(parseFloat((results[0] as {score: number}).score.toFixed(2) ?? '0')).toBe(0.05); // bus factor score
         //expect(parseFloat(results[5].score.toFixed(2) ?? '0')).toBe(1.00); // dependency pinning score
     });
 
