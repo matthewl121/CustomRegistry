@@ -90,6 +90,8 @@ paths:
 
         If you want to enumerate all packages, provide an array with a single PackageQuery whose name is "*".
 
+        If an array with multiple queries is provided, each query will be processed with an 'OR' relationship, returning results that match any of the specified queries.
+
         The response is paginated; the response header includes the offset to use in the next query.
 
         In the Request Body below, "Version" has all the possible inputs. The "Version" cannot be a combinaiton of the different possibilities.
