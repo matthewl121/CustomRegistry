@@ -1,8 +1,8 @@
 name: Push-to-EC2
 
-on: 
+on:
   push:
-    branches: 
+    branches:
       - main
       - aws_cd_dev
   workflow_dispatch:
@@ -15,58 +15,62 @@ jobs:
   deploy:
     name: Deploy to EC2
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-        aws-region: us-east-1
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
 
-    # Option 1: Use static IP from secrets
-    - name: Set instance IP
-      id: get-ip
-      run: |
-        echo "instance_ip=${{ secrets.EC2_HOST }}" >> $GITHUB_OUTPUT
+      - name: Debug Secrets
+        run: |
+          if [ -n "${{ secrets.EC2_HOST }}" ]; then
+            echo "EC2_HOST is set"
+          else
+            echo "EC2_HOST is not set"
+            exit 1
+          fi
+          if [ -n "${{ secrets.acmeeeeeeee.pem }}" ]; then
+            echo "acmeeeeeeee.pem is set"
+          else
+            echo "acmeeeeeeee.pem is not set"
+            exit 1
+          fi
 
-    - name: Setup SSH
-      run: |
-        # Debug output
-        echo "Setting up SSH..."
-        
-        # Create .ssh directory
-        mkdir -p ~/.ssh
-        
-        # Write private key with debug EC2_SSH_KEY
-        echo "Writing SSH key..."
-        echo "${{ secrets.acmeeeeeeee.pem }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        
-        # Debug key existence
-        ls -la ~/.ssh/id_rsa
-        
-        # Debug IP address
-        echo "Using IP: ${{ steps.get-ip.outputs.instance_ip }}"
-        
-        # Try to scan host key with verbose output
-        echo "Scanning host key..."
-        ssh-keyscan -v -H ${{ steps.get-ip.outputs.instance_ip }} >> ~/.ssh/known_hosts 2>&1 || echo "Warning: ssh-keyscan failed"
-        
-        # Disable strict host key checking for first connection
-        echo "StrictHostKeyChecking no" > ~/.ssh/config
-        chmod 600 ~/.ssh/config
+      - name: Setup SSH
+        run: |
+          # Create .ssh directory
+          mkdir -p ~/.ssh
+          
+          # Write private key
+          echo "${{ secrets.acmeeeeeeee.pem }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          
+          # Verify key file
+          if [ ! -s ~/.ssh/id_rsa ]; then
+            echo "Error: SSH key file is empty"
+            exit 1
+          fi
+          
+          # Configure SSH
+          echo "Host *
+            StrictHostKeyChecking no
+            UserKnownHostsFile=/dev/null" > ~/.ssh/config
+          chmod 600 ~/.ssh/config
+          
+          # Debug connection info
+          echo "Will connect to: ec2-user@${{ secrets.EC2_HOST }}"
 
-    - name: Test SSH Connection
-      run: |
-        echo "Testing SSH connection..."
-        ssh -v -o StrictHostKeyChecking=no ec2-user@${{ steps.get-ip.outputs.instance_ip }} 'echo "Connection successful"'
+      - name: Test SSH Connection
+        run: |
+          ssh -v ec2-user@${{ secrets.EC2_HOST }} 'echo "Connection successful"'
 
-    - name: Deploy to EC2
-      if: success()
-      run: |
-        echo "Starting deployment..."
-        rsync -avz --exclude '.git' ./ ec2-user@${{ steps.get-ip.outputs.instance_ip }}:~/registry/
-        ssh ec2-user@${{ steps.get-ip.outputs.instance_ip }} 'cd ~/registry && chmod +x run && ./run install'
+      - name: Deploy to EC2
+        if: success()
+        run: |
+          echo "Starting deployment..."
+          rsync -avz --exclude '.git' ./ ec2-user@${{ secrets.EC2_HOST }}:~/registry/
+          ssh ec2-user@${{ secrets.EC2_HOST }} 'cd ~/registry && chmod +x run && ./run install'
