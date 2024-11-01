@@ -1,9 +1,12 @@
+# .github/workflows/deploy.yml
 name: Push-to-EC2
 
-on:
+on: 
   push:
-    branches:
-      - aws_cd_dev_branch
+    branches: 
+      - main  # or your default branch name
+      - aws_cd_dev
+  workflow_dispatch:  # Allows manual trigger from GitHub UI
 
 permissions:
   id-token: write
@@ -38,7 +41,6 @@ jobs:
         mkdir -p ~/.ssh
         echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
-        # Explicitly add the host key
         ssh-keyscan -H ${{ steps.get-ip.outputs.instance_ip }} >> ~/.ssh/known_hosts 2>/dev/null
 
     - name: Deploy to EC2
