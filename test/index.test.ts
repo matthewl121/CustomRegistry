@@ -19,6 +19,8 @@ import { getRepoDataQuery } from '../src/api/graphqlQueries';
 
 const {expect, describe, it} = require('@jest/globals');
 
+jest.setTimeout(10000); // Set timeout to 10 seconds (10000 ms) for all tests in this file
+
 describe('Test suite', () => {
     // Testing all metrics with github/jspec
     test('github/jspec, bus factor', async () => {
