@@ -27,10 +27,10 @@ jobs:
 
       - name: Debug Secrets
         run: |
-          if [ -n "${{ secrets.EC2_HOST }}" ]; then
-            echo "EC2_HOST is set"
+          if [ -n "${{ secrets.acmeeeeeeee.pem }}" ]; then
+            echo "acmeeeeeeee.pem is set"
           else
-            echo "EC2_HOST is not set"
+            echo "acmeeeeeeee.pem is not set"
             exit 1
           fi
           if [ -n "${{ secrets.acmeeeeeeee.pem }}" ]; then
@@ -42,26 +42,17 @@ jobs:
 
       - name: Setup SSH
         run: |
-          # Create .ssh directory
           mkdir -p ~/.ssh
-          
-          # Write private key
-          echo "${{ secrets.acmeeeeeeee.pem }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          
-          # Verify key file
           if [ ! -s ~/.ssh/id_rsa ]; then
             echo "Error: SSH key file is empty"
             exit 1
           fi
-          
-          # Configure SSH
           echo "Host *
             StrictHostKeyChecking no
             UserKnownHostsFile=/dev/null" > ~/.ssh/config
           chmod 600 ~/.ssh/config
-          
-          # Debug connection info
           echo "Will connect to: ec2-user@${{ secrets.EC2_HOST }}"
 
       - name: Test SSH Connection
@@ -71,6 +62,6 @@ jobs:
       - name: Deploy to EC2
         if: success()
         run: |
-          echo "Starting deployment :) ..."
+          echo "Starting deployment..."
           rsync -avz --exclude '.git' ./ ec2-user@${{ secrets.EC2_HOST }}:~/registry/
           ssh ec2-user@${{ secrets.EC2_HOST }} 'cd ~/registry && chmod +x run && ./run install'
