@@ -38,10 +38,33 @@ jobs:
 
     - name: Setup SSH
       run: |
+        # Create .ssh directory
         mkdir -p ~/.ssh
+        
+        # Write private key
         echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+        
+        # Set correct permissions
         chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H ${{ steps.get-ip.outputs.instance_ip }} >> ~/.ssh/known_hosts 2>/dev/null
+        
+        # Verify key was written
+        if [ ! -s ~/.ssh/id_rsa ]; then
+          echo "Error: SSH key file is empty"
+          exit 1
+        fi
+        
+        # Add host key (with error checking)
+        if ! ssh-keyscan -H "${{ steps.get-ip.outputs.instance_ip }}" >> ~/.ssh/known_hosts 2>/dev/null; then
+          echo "Error: Could not scan host key"
+          exit 1
+        fi
+        
+        # Test SSH connection
+        echo "Testing SSH connection..."
+        if ! ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 ec2-user@${{ steps.get-ip.outputs.instance_ip }} 'echo "SSH connection successful"'; then
+          echo "Error: Could not establish SSH connection"
+          exit 1
+        fi
 
     - name: Deploy to EC2
       run: |
