@@ -1,16 +1,15 @@
 name: Push-to-EC2
 
-on: 
+# Define when this workflow will run
+on:
+  # Trigger on push to specific branches
   push:
-    branches: 
-      - main
-      - aws_cd_dev_branch
+    branches: [ "main" ]  # Replace with your branch name
+  
+  # Allow manual triggers
   workflow_dispatch:
 
-permissions:
-  id-token: write
-  contents: read
-
+# Job definition
 jobs:
   deploy:
     name: Deploy to EC2
@@ -26,47 +25,18 @@ jobs:
         role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
         aws-region: us-east-1
 
-    # Option 1: Use static IP from secrets
-    - name: Set instance IP
-      id: get-ip
-      run: |
-        echo "instance_ip=${{ secrets.EC2_HOST }}" >> $GITHUB_OUTPUT
-
     - name: Setup SSH
       run: |
-        # Debug output
         echo "Setting up SSH..."
-        
-        # Create .ssh directory
         mkdir -p ~/.ssh
-        
-        # Write private key with debug
-        echo "Writing SSH key..."
         echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
-        
-        # Debug key existence
-        ls -la ~/.ssh/id_rsa
-        
-        # Debug IP address
-        echo "Using IP: ${{ steps.get-ip.outputs.instance_ip }}"
-        
-        # Try to scan host key with verbose output
-        echo "Scanning host key..."
-        ssh-keyscan -v -H ${{ steps.get-ip.outputs.instance_ip }} >> ~/.ssh/known_hosts 2>&1 || echo "Warning: ssh-keyscan failed"
-        
-        # Disable strict host key checking for first connection --edit to push test
         echo "StrictHostKeyChecking no" > ~/.ssh/config
         chmod 600 ~/.ssh/config
-
-    - name: Test SSH Connection
-      run: |
-        echo "Testing SSH connection..."
-        ssh -v -o StrictHostKeyChecking=no ec2-user@${{ steps.get-ip.outputs.instance_ip }} 'echo "Connection successful"'
+        echo "SSH setup complete"
 
     - name: Deploy to EC2
-      if: success()
       run: |
-        echo "Starting deployment..."
-        rsync -avz --exclude '.git' ./ ec2-user@${{ steps.get-ip.outputs.instance_ip }}:~/registry/
-        ssh ec2-user@${{ steps.get-ip.outputs.instance_ip }} 'cd ~/registry && chmod +x run && ./run install'
+        echo "Starting deployment to ${{ secrets.EC2_HOST }}..."
+        rsync -avz --exclude '.git' ./ ec2-user@${{ secrets.EC2_HOST }}:~/registry/
+        ssh ec2-user@${{ secrets.EC2_HOST }} 'cd ~/registry && chmod +x run && ./run install'
