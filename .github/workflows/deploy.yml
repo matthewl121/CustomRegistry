@@ -40,9 +40,9 @@ jobs:
         # Create .ssh directory
         mkdir -p ~/.ssh
         
-        # Write private key with debug
+        # Write private key with debug EC2_SSH_KEY
         echo "Writing SSH key..."
-        echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+        echo "${{ secrets.acmeeeeeeee.pem }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
         
         # Debug key existence
