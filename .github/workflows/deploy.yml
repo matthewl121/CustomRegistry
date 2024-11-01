@@ -31,7 +31,7 @@ jobs:
       id: get-ip
       run: |
         IP=$(aws ec2 describe-instances \
-          --filters "Name:tag:Name,Values=CustomRegistry-Instance" \
+          --filters "Name=tag:Name,Values=CustomRegistry-Instance" \
           --query 'Reservations[].Instances[?State.Name==`running`].[PublicIpAddress]' \
           --output text)
         echo "instance_ip=$IP" >> $GITHUB_OUTPUT
