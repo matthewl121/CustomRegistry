@@ -1,3 +1,55 @@
+# name: Push-to-EC2
+
+# on:
+#   push:
+#     branches:
+#       - main
+#       - aws_cd_dev
+#   workflow_dispatch:
+
+# permissions:
+#   id-token: write
+#   contents: read
+
+# jobs:
+#   deploy:
+#     name: Deploy to EC2
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
+
+#       - name: Configure AWS credentials
+#         uses: aws-actions/configure-aws-credentials@v4
+#         with:
+#           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+#           aws-region: us-east-1
+
+#       - name: Setup SSH
+#         run: |
+#           mkdir -p ~/.ssh
+#           # Combine multiple key parts
+#           echo -e "${{ secrets.SSH_KEY_1 }}${{ secrets.SSH_KEY_2 }}${{ secrets.SSH_KEY_3 }}" > ~/.ssh/id_rsa
+#           chmod 600 ~/.ssh/id_rsa
+          
+#           echo "Host *
+#             StrictHostKeyChecking no
+#             UserKnownHostsFile=/dev/null" > ~/.ssh/config
+#           chmod 600 ~/.ssh/config
+
+#       - name: Test SSH Connection
+#         run: |
+#           echo "Testing connection to ${{ secrets.EC2_HOST }}..."
+#           ssh -v ec2-user@${{ secrets.EC2_HOST }} 'echo "Connection successful"'
+
+#       - name: Deploy to EC2
+#         if: success()
+#         run: |
+#           echo "Starting deployment..."
+#           rsync -avz --exclude '.git' ./ ec2-user@${{ secrets.EC2_HOST }}:~/registry/
+#           ssh ec2-user@${{ secrets.EC2_HOST }} 'cd ~/registry && chmod +x run && ./run install'
+
+
 name: Push-to-EC2
 
 on:
@@ -22,46 +74,24 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-to-assume: arn:aws:iam::<account-id>:role/Push-to-EC2
           aws-region: us-east-1
 
-      - name: Debug Secrets
+      - name: Zip application files
         run: |
-          if [ -n "${{ secrets.acmeeeeeeee.pem }}" ]; then
-            echo "acmeeeeeeee.pem is set"
-          else
-            echo "acmeeeeeeee.pem is not set"
-            exit 1
-          fi
-          if [ -n "${{ secrets.acmeeeeeeee.pem }}" ]; then
-            echo "acmeeeeeeee.pem is set"
-          else
-            echo "acmeeeeeeee.pem is not set"
-            exit 1
-          fi
+          zip -r application.zip . -x '.git*'  # Exclude the .git folder for a cleaner deployment package
 
-      - name: Setup SSH
+      - name: Upload to S3
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          if [ ! -s ~/.ssh/id_rsa ]; then
-            echo "Error: SSH key file is empty"
-            exit 1
-          fi
-          echo "Host *
-            StrictHostKeyChecking no
-            UserKnownHostsFile=/dev/null" > ~/.ssh/config
-          chmod 600 ~/.ssh/config
-          echo "Will connect to: ec2-user@${{ secrets.EC2_HOST }}"
+          aws s3 cp application.zip s3://my-deployment-bucket/application.zip
+        env:
+          AWS_REGION: us-east-1
 
-      - name: Test SSH Connection
+      - name: Trigger EC2 deployment via SSM
         run: |
-          ssh -v ec2-user@${{ secrets.EC2_HOST }} 'echo "Connection successful"'
-
-      - name: Deploy to EC2
-        if: success()
-        run: |
-          echo "Starting deployment..."
-          rsync -avz --exclude '.git' ./ ec2-user@${{ secrets.EC2_HOST }}:~/registry/
-          ssh ec2-user@${{ secrets.EC2_HOST }} 'cd ~/registry && chmod +x run && ./run install'
+          aws ssm send-command \
+            --document-name "AWS-RunShellScript" \
+            --targets "Key=instanceids,Values=${{ secrets.EC2_INSTANCE_ID }}" \
+            --parameters 'commands=["aws s3 cp s3://my-deployment-bucket/application.zip ~/application.zip", "unzip -o ~/application.zip -d ~/registry", "cd ~/registry && chmod +x run && ./run install"]'
+        env:
+          AWS_REGION: us-east-1
