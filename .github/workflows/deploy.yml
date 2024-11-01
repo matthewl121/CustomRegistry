@@ -55,7 +55,7 @@ jobs:
         echo "Scanning host key..."
         ssh-keyscan -v -H ${{ steps.get-ip.outputs.instance_ip }} >> ~/.ssh/known_hosts 2>&1 || echo "Warning: ssh-keyscan failed"
         
-        # Disable strict host key checking for first connection 
+        # Disable strict host key checking for first connection
         echo "StrictHostKeyChecking no" > ~/.ssh/config
         chmod 600 ~/.ssh/config
 
