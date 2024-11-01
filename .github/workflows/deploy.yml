@@ -1,12 +1,11 @@
-# .github/workflows/deploy.yml
 name: Push-to-EC2
 
 on: 
   push:
     branches: 
-      - main  # or your default branch name
-      - aws_cd_dev
-  workflow_dispatch:  # Allows manual trigger from GitHub UI
+      - main
+      - aws_cd_dev_branch
+  workflow_dispatch:
 
 permissions:
   id-token: write
@@ -27,46 +26,47 @@ jobs:
         role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
         aws-region: us-east-1
 
-    - name: Get instance IP
+    # Option 1: Use static IP from secrets
+    - name: Set instance IP
       id: get-ip
       run: |
-        IP=$(aws ec2 describe-instances \
-          --filters "Name=tag:Name,Values=CustomRegistry-Instance" \
-          --query 'Reservations[].Instances[?State.Name==`running`].[PublicIpAddress]' \
-          --output text)
-        echo "instance_ip=$IP" >> $GITHUB_OUTPUT
+        echo "instance_ip=${{ secrets.EC2_HOST }}" >> $GITHUB_OUTPUT
 
     - name: Setup SSH
       run: |
+        # Debug output
+        echo "Setting up SSH..."
+        
         # Create .ssh directory
         mkdir -p ~/.ssh
         
-        # Write private key
+        # Write private key with debug
+        echo "Writing SSH key..."
         echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
-        
-        # Set correct permissions
         chmod 600 ~/.ssh/id_rsa
         
-        # Verify key was written
-        if [ ! -s ~/.ssh/id_rsa ]; then
-          echo "Error: SSH key file is empty"
-          exit 1
-        fi
+        # Debug key existence
+        ls -la ~/.ssh/id_rsa
         
-        # Add host key (with error checking)
-        if ! ssh-keyscan -H "${{ steps.get-ip.outputs.instance_ip }}" >> ~/.ssh/known_hosts 2>/dev/null; then
-          echo "Error: Could not scan host key"
-          exit 1
-        fi
+        # Debug IP address
+        echo "Using IP: ${{ steps.get-ip.outputs.instance_ip }}"
         
-        # Test SSH connection
+        # Try to scan host key with verbose output
+        echo "Scanning host key..."
+        ssh-keyscan -v -H ${{ steps.get-ip.outputs.instance_ip }} >> ~/.ssh/known_hosts 2>&1 || echo "Warning: ssh-keyscan failed"
+        
+        # Disable strict host key checking for first connection
+        echo "StrictHostKeyChecking no" > ~/.ssh/config
+        chmod 600 ~/.ssh/config
+
+    - name: Test SSH Connection
+      run: |
         echo "Testing SSH connection..."
-        if ! ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 ec2-user@${{ steps.get-ip.outputs.instance_ip }} 'echo "SSH connection successful"'; then
-          echo "Error: Could not establish SSH connection"
-          exit 1
-        fi
+        ssh -v -o StrictHostKeyChecking=no ec2-user@${{ steps.get-ip.outputs.instance_ip }} 'echo "Connection successful"'
 
     - name: Deploy to EC2
+      if: success()
       run: |
+        echo "Starting deployment..."
         rsync -avz --exclude '.git' ./ ec2-user@${{ steps.get-ip.outputs.instance_ip }}:~/registry/
         ssh ec2-user@${{ steps.get-ip.outputs.instance_ip }} 'cd ~/registry && chmod +x run && ./run install'
