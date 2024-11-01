@@ -1,46 +1,47 @@
-# .github/workflows/deploy.yml 
-name: Deploy Custom Registry
+name: Push-to-EC2
 
 on:
   push:
-    branches: [ aws_cd_dev ]
+    branches:
+      - aws_cd_dev_branch
+
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   deploy:
+    name: Deploy to EC2
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
     
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Configure AWS Credentials
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
         aws-region: us-east-1
-    
-    - name: Get EC2 Instance IP
+
+    - name: Get instance IP
       id: get-ip
       run: |
         IP=$(aws ec2 describe-instances \
-          --filters "Name=tag:aws:cloudformation:stack-name,Values=CustomRegistry" \
-          --query 'Reservations[].Instances[].PublicIpAddress' \
+          --filters "Name:tag:Name,Values=CustomRegistry-Instance" \
+          --query 'Reservations[].Instances[?State.Name==`running`].[PublicIpAddress]' \
           --output text)
         echo "instance_ip=$IP" >> $GITHUB_OUTPUT
 
     - name: Setup SSH
       run: |
         mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H ${{ steps.get-ip.outputs.instance_ip }} >> ~/.ssh/known_hosts
-    
+        # Explicitly add the host key
+        ssh-keyscan -H ${{ steps.get-ip.outputs.instance_ip }} >> ~/.ssh/known_hosts 2>/dev/null
+
     - name: Deploy to EC2
       run: |
-        # Copy code to EC2
         rsync -avz --exclude '.git' ./ ec2-user@${{ steps.get-ip.outputs.instance_ip }}:~/registry/
-        
-        # Run install
         ssh ec2-user@${{ steps.get-ip.outputs.instance_ip }} 'cd ~/registry && chmod +x run && ./run install'
