@@ -110,8 +110,8 @@
 // };
 
 // src/metrics/dependencyPinning.ts
-import { ApiResponse, GraphQLResponse } from '../types';
 import { logToFile } from '../utils/log';
+import { fetchPackageJson } from '../api/githubApi';
 
 interface Dependencies {
     [key: string]: string;
@@ -149,22 +149,54 @@ export const isVersionPinned = (version: string): boolean => {
             return true;
         }
 
-        // Everything else (including ^1.0.0) is considered not pinned
+        // Check for caret ranges with exact minor version (^1.2.3)
+        if (/^\^(\d+\.\d+\.\d+)$/.test(normalizedVersion)) {
+            return true;
+        }
+
+        // Check for greater than or equal to a specific version (>=1.2.3)
+        if (/^>=\d+\.\d+\.\d+$/.test(normalizedVersion)) {
+            return true;
+        }
+
+        // Check for less than or equal to a specific version (<=1.2.3)
+        if (/^<=\d+\.\d+\.\d+$/.test(normalizedVersion)) {
+            return true;
+        }
+
+        // Check for greater than a specific version (>1.2.3)
+        if (/^>\d+\.\d+\.\d+$/.test(normalizedVersion)) {
+            return true;
+        }
+
+        // Check for less than a specific version (<1.2.3)
+        if (/^<\d+\.\d+\.\d+$/.test(normalizedVersion)) {
+            return true;
+        }
+
+        // Check for hyphen ranges (1.2.3 - 2.3.4)
+        if (/^\d+\.\d+\.\d+ - \d+\.\d+\.\d+$/.test(normalizedVersion)) {
+            return true;
+        }
+
+        // Everything else (including *, latest, and complex ranges) is considered not pinned
         return false;
     } catch (error) {
-        logToFile(`Error in isVersionPinned: ${error}`, 2);
+        logToFile(`Error in isVersionPinned: ${error}`, 1);
         return false;
     }
 };
 
 /**
  * Calculate raw dependency pinning score from package.json data
+ * - the more pinned dependencies, the better the score
  */
-export function calcDependencyPinningScore(packageJson: any): number {
+export async function calcDependencyPinningScore(packageJson: any): Promise<number> {
     try {
         const dependencies: Dependencies = {
-            ...(packageJson.dependencies || {}),
-            ...(packageJson.devDependencies || {})
+            ...(packageJson.data.dependencies || {}),
+            ...(packageJson.data.devDependencies || {}),
+            ...(packageJson.data.peerDependencies || {})
         };
 
         const totalDeps = Object.keys(dependencies).length;
@@ -189,26 +221,32 @@ export function calcDependencyPinningScore(packageJson: any): number {
 /**
  * Calculate dependency pinning metric from repository data
  */
-export function calcDependencyPinning(repoData: ApiResponse<GraphQLResponse | null>): number {
+export async function calcDependencyPinning(owner: string, repo: string, token: string): Promise<number> {
     try {
+        const packageJson = await fetchPackageJson(owner, repo, token);
+
         // Get package.json from GraphQL response
-        const packageJsonText = repoData?.data?.data?.repository?.object?.text;
+        // const packageJsonText = repoData?.data?.data?.repository?.object?.text;
+        // const packageJsonText = packageJson.text;
         
-        if (!packageJsonText) {
-            logToFile("No package.json found in repository", 2);
+        // console.log(packageJson);
+
+        // if (!packageJsonText) {
+        if (!packageJson || !packageJson.data) {
+            logToFile("No package.json found in repository", 1);
             return 1.0; // No dependencies = perfect score
         }
 
-        let packageJson;
-        try {
-            packageJson = JSON.parse(packageJsonText);
-        } catch (error) {
-            logToFile(`Error parsing package.json: ${error}`, 1);
-            return 0;
-        }
+        // let packageJson;
+        // try {
+        //     packageJson = JSON.parse(packageJsonText);
+        // } catch (error) {
+        //     logToFile(`Error parsing package.json: ${error}`, 1);
+        //     return 0;
+        // }
 
-        const score = calcDependencyPinningScore(packageJson);
-        return Number(score) || 0; // Ensure we return a number
+        const score = await calcDependencyPinningScore(packageJson);
+        return score;
     } catch (error) {
         logToFile(`Error in calcDependencyPinning: ${error}`, 1);
         return 0;
