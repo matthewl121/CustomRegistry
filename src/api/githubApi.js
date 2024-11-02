@@ -36,13 +36,14 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
-exports.getReadmeDetails = exports.checkFolderExists = exports.fetchRepoData = exports.fetchContributorActivity = exports.fetchCodeReviewActivity = void 0;
+exports.getReadmeDetails = exports.checkFolderExists = exports.fetchRepoData = exports.fetchContributorActivity = exports.fetchCodeReviewActivity = exports.fetchPackageJson = void 0;
 var apiUtils_1 = require("./apiUtils");
 var graphqlQueries_1 = require("./graphqlQueries");
 var log_1 = require("../utils/log");
 var path = require("path");
 var fs = require("fs");
 var pLimit = require("p-limit");
+// import { sleep } from '../../repos/socketio_socket.io/packages/socket.io-adapter/test/util';
 var GITHUB_BASE_URL = "https://api.github.com";
 var LOCAL_REPO_PATH = path.join(__dirname, '../../repos');
 /*  Fetches contributor commit activity for the given repository.
@@ -57,6 +58,32 @@ var LOCAL_REPO_PATH = path.join(__dirname, '../../repos');
         },
     }
 */
+var fetchPackageJson = function (owner, repo, token) { return __awaiter(void 0, void 0, void 0, function () {
+    var url, response, content, packageJson;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                url = "https://api.github.com/repos/".concat(owner, "/").concat(repo, "/contents/package.json");
+                return [4 /*yield*/, (0, apiUtils_1.apiGetRequest)(url, token)];
+            case 1:
+                response = _a.sent();
+                if (response.error || !response.data || !response.data.content) {
+                    return [2 /*return*/, { data: null, error: 'githubApi.ts: Failed to fetch package.json' }];
+                }
+                try {
+                    content = Buffer.from(response.data.content, 'base64').toString();
+                    packageJson = JSON.parse(content);
+                    return [2 /*return*/, { data: packageJson, error: null }];
+                }
+                catch (error) {
+                    (0, log_1.logToFile)("Error parsing package.json: ".concat(error), 1);
+                    return [2 /*return*/, { data: null, error: 'githubApi.ts: Error parsing package.json' }];
+                }
+                return [2 /*return*/];
+        }
+    });
+}); };
+exports.fetchPackageJson = fetchPackageJson;
 // Function to count total lines in the repository
 var countLinesInRepo = function (dir) {
     var totalLines = 0;
