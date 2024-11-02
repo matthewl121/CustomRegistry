@@ -148,8 +148,6 @@ var fetchCodeReviewActivity = function (owner, repo, token) { return __awaiter(v
                 linesIntroduced = additions.reduce(function (acc, curr) { return acc + curr; }, 0);
                 repoPath = path.join(LOCAL_REPO_PATH, owner + '_' + repo);
                 totalLines = countLinesInRepo(repoPath);
-                // console.log(linesIntroduced);
-                // console.log(totalLines);
                 return [2 /*return*/, { linesIntroduced: linesIntroduced, totalLines: totalLines, error: null }];
         }
     });
