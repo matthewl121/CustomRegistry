@@ -9,7 +9,7 @@ try {
 //   const lines = data.split('\n');
 
   // Get total number of tests and number of tests passed
-  const testsCountRegex = /Tests:\s+(\d+)\s+passed,\s+(\d+)\s+total/;
+  const testsCountRegex = /Tests:\s+(?:\d+\s+failed,\s+)?(\d+)\s+passed,\s+(\d+)\s+total/;
   const testCountMatch = data.match(testsCountRegex);
   let passed = -1;
   let total = -1;
