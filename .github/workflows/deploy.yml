@@ -28,17 +28,17 @@ jobs:
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
-          echo -e "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.SSH_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa  # Removes any carriage return characters
+          echo "Key Length: $(echo -n "${{ secrets.SSH_KEY }}" | wc -c)"  # Check length
           chmod 600 ~/.ssh/id_rsa
           echo "Host *" > ~/.ssh/config
           echo "    StrictHostKeyChecking no" >> ~/.ssh/config
           echo "    UserKnownHostsFile=/dev/null" >> ~/.ssh/config
           chmod 600 ~/.ssh/config
 
-      - name: Test SSH Connection
+      - name: Check SSH Key Format
         run: |
-          echo "Testing connection to ${{ secrets.EC2_HOST }}..."
-          ssh -v -i ~/.ssh/id_rsa ec2-user@${{ secrets.EC2_HOST }} 'echo "Connection successful"'
+          ssh-keygen -y -f ~/.ssh/id_rsa
 
       - name: Deploy to EC2
         if: success()
