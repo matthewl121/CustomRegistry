@@ -9,7 +9,7 @@ export function initLogFile() {
     if (!fs.existsSync(logDir)) {
         fs.mkdirSync(logDir, { recursive: true });
     } 
-    fs.writeFileSync(process.env.LOG_FILE, '');
+    fs.writeFileSync(logFilePath, '');
     // const f = fs.openSync(process.env.LOG_FILE, 'w');
     // fs.closeSync(f);
 }
