@@ -50,4 +50,22 @@ jobs:
                      -e "ssh -i ~/.ssh/id_rsa" \
                      ./ "ec2-user@${{ secrets.EC2_HOST }}:~/registry/"
           
-          ssh -i ~/.ssh/id_rsa ec2-user@${{ secrets.EC2_HOST }} "cd ~/registry && chmod +x run && ./run install"
+          # Install Node.js on EC2 if not already installed
+          ssh -i ~/.ssh/id_rsa ec2-user@${{ secrets.EC2_HOST }} "
+            # Check if node is installed
+            if ! command -v node &> /dev/null; then
+              echo 'Installing Node.js...'
+              curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+              export NVM_DIR=\$HOME/.nvm
+              [ -s \$NVM_DIR/nvm.sh ] && \. \$NVM_DIR/nvm.sh
+              nvm install 18
+              nvm use 18
+            fi
+
+            # Source nvm and run installation
+            export NVM_DIR=\$HOME/.nvm
+            [ -s \$NVM_DIR/nvm.sh ] && \. \$NVM_DIR/nvm.sh
+            cd ~/registry && 
+            chmod +x run && 
+            ./run install
+          "
