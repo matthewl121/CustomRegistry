@@ -50,22 +50,19 @@ jobs:
                      -e "ssh -i ~/.ssh/id_rsa" \
                      ./ "ec2-user@${{ secrets.EC2_HOST }}:~/registry/"
           
-          # Install Node.js on EC2 if not already installed
           ssh -i ~/.ssh/id_rsa ec2-user@${{ secrets.EC2_HOST }} "
-            # Check if node is installed
-            if ! command -v node &> /dev/null; then
-              echo 'Installing Node.js...'
-              curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-              export NVM_DIR=\$HOME/.nvm
-              [ -s \$NVM_DIR/nvm.sh ] && \. \$NVM_DIR/nvm.sh
-              nvm install 18
-              nvm use 18
-            fi
-
-            # Source nvm and run installation
+            # Setup Node.js
             export NVM_DIR=\$HOME/.nvm
             [ -s \$NVM_DIR/nvm.sh ] && \. \$NVM_DIR/nvm.sh
-            cd ~/registry && 
-            chmod +x run && 
+            
+            # Install TypeScript globally
+            npm install -g typescript
+            
+            cd ~/registry
+            
+            # Make run script executable and execute installation
+            chmod +x run
+            npm install
+            tsc --init || true
             ./run install
           "
