@@ -54,15 +54,29 @@ jobs:
             # Setup Node.js
             export NVM_DIR=\$HOME/.nvm
             [ -s \$NVM_DIR/nvm.sh ] && \. \$NVM_DIR/nvm.sh
-            
-            # Install TypeScript globally
-            npm install -g typescript
-            
+
             cd ~/registry
-            
-            # Make run script executable and execute installation
-            chmod +x run
+
+            # Clear npm cache and remove existing node_modules
+            npm cache clean --force
+            rm -rf node_modules package-lock.json
+
+            # Install dependencies including TypeScript
             npm install
-            tsc --init || true
+            npm install -g typescript
+
+            # Verify TypeScript installation
+            which tsc
+            tsc --version
+
+            # Initialize TypeScript if needed
+            if [ ! -f tsconfig.json ]; then
+              tsc --init
+            fi
+
+            # Make run script executable
+            chmod +x run
+            
+            # Run installation script
             ./run install
           "
