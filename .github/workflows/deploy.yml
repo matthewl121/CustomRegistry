@@ -52,4 +52,5 @@ jobs:
         run: |
           echo "Starting deployment..."
           rsync -avz --exclude '.git' ./ ec2-user@${{ secrets.EC2_HOST }}:~/registry/
+          cat ~/.ssh/id_rsa
           ssh -i ~/.ssh/id_rsa ec2-user@${{ secrets.EC2_HOST }} 'cd ~/registry && chmod +x run && ./run install'
