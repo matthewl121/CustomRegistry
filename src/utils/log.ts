@@ -4,7 +4,8 @@ const fs = require('fs');
 const path = require('path');
 
 export function initLogFile() {
-    const logDir = path.dirname(process.env.LOG_FILE);
+    const logFilePath = process.env.LOG_FILE || path.join(__dirname, 'log_file.txt');
+    const logDir = path.dirname(logFilePath);
     if (!fs.existsSync(logDir)) {
         fs.mkdirSync(logDir, { recursive: true });
     } 
