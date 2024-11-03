@@ -26,9 +26,11 @@ jobs:
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
-          # Combine multiple key parts
           echo -e "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+          
+          # Check if the key was created correctly
+          ls -l ~/.ssh/id_rsa
           
           echo "Host *
             StrictHostKeyChecking no
