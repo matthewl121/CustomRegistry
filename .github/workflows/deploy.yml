@@ -48,9 +48,6 @@ jobs:
           rsync -avz --exclude '.git' \
                      --exclude 'node_modules' \
                      -e "ssh -i ~/.ssh/id_rsa" \
-                     ./ ec2-user@${{ secrets.EC2_HOST }}:~/registry/
+                     ./ "ec2-user@${{ secrets.EC2_HOST }}:~/registry/"
           
-          ssh -i ~/.ssh/id_rsa ec2-user@${{ secrets.EC2_HOST }} '
-            cd ~/registry && \
-            chmod +x run && \
-            ./run install
+          ssh -i ~/.ssh/id_rsa ec2-user@${{ secrets.EC2_HOST }} "cd ~/registry && chmod +x run && ./run install"
