@@ -106,7 +106,7 @@ parentPort.on('message', function (params) { return __awaiter(void 0, void 0, vo
                 return [3 /*break*/, 16];
             case 15:
                 error_1 = _b.sent();
-                console.error('Worker error:', error_1);
+                logToFile("Worker error: ".concat(error_1), 1);
                 errorResponse = {
                     score: -1,
                     latency: 0,
