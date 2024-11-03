@@ -15,9 +15,15 @@ jobs:
   deploy:
     name: Deploy to EC2
     runs-on: ubuntu-latest
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -28,29 +34,23 @@ jobs:
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
-          # Outputting the key to file while ensuring proper formatting
           echo "${{ secrets.SSH_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
 
-          # Configure SSH
-          echo "Host *" > ~/.ssh/config
-          echo "    StrictHostKeyChecking no" >> ~/.ssh/config
-          echo "    UserKnownHostsFile=/dev/null" >> ~/.ssh/config
-          chmod 600 ~/.ssh/config
-      - name: Check SSH Key Format
-        run: |
-          ssh-keygen -y -f ~/.ssh/id_rsa
-
-      - name: Debug SSH Key Format
-        run: |
-          echo "Key Length: $(echo -n "${{ secrets.SSH_KEY }}" | wc -c)"  # Check length
-          # Attempt to show public key derived from private key
-          ssh-keygen -y -f ~/.ssh/id_rsa || echo "Failed to read SSH key"
+      - name: Install rsync
+        run: sudo apt-get update && sudo apt-get install -y rsync
 
       - name: Deploy to EC2
-        if: success()
         run: |
           echo "Starting deployment..."
-          rsync -avz --exclude '.git' ./ ec2-user@${{ secrets.EC2_HOST }}:~/registry/
-          cat ~/.ssh/id_rsa
-          ssh -i ~/.ssh/id_rsa ec2-user@${{ secrets.EC2_HOST }} 'cd ~/registry && chmod +x run && ./run install'
+          rsync -avz --exclude '.git' \
+                     --exclude 'node_modules' \
+                     -e "ssh -i ~/.ssh/id_rsa" \
+                     ./ ec2-user@${{ secrets.EC2_HOST }}:~/registry/
+          
+          ssh -i ~/.ssh/id_rsa ec2-user@${{ secrets.EC2_HOST }} '
+            cd ~/registry && \
+            chmod +x run && \
+            ./run install
