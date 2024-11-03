@@ -3,7 +3,7 @@ import { fetchRepoData } from './api/githubApi';
 import { getRepoDetails } from './utils/urlHandler';
 import { initLogFile, logToFile, metricsLogToStdout } from './utils/log';
 import { calculateMetrics } from './metrics/metric';
-import * as workers from './utils/worker';
+import * as workers from './utils/worker'; 
 
 // CommonJS-style import for dotenv
 const dotenv = require('dotenv');
