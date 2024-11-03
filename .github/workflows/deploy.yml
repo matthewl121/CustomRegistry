@@ -1,3 +1,5 @@
+name: Deploy to EC2
+
 on:
   push:
     branches:
@@ -28,23 +30,19 @@ jobs:
           mkdir -p ~/.ssh
           echo -e "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          
-          # Check if the key was created correctly
-          ls -l ~/.ssh/id_rsa
-          
-          echo "Host *
-            StrictHostKeyChecking no
-            UserKnownHostsFile=/dev/null" > ~/.ssh/config
+          echo "Host *" > ~/.ssh/config
+          echo "    StrictHostKeyChecking no" >> ~/.ssh/config
+          echo "    UserKnownHostsFile=/dev/null" >> ~/.ssh/config
           chmod 600 ~/.ssh/config
 
       - name: Test SSH Connection
         run: |
           echo "Testing connection to ${{ secrets.EC2_HOST }}..."
-          ssh -v ec2-user@${{ secrets.EC2_HOST }} 'echo "Connection successful"'
+          ssh -v -i ~/.ssh/id_rsa ec2-user@${{ secrets.EC2_HOST }} 'echo "Connection successful"'
 
       - name: Deploy to EC2
         if: success()
         run: |
           echo "Starting deployment..."
           rsync -avz --exclude '.git' ./ ec2-user@${{ secrets.EC2_HOST }}:~/registry/
-          ssh ec2-user@${{ secrets.EC2_HOST }} 'cd ~/registry && chmod +x run && ./run install'
+          ssh -i ~/.ssh/id_rsa ec2-user@${{ secrets.EC2_HOST }} 'cd ~/registry && chmod +x run && ./run install'
