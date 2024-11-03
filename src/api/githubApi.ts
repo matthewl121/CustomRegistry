@@ -8,7 +8,7 @@ import {logToFile} from '../utils/log';
 import * as path from 'path';
 import * as fs from 'fs';
 import pLimit = require('p-limit');
-import { sleep } from '../../repos/socketio_socket.io/packages/socket.io-adapter/test/util';
+// import { sleep } from '../../repos/socketio_socket.io/packages/socket.io-adapter/test/util';
 
 const GITHUB_BASE_URL: string = "https://api.github.com"
 const LOCAL_REPO_PATH = path.join(__dirname, '../../repos');
@@ -25,6 +25,29 @@ const LOCAL_REPO_PATH = path.join(__dirname, '../../repos');
         },
     }
 */
+
+export const fetchPackageJson = async (owner: string, repo: string, token: string): Promise<ApiResponse<any>> => {
+    const url = `https://api.github.com/repos/${owner}/${repo}/contents/package.json`;
+    
+    // Make a GET request to the GitHub API to fetch the package.json file
+    const response = await apiGetRequest<any>(url, token);
+    if (response.error || !response.data || !response.data.content) {
+        return { data: null, error: 'githubApi.ts: Failed to fetch package.json' };
+    }
+
+    try {
+        // Decode the base64 content of the package.json file
+        const content = Buffer.from(response.data.content, 'base64').toString();
+        
+        // Parse the JSON content
+        const packageJson = JSON.parse(content);
+
+        return { data: packageJson, error: null };
+    } catch (error) {
+        logToFile(`Error parsing package.json: ${error}`, 1);
+        return { data: null, error: 'githubApi.ts: Error parsing package.json' };
+    }
+};
 
 // Function to count total lines in the repository
 const countLinesInRepo = (dir: string): number => {
@@ -97,8 +120,6 @@ export const fetchCodeReviewActivity = async (
 
     // Count total lines in the cloned repository
     const totalLines = countLinesInRepo(repoPath);
-    // console.log(linesIntroduced);
-    // console.log(totalLines);
 
     return { linesIntroduced, totalLines, error: null };
 };

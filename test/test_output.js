@@ -9,7 +9,7 @@ try {
     var data = fs.readFileSync(filePath, 'utf8');
     //   const lines = data.split('\n');
     // Get total number of tests and number of tests passed
-    var testsCountRegex = /Tests:\s+(\d+)\s+passed,\s+(\d+)\s+total/;
+    var testsCountRegex = /Tests:\s+(?:\d+\s+failed,\s+)?(\d+)\s+passed,\s+(\d+)\s+total/;
     var testCountMatch = data.match(testsCountRegex);
     var passed = -1;
     var total = -1;
