@@ -39,8 +39,8 @@ function calculateNetScore(scores) {
             (scores.rampUp * exports.METRIC_WEIGHTS.RAMP_UP) +
             (scores.responsiveness * exports.METRIC_WEIGHTS.RESPONSIVENESS) +
             (scores.license * exports.METRIC_WEIGHTS.LICENSE) +
-            (scores.dependencypinning * exports.METRIC_WEIGHTS.DEPENDENCY_PINNING) +
-            (scores.codereview * exports.METRIC_WEIGHTS.CODE_REVIEW);
+            (scores.dependencyPinning * exports.METRIC_WEIGHTS.DEPENDENCY_PINNING) +
+            (scores.codeReview * exports.METRIC_WEIGHTS.CODE_REVIEW);
         var end = Date.now();
         return {
             score: netScore,
@@ -68,7 +68,7 @@ function validateMetricScores(scores) {
         scores.busFactor !== -1 &&
         scores.rampUp !== -1 &&
         scores.license !== -1 &&
-        scores.dependencypinning !== -1 &&
-        scores.codereview !== -1;
+        scores.dependencyPinning !== -1 &&
+        scores.codeReview !== -1;
 }
 exports.validateMetricScores = validateMetricScores;

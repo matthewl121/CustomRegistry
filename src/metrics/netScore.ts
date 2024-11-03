@@ -35,8 +35,8 @@ export interface ScoreInput {
     rampUp: number;
     responsiveness: number;
     license: number;
-    dependencypinning: number;
-    codereview: number;
+    dependencyPinning: number;
+    codeReview: number;
 }
 
 /**
@@ -57,8 +57,8 @@ export function calculateNetScore(scores: ScoreInput): {
                         (scores.rampUp * METRIC_WEIGHTS.RAMP_UP) +
                         (scores.responsiveness * METRIC_WEIGHTS.RESPONSIVENESS) +
                         (scores.license * METRIC_WEIGHTS.LICENSE) + 
-                        (scores.dependencypinning * METRIC_WEIGHTS.DEPENDENCY_PINNING)+
-                        (scores.codereview * METRIC_WEIGHTS.CODE_REVIEW);
+                        (scores.dependencyPinning * METRIC_WEIGHTS.DEPENDENCY_PINNING)+
+                        (scores.codeReview * METRIC_WEIGHTS.CODE_REVIEW);
         
         const end = Date.now();
         
@@ -87,6 +87,6 @@ export function validateMetricScores(scores: ScoreInput): boolean {
            scores.busFactor !== -1 &&
            scores.rampUp !== -1 &&
            scores.license !== -1 &&
-           scores.dependencypinning !== -1 &&
-           scores.codereview !== -1;
+           scores.dependencyPinning !== -1 &&
+           scores.codeReview !== -1;
 }
