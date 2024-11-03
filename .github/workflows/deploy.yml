@@ -55,6 +55,10 @@ jobs:
             export NVM_DIR=\$HOME/.nvm
             [ -s \$NVM_DIR/nvm.sh ] && \. \$NVM_DIR/nvm.sh
 
+
+            # Copy .env file from root to registry directory
+            cp ~/.env ~/registry/.env
+
             cd ~/registry
 
             # Clear npm cache and remove existing node_modules
