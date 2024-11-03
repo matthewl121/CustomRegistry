@@ -74,7 +74,7 @@ parentPort.on('message', async (params: WorkerParams) => {
         
         parentPort.postMessage(response);
     } catch (error) {
-        console.error('Worker error:', error);
+        logToFile(`Worker error: ${error}`, 1);
         
         const errorResponse: WorkerResponse = {
             score: -1,

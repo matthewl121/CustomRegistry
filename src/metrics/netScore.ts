@@ -3,23 +3,27 @@
  * Combines individual metric scores using defined weights to produce an overall quality score.
  * 
  * Score weights:
- * - Bus Factor: 25% - Risk assessment based on contributor distribution
- * - Correctness: 30% - Quality assessment based on issue resolution
- * - Ramp Up: 20% - Ease of onboarding new contributors
- * - Responsiveness: 15% - Maintainer activity and response time
- * - License: 10% - Presence and clarity of licensing
+ * - Bus Factor: 20% - Risk assessment based on contributor distribution
+ * - Correctness: 25% - Quality assessment based on issue resolution
+ * - Ramp Up: 15% - Ease of onboarding new contributors
+ * - Responsiveness: 10% - Maintainer activity and response time
+ * - License: 5% - Presence and clarity of licensing
+ * - Dependency Pinnning: 10% - Presence and clarity of licensing
+ * - Code Review: 10% - Presence and clarity of licensing
  */
 
-import { Metrics } from '../types';
 import { logToFile } from '../utils/log';
 
 // Define weights as constants for maintainability
 export const METRIC_WEIGHTS = {
-    BUS_FACTOR: 0.25,
-    CORRECTNESS: 0.30,
-    RAMP_UP: 0.20,
-    RESPONSIVENESS: 0.15,
-    LICENSE: 0.10
+    BUS_FACTOR: 0.20,
+    CORRECTNESS: 0.25,
+    RAMP_UP: 0.15,
+    RESPONSIVENESS: 0.10,
+    LICENSE: 0.05,
+    DEPENDENCY_PINNING: 0.10,
+    CODE_REVIEW: 0.10
+    
 } as const;
 
 /**
@@ -31,6 +35,8 @@ export interface ScoreInput {
     rampUp: number;
     responsiveness: number;
     license: number;
+    dependencypinning: number;
+    codereview: number;
 }
 
 /**
@@ -50,7 +56,9 @@ export function calculateNetScore(scores: ScoreInput): {
                         (scores.correctness * METRIC_WEIGHTS.CORRECTNESS) +
                         (scores.rampUp * METRIC_WEIGHTS.RAMP_UP) +
                         (scores.responsiveness * METRIC_WEIGHTS.RESPONSIVENESS) +
-                        (scores.license * METRIC_WEIGHTS.LICENSE);
+                        (scores.license * METRIC_WEIGHTS.LICENSE) + 
+                        (scores.dependencypinning * METRIC_WEIGHTS.DEPENDENCY_PINNING)+
+                        (scores.codereview * METRIC_WEIGHTS.CODE_REVIEW);
         
         const end = Date.now();
         
@@ -78,5 +86,7 @@ export function validateMetricScores(scores: ScoreInput): boolean {
            scores.responsiveness !== -1 &&
            scores.busFactor !== -1 &&
            scores.rampUp !== -1 &&
-           scores.license !== -1;
+           scores.license !== -1 &&
+           scores.dependencypinning !== -1 &&
+           scores.codereview !== -1;
 }
