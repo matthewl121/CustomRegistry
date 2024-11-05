@@ -35,6 +35,12 @@ jobs:
       - name: Set executable permissions for ./run
         run: chmod +x run
 
+      - name: Create .env file
+        run: |
+          echo "GITHUB_TOKEN=${{ secrets.TOKEN }}" >> .env
+          echo "LOG_FILE=/LOGS/log_file.txt" >> .env
+          echo "LOG_LEVEL=2" >> .env  # Add other environment variables as needed
+
       - name: Package for Lambda
         run: |
           zip deploy_phase1.zip src/* src/api/* src/utils/* package.json run run.js index.mjs .env
