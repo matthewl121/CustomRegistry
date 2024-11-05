@@ -1,4 +1,4 @@
-name: Deploy
+name: Deploy to Lambda
 
 on:
     push:
@@ -34,7 +34,7 @@ jobs:
 
             - name: Package for Lambda
               run: |
-                zip deploy_phase1.zip src/* src/api/* src/utils/* 
+                zip deploy_phase1.zip src/* src/api/* src/utils/* package.json run run.js
 
             - name: Deploy to AWS Lambda
               run: |
