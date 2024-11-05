@@ -62,21 +62,6 @@ jobs:
           set -e
           echo "Starting deployment..."
           rsync -avz --exclude '.git' \
-                     --exclude 'node_modules' \
-                     -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" \
-                     ./ "ec2-user@${{ secrets.EC2_HOST }}:~/registry/"
-          
-          ssh -i ~/.ssh/id_rsa ec2-user@${{ secrets.EC2_HOST }} "
-            # Setup Node.js
-            export NVM_DIR=\$HOME/.nvm
-            [ -s \$NVM_DIR/nvm.sh ] && \. \$NVM_DIR/nvm.sh
-            
-            # Copy .env file from root to registry directory
-            cp ~/.env ~/registry/.env
-            
-            cd ~/registry
-            
-            # Clear npm cache and remove existing node_modules
-            npm cache clean --force
-            rm -rf node_modules package-lock.json
-          "
+                    --exclude 'node_modules' \
+                    -e "ssh -i ~/.ssh/id_rsa -v" \
+                    ./ "ec2-user@${{ secrets.EC2_HOST }}:~/registry/"
