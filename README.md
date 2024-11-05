@@ -1,4 +1,4 @@
-[![ESLint](https://github.com/matthewl121/CustomRegistry/actions/workflows/eslint.yml/badge.svg?branch=main)](https://github.com/matthewl121/CustomRegistry/actions/workflows/eslint.yml)
+[![ESLint](https://github.com/matthewl121/CustomRegistry/actions/workflows/eslint.yml/badge.svg?branch=main)](https://github.com/matthewl121/CustomRegistry/actions/workflows/eslint.yml) [![Deploy to Lambda](https://github.com/matthewl121/CustomRegistry/actions/workflows/lambda.yml/badge.svg)](https://github.com/matthewl121/CustomRegistry/actions/workflows/lambda.yml)
 # ACME Corp CLI Interface for Module Reuse
 
 ## Project Overview
