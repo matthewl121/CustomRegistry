@@ -34,13 +34,24 @@ jobs:
       - name: Setup SSH
         run: |
           set -e
-          mkdir -p ~/.ssh
           echo "Setting up SSH keys..."
+          mkdir -p ~/.ssh
           echo "${{ secrets.SSH_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
+          if [ $? -ne 0 ]; then
+            echo "Failed to write SSH key."
+            exit 1
+          fi
           chmod 600 ~/.ssh/id_rsa
+
           echo "Adding EC2 host to known hosts..."
-          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} 2>&1 | tee ssh_keyscan_output.log || true
+          if grep -q 'Could not resolve hostname' ssh_keyscan_output.log; then
+            echo "Could not resolve EC2 host. Please check the value of EC2_HOST."
+            exit 1
+          fi
+          cat ssh_keyscan_output.log >> ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
+
           echo "SSH setup complete."
 
       - name: Install rsync
