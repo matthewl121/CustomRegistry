@@ -40,7 +40,10 @@ jobs:
           echo "GITHUB_TOKEN=${{ secrets.TOKEN }}" >> .env
           echo "LOG_FILE=/LOGS/log_file.txt" >> .env
           echo "LOG_LEVEL=2" >> .env  # Add other environment variables as needed
-
+      
+      - name: Setup Source .env file
+        run: set -a; source .env; set +a
+      
       - name: Package for Lambda
         run: |
           zip deploy_phase1.zip src/* src/api/* src/utils/* package.json run run.js index.mjs .env
