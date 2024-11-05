@@ -10,11 +10,9 @@ const DownloadPackage = () => {
         if (!pkg) return;
         
         try {
-            // Get the pre-signed URL from the backend
             const data = await apiGet(`/package/${pkg}`);
             console.log('Pre-signed URL retrieved successfully:', data);
 
-            // Set the download URL from the response
             setDownloadUrl(data.downloadUrl);
         } catch (error) {
             console.error('Error retrieving download link:', error);
@@ -24,7 +22,6 @@ const DownloadPackage = () => {
     const handleFileDownload = () => {
         if (!downloadUrl) return;
 
-        // Create a link element to download the file directly from S3
         const link = document.createElement('a');
         link.href = downloadUrl;
         link.download = pkg || 'downloaded_file';
