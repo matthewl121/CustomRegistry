@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - aws_cd_branch
+      - ec2_deploy
   workflow_dispatch:
 
 permissions:
@@ -37,10 +37,6 @@ jobs:
           echo "Setting up SSH keys..."
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
-          if [ $? -ne 0 ]; then
-            echo "Failed to write SSH key."
-            exit 1
-          fi
           chmod 600 ~/.ssh/id_rsa
 
           echo "Adding EC2 host to known hosts..."
@@ -54,14 +50,20 @@ jobs:
 
           echo "SSH setup complete."
 
-      - name: Install rsync
-        run: sudo apt-get update && sudo apt-get install -y rsync
-
       - name: Deploy to EC2
         run: |
           set -e
           echo "Starting deployment..."
+          # Increase verbosity for troubleshooting
           rsync -avz --exclude '.git' \
                     --exclude 'node_modules' \
-                    -e "ssh -i ~/.ssh/id_rsa -v" \
+                    -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -v" \
                     ./ "ec2-user@${{ secrets.EC2_HOST }}:~/registry/"
+          
+          # Optional: SSH into the instance to run commands after rsync
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_HOST }} "
+            cd ~/registry || exit
+            # Example commands you might run after deployment
+            npm install
+            # Add any other commands you need
+          "
