@@ -33,11 +33,15 @@ jobs:
 
       - name: Setup SSH
         run: |
+          set -e
           mkdir -p ~/.ssh
+          echo "Setting up SSH keys..."
           echo "${{ secrets.SSH_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+          echo "Adding EC2 host to known hosts..."
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
+          echo "SSH setup complete."
 
       - name: Install rsync
         run: sudo apt-get update && sudo apt-get install -y rsync
