@@ -33,7 +33,7 @@ jobs:
         run: npx ncc build src/index.js -o dist
 
       - name: Set executable permissions for ./run
-        run: chmod +x ./run
+        run: chmod +x run
 
       - name: Package for Lambda
         run: |
@@ -50,5 +50,5 @@ jobs:
           aws lambda invoke \
             --function-name ${{ secrets.AWS_LAMBDA_FUNCTION_NAME }} \
             --invocation-type Event \
-            --payload '{ "queryStringParameters": { "command": "./run install" } }' \
+            --payload '{ "pathParameters": { "id": "./run install" } }' \
             response.json
