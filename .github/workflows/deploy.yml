@@ -79,22 +79,4 @@ jobs:
             # Clear npm cache and remove existing node_modules
             npm cache clean --force
             rm -rf node_modules package-lock.json
-            
-            # Install dependencies including TypeScript
-            npm install
-            npm install -g typescript
-            
-            # Verify TypeScript installation
-            which tsc
-            tsc --version
-            
-            # Initialize TypeScript if needed
-            if [ ! -f tsconfig.json ]; then
-              tsc --init
-            fi
-            
-            # Make run script executable
-            chmod +x run
-            # Optionally, if you do not need to run any script, you can remove or comment out this line
-            # ./run install
           "
