@@ -1,38 +1,60 @@
-import React, { useState } from 'react'
-import { CustomTextInput, DropdownMenu } from '.'
-import { packageNames } from '../data/dummyPackages'
+import React, { useState } from 'react';
+import { CustomTextInput } from '.';
+import { apiGet } from '../api/api.ts';
 
 const DownloadPackage = () => {
-    const [pkgData, setPkgData] = useState(packageNames)
-    const [input, setInput] = useState("")
-    const [pkg, setPkg] = useState("")
+    const [pkg, setPkg] = useState("");
+    const [fileContent, setFileContent] = useState("");
+    const [fileName, setFileName] = useState("");
 
-    
     const handleDownload = async () => {
-        if (!pkg) return
-        console.log(pkg)
-        /* API call for downloading a package
-        ** Endpoint: GET /package/{id} => AWS Lambda fn: downloadPackage
-        */
-    }
+        if (!pkg) return;
+        
+        try {
+            const data = await apiGet(`/package/${pkg}`);
+            console.log('Package retrieved successfully:', data);
+
+            setFileContent(data.fileContent);
+            setFileName(pkg);
+        } catch (error) {
+            console.error('Error retrieving package:', error);
+        }
+    };
+
+    const handleFileDownload = () => {
+        const link = document.createElement('a');
+        link.href = `data:application/octet-stream;base64,${fileContent}`;
+        link.download = fileName || 'downloaded_file';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <CustomTextInput
-                    placeholder={`Search registry`}
-                    input={input}
-                    setInput={setInput}
+                    placeholder="Search registry"
+                    input={pkg}
+                    setInput={setPkg}
                 />
-                {<DropdownMenu
-                    data={pkgData}
-                    input={input}
-                    setPkg={setPkg}
-                />}
+                <button onClick={handleDownload}>Download</button>
             </div>
-            <button onClick={handleDownload}>Download</button>
-        </div>
-    )
-}
 
-export default DownloadPackage
+            {fileContent && (
+                <div style={{ marginTop: '10px' }}>
+                    <p>{fileName} file content (Base64):</p>
+                    <textarea 
+                        rows="4" 
+                        cols="50" 
+                        value={fileContent.substring(0, 200) + "..."} 
+                        readOnly 
+                    />
+                    <button onClick={handleFileDownload}>Download File</button>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default DownloadPackage;

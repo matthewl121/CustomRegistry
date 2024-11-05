@@ -4,6 +4,7 @@ import { CustomTextInput, DebloatCheckbox } from '.';
 export const UpdatePackage = () => {
     const [url, setUrl] = useState('');
     const [version, setVersion] = useState('');
+    const [file, setFile] = useState(null);
     const [debloat, setDebloat] = useState(false);
 
     const handleUpdate = async () => {
@@ -27,8 +28,9 @@ export const UpdatePackage = () => {
 
     return (
         <div>
+            <input type="file" onChange={(e) => setFile(e.target.files[0])} />
             <CustomTextInput 
-                placeholder="Enter npm or GitHub URL" 
+                placeholder="Enter npm URL" 
                 input={url} 
                 setInput={setUrl} 
             />
@@ -37,7 +39,10 @@ export const UpdatePackage = () => {
                 input={version} 
                 setInput={setVersion} 
             />
-            <DebloatCheckbox checked={debloat} onChange={() => setDebloat(!debloat)} />
+            <DebloatCheckbox
+                debloat={debloat}
+                setDebloat={setDebloat}
+            />
             <button onClick={handleUpdate}>Update</button>
         </div>
     );
