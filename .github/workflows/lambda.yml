@@ -30,7 +30,7 @@ jobs:
               run: npm ci
 
             - name: Build the Lambda function
-              run: npx ncc build src/index.ts -o dist
+              run: npx ncc build src/index.js -o dist
 
             - name: Package for Lambda
               run: |

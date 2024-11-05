@@ -1,6 +1,8 @@
 "use strict";
-exports.__esModule = true;
-exports.metricsLogToStdout = exports.logToFile = exports.initLogFile = void 0;
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.initLogFile = initLogFile;
+exports.logToFile = logToFile;
+exports.metricsLogToStdout = metricsLogToStdout;
 var fs = require('fs');
 var path = require('path');
 function initLogFile() {
@@ -13,7 +15,6 @@ function initLogFile() {
     // const f = fs.openSync(process.env.LOG_FILE, 'w');
     // fs.closeSync(f);
 }
-exports.initLogFile = initLogFile;
 function logToFile(message, message_level) {
     var log_level = parseInt(process.env.LOG_LEVEL || '1', 10);
     // Check if LOG_LEVEL is valid
@@ -32,7 +33,6 @@ function logToFile(message, message_level) {
         fs.appendFileSync(process.env.LOG_FILE, formattedMessage + '\n');
     }
 }
-exports.logToFile = logToFile;
 function metricsLogToStdout(message, message_level) {
     var log_level = parseInt(process.env.LOG_LEVEL || '1', 10);
     // Check if LOG_LEVEL is valid
@@ -51,7 +51,6 @@ function metricsLogToStdout(message, message_level) {
         console.log(formattedMessage); // Log to stdout
     }
 }
-exports.metricsLogToStdout = metricsLogToStdout;
 // Usage examples:
 // logToFile('Informational messages', 1);
 // logToFile('Debug messages', 2);
