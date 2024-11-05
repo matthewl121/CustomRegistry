@@ -33,54 +33,35 @@ jobs:
 
       - name: Setup SSH
         run: |
+          set -e
+          echo "Setting up SSH keys..."
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
+          if [ $? -ne 0 ]; then
+            echo "Failed to write SSH key."
+            exit 1
+          fi
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+          echo "Adding EC2 host to known hosts..."
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} 2>&1 | tee ssh_keyscan_output.log || true
+          if grep -q 'Could not resolve hostname' ssh_keyscan_output.log; then
+            echo "Could not resolve EC2 host. Please check the value of EC2_HOST."
+            exit 1
+          fi
+          cat ssh_keyscan_output.log >> ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
+
+          echo "SSH setup complete."
 
       - name: Install rsync
         run: sudo apt-get update && sudo apt-get install -y rsync
 
       - name: Deploy to EC2
         run: |
+          set -e
           echo "Starting deployment..."
           rsync -avz --exclude '.git' \
-                     --exclude 'node_modules' \
-                     -e "ssh -i ~/.ssh/id_rsa" \
-                     ./ "ec2-user@${{ secrets.EC2_HOST }}:~/registry/"
-          
-          ssh -i ~/.ssh/id_rsa ec2-user@${{ secrets.EC2_HOST }} "
-            # Setup Node.js
-            export NVM_DIR=\$HOME/.nvm
-            [ -s \$NVM_DIR/nvm.sh ] && \. \$NVM_DIR/nvm.sh
-
-
-            # Copy .env file from root to registry directory
-            cp ~/.env ~/registry/.env
-
-            cd ~/registry
-
-            # Clear npm cache and remove existing node_modules
-            npm cache clean --force
-            rm -rf node_modules package-lock.json
-
-            # Install dependencies including TypeScript
-            npm install
-            npm install -g typescript
-
-            # Verify TypeScript installation
-            which tsc
-            tsc --version
-
-            # Initialize TypeScript if needed
-            if [ ! -f tsconfig.json ]; then
-              tsc --init
-            fi
-
-            # Make run script executable
-            chmod +x run
-            
-            # Run installation script
-            ./run install
-          "
+                    --exclude 'node_modules' \
+                    -e "ssh -i ~/.ssh/id_rsa -v" \
+                    ./ "ec2-user@${{ secrets.EC2_HOST }}:~/registry/"
