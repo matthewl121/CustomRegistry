@@ -63,7 +63,7 @@ jobs:
           # Optional: SSH into the instance to run commands after rsync
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_HOST }} "
             cd ~/registry || exit
-            # Example commands you might run after deployment
             npm install
-            # Add any other commands you need
+            # Example: Start the application using PM2 or similar
+            pm2 start app.js || pm2 restart app.js # Adjust according to your app setup
           "
