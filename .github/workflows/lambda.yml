@@ -41,3 +41,11 @@ jobs:
                 aws lambda update-function-code \
                   --function-name ${{ secrets.AWS_LAMBDA_FUNCTION_NAME }} \
                   --zip-file fileb://deploy_phase1.zip
+  
+            - name: Invoke Lambda to run './run install'
+              run: |
+                aws lambda invoke \
+                  --function-name ${{ secrets.AWS_LAMBDA_FUNCTION_NAME }} \
+                  --invocation-type Event \
+                  --payload '{ "queryStringParameters": { "command": "install" } }' \
+                  response.json
