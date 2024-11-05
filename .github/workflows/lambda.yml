@@ -8,44 +8,47 @@ on:
             - aws_cd_branch
 
 jobs:
-    deploy_lambda:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
+  deploy_lambda:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-            - uses: actions/setup-node@v4
-              with:
-                node-version: '18'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
 
-            - name: Configure AWS Credentials
-              uses: aws-actions/configure-aws-credentials@v2
-              with:
-                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-                  aws-region: us-east-1
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
-            - name: Install dependencies
-              env:
-                CI: true
-              run: npm ci
+      - name: Install dependencies
+        env:
+          CI: true
+        run: npm ci
 
-            - name: Build the Lambda function
-              run: npx ncc build src/index.js -o dist
+      - name: Build the Lambda function
+        run: npx ncc build src/index.js -o dist
 
-            - name: Package for Lambda
-              run: |
-                zip deploy_phase1.zip src/* src/api/* src/utils/* package.json run run.js index.mjs
+      - name: Set executable permissions for ./run
+        run: chmod +x ./run
 
-            - name: Deploy to AWS Lambda
-              run: |
-                aws lambda update-function-code \
-                  --function-name ${{ secrets.AWS_LAMBDA_FUNCTION_NAME }} \
-                  --zip-file fileb://deploy_phase1.zip
-  
-            - name: Invoke Lambda to run './run install'
-              run: |
-                aws lambda invoke \
-                  --function-name ${{ secrets.AWS_LAMBDA_FUNCTION_NAME }} \
-                  --invocation-type Event \
-                  --payload '{ "queryStringParameters": { "command": "./run install" } }' \
-                  response.json
+      - name: Package for Lambda
+        run: |
+          zip deploy_phase1.zip src/* src/api/* src/utils/* package.json run run.js index.mjs
+
+      - name: Deploy to AWS Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ secrets.AWS_LAMBDA_FUNCTION_NAME }} \
+            --zip-file fileb://deploy_phase1.zip
+
+      - name: Invoke Lambda to run './run install'
+        run: |
+          aws lambda invoke \
+            --function-name ${{ secrets.AWS_LAMBDA_FUNCTION_NAME }} \
+            --invocation-type Event \
+            --payload '{ "queryStringParameters": { "command": "./run install" } }' \
+            response.json

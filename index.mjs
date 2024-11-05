@@ -8,24 +8,11 @@ export const handler = async (event) => {
   console.log("Received event:", JSON.stringify(event, null, 2));
 
   const bucketName = "acmeregistrys3";
-  const key = event.pathParameters.id;
-  const commandArg = event.queryStringParameters?.command || ""; // Error if not argument is provided
-
-  if (commandArg === "") {
-    return {
-      statusCode: 400,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-      body: JSON.stringify({ message: `Error: No command argument provided` }),
-    };
-  }
+  const commandArg = event.pathParameters.id; // Get argument (e.g., "install")
 
   const params = {
     Bucket: bucketName,
-    Key: key,
+    Key: commandArg, // Assuming the key in S3 matches the command argument
   };
 
   try {
