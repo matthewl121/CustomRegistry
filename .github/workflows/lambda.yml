@@ -37,7 +37,7 @@ jobs:
 
       - name: Package for Lambda
         run: |
-          zip deploy_phase1.zip src/* src/api/* src/utils/* package.json run run.js index.mjs
+          zip deploy_phase1.zip src/* src/api/* src/utils/* package.json run run.js index.mjs .env
 
       - name: Deploy to AWS Lambda
         run: |
