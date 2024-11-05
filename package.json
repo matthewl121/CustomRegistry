@@ -19,6 +19,7 @@
     "@types/axios": "^0.14.0",
     "@types/jest": "^29.5.13",
     "@types/node": "^22.5.4",
+    "@vercel/ncc": "^0.38.2",
     "eslint": "^8.57.0",
     "eslint-config-standard": "^17.1.0",
     "eslint-plugin-import": "^2.30.0",
