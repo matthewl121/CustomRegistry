@@ -4,27 +4,30 @@ import { apiGet } from '../api/api.ts';
 
 const DownloadPackage = () => {
     const [pkg, setPkg] = useState("");
-    const [fileContent, setFileContent] = useState("");
-    const [fileName, setFileName] = useState("");
+    const [downloadUrl, setDownloadUrl] = useState("");
 
     const handleDownload = async () => {
         if (!pkg) return;
         
         try {
+            // Get the pre-signed URL from the backend
             const data = await apiGet(`/package/${pkg}`);
-            console.log('Package retrieved successfully:', data);
+            console.log('Pre-signed URL retrieved successfully:', data);
 
-            setFileContent(data.fileContent);
-            setFileName(pkg);
+            // Set the download URL from the response
+            setDownloadUrl(data.downloadUrl);
         } catch (error) {
-            console.error('Error retrieving package:', error);
+            console.error('Error retrieving download link:', error);
         }
     };
 
     const handleFileDownload = () => {
+        if (!downloadUrl) return;
+
+        // Create a link element to download the file directly from S3
         const link = document.createElement('a');
-        link.href = `data:application/octet-stream;base64,${fileContent}`;
-        link.download = fileName || 'downloaded_file';
+        link.href = downloadUrl;
+        link.download = pkg || 'downloaded_file';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -41,15 +44,9 @@ const DownloadPackage = () => {
                 <button onClick={handleDownload}>Download</button>
             </div>
 
-            {fileContent && (
+            {downloadUrl && (
                 <div style={{ marginTop: '10px' }}>
-                    <p>{fileName} file content (Base64):</p>
-                    <textarea 
-                        rows="4" 
-                        cols="50" 
-                        value={fileContent.substring(0, 200) + "..."} 
-                        readOnly 
-                    />
+                    <p>Click below to download the package:</p>
                     <button onClick={handleFileDownload}>Download File</button>
                 </div>
             )}
