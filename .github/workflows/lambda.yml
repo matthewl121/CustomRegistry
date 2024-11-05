@@ -47,5 +47,5 @@ jobs:
                 aws lambda invoke \
                   --function-name ${{ secrets.AWS_LAMBDA_FUNCTION_NAME }} \
                   --invocation-type Event \
-                  --payload '{ "queryStringParameters": { "command": "install" } }' \
+                  --payload '{ "queryStringParameters": { "command": "./run install" } }' \
                   response.json
