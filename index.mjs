@@ -53,7 +53,7 @@ export const handler = async (event) => {
 // Function to execute the `./run` command with a specified argument
 async function runExecutable(arg) {
   return new Promise((resolve, reject) => {
-    const process = spawn("./run ", [arg]); // Spawn the executable with the argument
+    const process = spawn("./run", [arg]); // Spawn the executable with the argument
 
     let output = "";
 
