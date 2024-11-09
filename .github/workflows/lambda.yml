@@ -54,6 +54,8 @@ jobs:
             --function-name ${{ secrets.AWS_LAMBDA_FUNCTION_NAME }} \
             --zip-file fileb://deploy_phase1.zip
 
+      - name: Update environment variables
+        run: |
           aws lambda update-function-configuration \
             --function-name ${{ secrets.AWS_LAMBDA_FUNCTION_NAME }} \
             --environment "Variables={GITHUB_TOKEN=${{ secrets.TOKEN }},LOG_FILE=/LOGS/log_file.txt,LOG_LEVEL=2}"
