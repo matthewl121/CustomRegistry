@@ -30,7 +30,7 @@ export const handler = async (event) => {
       statusCode: 200,
       headers: {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
         'Content-Type': 'application/json',
       },
@@ -42,7 +42,7 @@ export const handler = async (event) => {
       statusCode: 500,
       headers: {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
       },
       body: JSON.stringify({ message: `Error: ${error.message}` }),
@@ -53,7 +53,7 @@ export const handler = async (event) => {
 // Function to execute the `./run` command with a specified argument
 async function runExecutable(arg) {
   return new Promise((resolve, reject) => {
-    const process = spawn("./run", [arg]); // Spawn the executable with the argument
+    const process = spawn("./run ", [arg]); // Spawn the executable with the argument
 
     let output = "";
 
