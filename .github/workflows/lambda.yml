@@ -58,7 +58,7 @@ jobs:
 
           aws lambda update-function-configuration \
             --function-name ${{ secrets.AWS_LAMBDA_FUNCTION_NAME }} \
-            --environment "Variables={GITHUB_TOKEN=${{ secrets.TOKEN }},LOG_FILE=/LOGS/log_file.txt,LOG_LEVEL=2}"
+            --environment "Variables={GITHUB_TOKEN=${{ secrets.TOKEN }},LOG_FILE=/LOGS/log_file.txt,LOG_LEVEL=2, RUN_INSTALL_ON_DEPLOY=true}"
           
           echo "Lambda function updated successfully"
           sleep 10

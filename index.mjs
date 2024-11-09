@@ -4,7 +4,20 @@ import { spawn } from "child_process"; // Import child_process to run commands
 
 const s3 = new S3Client({ region: "us-east-1" });
 
+const { execSync } = require('child_process');
+
+
+
 export const handler = async (event) => {
+  if (process.env.RUN_INSTALL_ON_DEPLOY === 'true') {
+    try {
+      execSync('./run install', { stdio: 'inherit' });
+      console.log('Install command executed successfully.');
+    } catch (error) {
+      console.error('Error running install command:', error);
+    }
+  }
+
   console.log("Received event:", JSON.stringify(event, null, 2));
 
   const bucketName = "acmeregistrys3";
