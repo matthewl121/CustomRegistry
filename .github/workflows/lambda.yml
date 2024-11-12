@@ -28,8 +28,6 @@ jobs:
         env:
           CI: true
         run: npm ci
-      - name: Install node modules
-        run: npm install
 
       - name: Build the Lambda function
         run: npx ncc build src/index.js -o dist
