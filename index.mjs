@@ -7,6 +7,10 @@ const s3 = new S3Client({ region: "us-east-1" });
 
 export const handler = async (event) => {
 
+  if(!fs.existsSync('node_modules')) {
+    execSync('npm install', {stdio: 'inherit'});
+  }
+
   console.log("Received event:", JSON.stringify(event, null, 2));
 
   const bucketName = "acmeregistrys3";
