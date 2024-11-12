@@ -6,14 +6,6 @@ const s3 = new S3Client({ region: "us-east-1" });
 
 
 export const handler = async (event) => {
-  if (process.env.RUN_INSTALL_ON_DEPLOY === 'true') {
-    try {
-      execSync('./run install', { stdio: 'inherit' });
-      console.log('Install command executed successfully.');
-    } catch (error) {
-      console.error('Error running install command:', error);
-    }
-  }
 
   console.log("Received event:", JSON.stringify(event, null, 2));
 
@@ -36,6 +28,7 @@ export const handler = async (event) => {
     // Run the `./run` executable with the selected argument
     const output = await runExecutable(commandArg);
 
+    console.log(`Command output: ${output}`);
     return {
       statusCode: 200,
       headers: {

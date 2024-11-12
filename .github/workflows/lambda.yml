@@ -28,7 +28,9 @@ jobs:
         env:
           CI: true
         run: npm ci
-
+      - name: Install node modules
+        run: npm install
+        
       - name: Build the Lambda function
         run: npx ncc build src/index.js -o dist
 
@@ -46,7 +48,7 @@ jobs:
       
       - name: Package for Lambda
         run: |
-          zip deploy_phase1.zip src/* src/api/* src/utils/* package.json run run.js index.mjs .env
+          zip deploy_phase1.zip src/* src/api/* src/utils/* package.json run run.js index.mjs .env /
 
       - name: Deploy to AWS Lambda
         run: |
