@@ -52,31 +52,33 @@ export const handler = async (event) => {
     };
   }
 };
+import { main } from "./src/index.js"
 
 // Function to execute the `./run` command with a specified argument
 async function runExecutable(arg) {
   return new Promise((resolve, reject) => {
-    const process = spawn("./run", [arg]); // Spawn the executable with the argument
+    main(url)
+    // const process = spawn("./run", [arg]); // Spawn the executable with the argument
 
-    let output = "";
+    // let output = "";
 
-    // Collect output data
-    process.stdout.on("data", (data) => {
-      output += data.toString();
-    });
+    // // Collect output data
+    // process.stdout.on("data", (data) => {
+    //   output += data.toString();
+    // });
 
-    // Collect error data
-    process.stderr.on("data", (data) => {
-      output += data.toString();
-    });
+    // // Collect error data
+    // process.stderr.on("data", (data) => {
+    //   output += data.toString();
+    // });
 
-    // Resolve or reject based on process exit
-    process.on("close", (code) => {
-      if (code === 0) {
-        resolve(output);
-      } else {
-        reject(new Error(`Command exited with code ${code}: ${output}`));
-      }
-    });
+    // // Resolve or reject based on process exit
+    // process.on("close", (code) => {
+    //   if (code === 0) {
+    //     resolve(output);
+    //   } else {
+    //     reject(new Error(`Command exited with code ${code}: ${output}`));
+    //   }
+    // });
   });
 }
