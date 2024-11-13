@@ -44,9 +44,11 @@ jobs:
       - name: Setup Source .env file
         run: set -a; source .env; set +a
       
+
+      
       - name: Package for Lambda
         run: |
-          zip -r deploy_phase1.zip src/* src/api/* src/utils/* src/metrics/* package.json run run.js index.mjs .env node_modules/* -x "node_modules/**/*.md" "node_modules/**/test/*"
+          zip -r deploy_phase1.zip src/* src/api/* src/utils/* src/metrics/* package.json run run.js index.mjs .env
 
       - name: Deploy to AWS Lambda
         run: |
