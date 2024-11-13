@@ -32,7 +32,7 @@ jobs:
           npm prune --production
 
       - name: Build the Lambda function
-        run: npx ncc build src/index.js -o dist --minify
+        run: npx ncc build src/index.js -o dist
 
       - name: Set executable permissions for ./run
         run: chmod +x run
@@ -45,8 +45,6 @@ jobs:
       
       - name: Setup Source .env file
         run: set -a; source .env; set +a
-      
-
       
       - name: Package for Lambda
         run: |
