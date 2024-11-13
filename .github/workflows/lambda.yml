@@ -29,10 +29,9 @@ jobs:
           CI: true
         run: |
           npm ci
-          npm prune --production
 
       - name: Build the Lambda function
-        run: npx ncc build src/index.js -o dist
+        run: npx ncc build src/index.js -o dist --minify
 
       - name: Set executable permissions for ./run
         run: chmod +x run
