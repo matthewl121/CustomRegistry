@@ -47,7 +47,7 @@ jobs:
       
       - name: Package for Lambda
         run: |
-          zip -r deploy_phase1.zip src/* src/api/* src/utils/* src/metrics/* package.json run run.js index.mjs .env node_modules/* -x node_modules/aws-sdk/* -x node_modules/@aws-sdk/* node_modules/aws-lambda-ric node_modules/**/test*
+          zip -r deploy_phase1.zip src/* src/api/* src/utils/* src/metrics/* package.json run run.js index.mjs .env node_modules/* -x node_modules/aws-sdk/* -x node_modules/aws-lambda-ric -x node_modules/**/test*
 
       - name: Deploy to AWS Lambda
         run: |
