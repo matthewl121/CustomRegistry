@@ -1,88 +1,36 @@
-import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { spawn, execSync } from "child_process"; // Import child_process to run commands
+import { exec } from 'child_process';
 
-const s3 = new S3Client({ region: "us-east-1" });
-
-
+/**
+ * Lambda handler function
+ * @param {Object} event - The event object passed to the Lambda function, expected to contain a 'url' parameter.
+ * @returns {Promise<Object>} - The result of the execution or an error message.
+ */
 export const handler = async (event) => {
+    const { url } = event.pathParameters.id;
 
-  if(!fs.existsSync('node_modules')) {
-    execSync('npm install', {stdio: 'inherit'});
-  }
+    if (!url) {
+        return {
+            statusCode: 400,
+            body: JSON.stringify({ message: 'URL parameter is required' }),
+        };
+    }
 
-  console.log("Received event:", JSON.stringify(event, null, 2));
+    return new Promise((resolve, reject) => {
+        // Execute the `run` script with the provided URL
+        exec(`./run "${url}"`, (error, stdout, stderr) => {
+            if (error) {
+                console.error(`Execution error: ${stderr}`);
+                return resolve({
+                    statusCode: 500,
+                    body: JSON.stringify({ message: 'Error executing run script', error: stderr }),
+                });
+            }
 
-  const bucketName = "acmeregistrys3";
-  const commandArg = event.pathParameters.id; // Get argument (e.g., "install")
-
-  const params = {
-    Bucket: bucketName,
-    Key: commandArg, // Assuming the key in S3 matches the command argument
-  };
-
-  try {
-    // Generate a pre-signed URL
-    const signedUrl = await getSignedUrl(s3, new GetObjectCommand(params), {
-      expiresIn: 300,
+            // Parse stdout or format it as needed for the response
+            resolve({
+                statusCode: 200,
+                body: JSON.stringify({ message: 'Execution successful', output: stdout }),
+            });
+        });
     });
-
-    console.log(`Pre-signed URL generated successfully: ${signedUrl}`);
-
-    // Run the `./run` executable with the selected argument
-    const output = await runExecutable(commandArg);
-
-    console.log(`Command output: ${output}`);
-    return {
-      statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ downloadUrl: signedUrl, output }),
-    };
-  } catch (error) {
-    console.error(`Error: ${error.message}`);
-    return {
-      statusCode: 500,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-      body: JSON.stringify({ message: `Error: ${error.message}` }),
-    };
-  }
 };
-import { main } from "./src/index.js"
-
-// Function to execute the `./run` command with a specified argument
-async function runExecutable(arg) {
-  return new Promise((resolve, reject) => {
-    main(url)
-    // const process = spawn("./run", [arg]); // Spawn the executable with the argument
-
-    // let output = "";
-
-    // // Collect output data
-    // process.stdout.on("data", (data) => {
-    //   output += data.toString();
-    // });
-
-    // // Collect error data
-    // process.stderr.on("data", (data) => {
-    //   output += data.toString();
-    // });
-
-    // // Resolve or reject based on process exit
-    // process.on("close", (code) => {
-    //   if (code === 0) {
-    //     resolve(output);
-    //   } else {
-    //     reject(new Error(`Command exited with code ${code}: ${output}`));
-    //   }
-    // });
-  });
-}
