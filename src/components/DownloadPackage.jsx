@@ -14,7 +14,7 @@ const DownloadPackage = () => {
             return;
         }
 
-        const packageId = `${pkg}@${version}`;
+        const packageId = `${pkg}--${version}`;
         try {
             const data = await apiGet(`/package/${packageId}`);
             const { metadata, data: packageData } = data;
