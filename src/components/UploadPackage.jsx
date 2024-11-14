@@ -44,9 +44,6 @@ export const UploadPackage = () => {
             return;
         }
 
-        console.log(packageData)
-        return
-
         try {
             const response = await fetch('/package', {
                 method: 'POST',
