@@ -13,6 +13,7 @@ const CustomTextInput = ({ placeholder, input, setInput }) => {
                 color: 'var(--text-color)',
                 backgroundColor: 'var(--background-color)',
                 transition: 'border-color 0.15s ease',
+                margin: "15px 0px"
             }}
             type="text"
             value={input}

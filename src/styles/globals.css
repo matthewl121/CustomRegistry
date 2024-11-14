@@ -39,3 +39,8 @@ button:hover {
     background-color: var(--accent-color-2);
     box-shadow: 0px 0px 36px var(--shadow-color);
 }
+
+textarea {
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
