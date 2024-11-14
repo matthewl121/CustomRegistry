@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
-import { CustomText, DownloadPackage, PackageCost, RatePackage, UpdatePackage, UploadPackage } from '.';
+import { CustomText, DownloadPackage, DownloadPackages, PackageCost, RatePackage, Reset, UpdatePackage, UploadPackage } from '.';
 
 const Home = () => {
     const [activeText, setActiveText] = useState(null);
 
     const componentsMap = {
         "Download Package": <DownloadPackage />,
+        "Download Packages": <DownloadPackages />,
         "Upload Package": <UploadPackage />,
         "Update Package": <UpdatePackage />,
         "Rate Package": <RatePackage />,
-        "Package Cost": <PackageCost />
+        "Package Cost": <PackageCost />,
+        "Reset": <Reset />,
     };
 
     return (
