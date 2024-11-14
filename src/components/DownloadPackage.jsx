@@ -4,47 +4,56 @@ import { apiGet } from '../api/api.ts';
 
 const DownloadPackage = () => {
     const [pkg, setPkg] = useState("");
-    const [downloadUrl, setDownloadUrl] = useState("");
+    const [version, setVersion] = useState("");
+    const [metadata, setMetadata] = useState(null);
+    const [fileContent, setFileContent] = useState("");
 
     const handleDownload = async () => {
-        if (!pkg) return;
-        
-        try {
-            const data = await apiGet(`/package/${pkg}`);
-            console.log('Pre-signed URL retrieved successfully:', data);
-
-            setDownloadUrl(data.downloadUrl);
-        } catch (error) {
-            console.error('Error retrieving download link:', error);
+        if (!pkg || !version) {
+            console.error("Package name and version are required.");
+            return;
         }
-    };
 
-    const handleFileDownload = () => {
-        if (!downloadUrl) return;
+        const packageId = `${pkg}@${version}`;
+        try {
+            const data = await apiGet(`/package/${packageId}`);
+            const { metadata, data: packageData } = data;
 
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.download = pkg || 'downloaded_file';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+            setMetadata(metadata);
+            setFileContent(packageData.Content);
+        } catch (error) {
+            console.error('Error retrieving package:', error);
+        }
     };
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <CustomTextInput
-                    placeholder="Search registry"
+                    placeholder="Package Name"
                     input={pkg}
                     setInput={setPkg}
+                />
+                <CustomTextInput
+                    placeholder="Version"
+                    input={version}
+                    setInput={setVersion}
                 />
                 <button onClick={handleDownload}>Download</button>
             </div>
 
-            {downloadUrl && (
-                <div style={{ marginTop: '10px' }}>
-                    <p>Click below to download the package:</p>
-                    <button onClick={handleFileDownload}>Download File</button>
+            {metadata && (
+                <div style={{ marginTop: '20px' }}>
+                    <h3>Package Metadata:</h3>
+                    <pre>{JSON.stringify(metadata, null, 2)}</pre>
+                </div>
+            )}
+
+            {fileContent && (
+                <div style={{ marginTop: '20px' }}>
+                    <h3>Package Data:</h3>
+                    <p><strong>Base64 Content:</strong></p>
+                    <pre>{fileContent.substring(0, 100)}... (truncated)</pre>
                 </div>
             )}
         </div>
