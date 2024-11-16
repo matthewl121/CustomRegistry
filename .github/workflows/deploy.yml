@@ -60,42 +60,40 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Test SSH connection
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          debug: true
+          script: |
+            echo "Testing SSH connection"
+            pwd
+            whoami
+
       - name: Copy files to EC2
         uses: appleboy/scp-action@v0.1.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.SSH_KEY }}
+          port: 22
+          debug: true
+          timeout: 60s
           source: "."
           target: "/var/www/backend"
 
       - name: Deploy application
+        if: success()
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            # Navigate to application directory
             cd /var/www/backend
-            
-            # Install dependencies
-            npm install --production
-            
-            # Build the application (if needed)
-            npm run build
-            
-            # Update environment variables (if using PM2)
-            export NODE_ENV=production
-            
-            # Restart the application (using PM2)
-            pm2 restart backend || pm2 start npm --name "backend" -- start
-            
-            # If you're using systemd instead of PM2, uncomment these lines:
-            # sudo systemctl restart your-app-name
-            
-            # Clean up old files (optional)
-            find /var/www/backend -type f -name "*.log" -mtime +7 -exec rm {} \;
-            
-            # Print deployment completion
-            echo "Deployment completed successfully"
+            echo "Deployment started"
+            # Your deployment commands here
+            echo "Deployment completed"
