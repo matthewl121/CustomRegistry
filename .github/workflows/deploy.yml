@@ -1,48 +1,81 @@
+# on:
+#   push:
+#     branches:
+#       - main
+#       - aws_cd_dev
+#   workflow_dispatch:
+
+# permissions:
+#   id-token: write
+#   contents: read
+
+# jobs:
+#   deploy:
+#     name: Deploy to EC2
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
+
+#       - name: Configure AWS credentials
+#         uses: aws-actions/configure-aws-credentials@v4
+#         with:
+#           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+#           aws-region: us-east-1
+
+#       - name: Setup SSH
+#         run: |
+#           mkdir -p ~/.ssh
+#           # Combine multiple key parts
+#           echo -e "${{ secrets.SSH_KEY_1 }}${{ secrets.SSH_KEY_2 }}${{ secrets.SSH_KEY_3 }}" > ~/.ssh/id_rsa
+#           chmod 600 ~/.ssh/id_rsa
+          
+#           echo "Host *
+#             StrictHostKeyChecking no
+#             UserKnownHostsFile=/dev/null" > ~/.ssh/config
+#           chmod 600 ~/.ssh/config
+
+#       - name: Test SSH Connection
+#         run: |
+#           echo "Testing connection to ${{ secrets.EC2_HOST }}..."
+#           ssh -v ec2-user@${{ secrets.EC2_HOST }} 'echo "Connection successful"'
+
+#       - name: Deploy to EC2
+#         if: success()
+#         run: |
+#           echo "Starting deployment..."
+#           rsync -avz --exclude '.git' ./ ec2-user@${{ secrets.EC2_HOST }}:~/registry/
+#           ssh ec2-user@${{ secrets.EC2_HOST }} 'cd ~/registry && chmod +x run && ./run install'
+name: Deploy to EC2
+
 on:
   push:
     branches:
-      - main
       - aws_cd_dev
-  workflow_dispatch:
-
-permissions:
-  id-token: write
-  contents: read
 
 jobs:
   deploy:
-    name: Deploy to EC2
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: us-east-1
+    - name: Copy files to EC2
+      uses: appleboy/scp-action@v0.2.1
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.SSH_KEY }}
+        source: "."
+        target: "/var/www/backend"
 
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          # Combine multiple key parts
-          echo -e "${{ secrets.SSH_KEY_1 }}${{ secrets.SSH_KEY_2 }}${{ secrets.SSH_KEY_3 }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          
-          echo "Host *
-            StrictHostKeyChecking no
-            UserKnownHostsFile=/dev/null" > ~/.ssh/config
-          chmod 600 ~/.ssh/config
-
-      - name: Test SSH Connection
-        run: |
-          echo "Testing connection to ${{ secrets.EC2_HOST }}..."
-          ssh -v ec2-user@${{ secrets.EC2_HOST }} 'echo "Connection successful"'
-
-      - name: Deploy to EC2
-        if: success()
-        run: |
-          echo "Starting deployment..."
-          rsync -avz --exclude '.git' ./ ec2-user@${{ secrets.EC2_HOST }}:~/registry/
-          ssh ec2-user@${{ secrets.EC2_HOST }} 'cd ~/registry && chmod +x run && ./run install'
+    - name: Execute deploy script
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.SSH_KEY }}
+        script: |
+          cd /var/www/backend
+          ./deploy.sh
