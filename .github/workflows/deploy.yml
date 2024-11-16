@@ -65,7 +65,7 @@ jobs:
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_KEY }}
+          key: ${{ secrets.SSH_KEY }}
           source: "."
           target: "/var/www/backend"
 
@@ -74,7 +74,7 @@ jobs:
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_KEY }}
+          key: ${{ secrets.SSH_KEY }}
           script: |
             # Navigate to application directory
             cd /var/www/backend
