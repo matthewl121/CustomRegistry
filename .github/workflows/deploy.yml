@@ -58,8 +58,6 @@
 #             ls -la
 #             echo "Deployment completed"
 
-name: Deploy to EC2
-
 on:
   push:
     branches:
@@ -75,23 +73,23 @@ jobs:
       - name: Deploy to EC2
         uses: appleboy/scp-action@v0.1.3
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
+          host: ec2-34-205-19-248.compute-1.amazonaws.com  # Use public DNS
+          username: ec2-user
           key: ${{ secrets.SSH_KEY }}
-          port: 22  # Using standard SSH port
+          port: 22
           source: "."
           target: "~/backend"
           strip_components: 1
           overwrite: true
           use_insecure_cipher: true
           debug: true
-          timeout: 60s
+          timeout: 120s
 
       - name: Verify Deployment
         uses: appleboy/ssh-action@v0.1.7
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
+          host: ec2-34-205-19-248.compute-1.amazonaws.com  # Use public DNS
+          username: ec2-user
           key: ${{ secrets.SSH_KEY }}
           port: 22
           script: |
