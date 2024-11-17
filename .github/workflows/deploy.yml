@@ -97,7 +97,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.SSH_KEY }}
-          port: 443
+          port: 22
           use_insecure_cipher: true
           timeout: 60s
           command_timeout: 60s
