@@ -115,7 +115,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.SSH_KEY }}
-          port: 443
+          port: 22
           source: "."
           target: "~/backend"
           timeout: 60s
