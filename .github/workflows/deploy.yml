@@ -12,9 +12,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Create deployment archive
+      - name: Fix file permissions
         run: |
-          tar --exclude='.git' --exclude='.github' -czf deploy.tar.gz .
+          chmod -R 755 .
+          git config --global --add safe.directory '*'
 
       - name: Deploy to EC2
         uses: appleboy/scp-action@v0.1.3
@@ -22,20 +23,21 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.SSH_KEY }}
-          port: 443
-          source: "deploy.tar.gz"
-          target: "~/"
-          strip_components: 0
+          port: 22
+          source: "."
+          target: "~/backend"
+          strip_components: 1
+          rm: true
+          overwrite: true
+          timeout: 120s
 
-      - name: Extract files on EC2
+      - name: Verify Deployment
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.SSH_KEY }}
-          port: 443
+          port: 22
           script: |
-            rm -rf ~/backend
-            mkdir -p ~/backend
-            tar -xzf ~/deploy.tar.gz -C ~/backend
-            rm ~/deploy.tar.gz
+            echo "Verifying deployment..."
+            ls -la ~/backend
