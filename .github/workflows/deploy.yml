@@ -43,6 +43,19 @@ jobs:
           overwrite: true
           timeout: 120s
 
+      - name: Install NVM, Node.js and Express
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          script: |
+            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+            source ~/.bashrc
+            nvm install 18
+            npm install express
+
       - name: Install Dependencies and Configure
         uses: appleboy/ssh-action@v0.1.7
         with:
@@ -51,17 +64,20 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: 22
           script: |
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            source ~/.bashrc
             cd ~/backend
             
-            # Install dependencies
-            npm install typescript --save-dev
-            npm install express @types/express
+            # Clean install to ensure consistent state
+            rm -rf node_modules
+            rm -f package-lock.json
+            
+            # Install all dependencies
+            npm install typescript @types/node --save-dev
+            npm install @types/express
             npm install
             
             # Initialize TypeScript configuration if not exists
-            ./node_modules/.bin/tsc --init || true
+            npx tsc --init || true
             
             set -a
             source .env
@@ -77,12 +93,17 @@ jobs:
           port: 22
           script: |
             echo "Verifying deployment..."
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            source ~/.bashrc
             cd ~/backend
-            ls -la
+            echo "Node version:"
             node --version
+            echo "NPM version:"
             npm --version
-            ./node_modules/.bin/tsc --version
-            # Verify express installation
+            echo "TypeScript version:"
+            npx tsc --version
+            echo "Express version:"
             npm list express
+            echo "TypeScript installation:"
+            npm list typescript
+            echo "Directory contents:"
+            ls -la node_modules/.bin/
