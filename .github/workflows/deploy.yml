@@ -43,18 +43,6 @@ jobs:
           overwrite: true
           timeout: 120s
 
-      - name: Install NVM and Node.js
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          port: 22
-          script: |
-            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-            source ~/.bashrc
-            nvm install 18
-
       - name: Install Dependencies and Configure
         uses: appleboy/ssh-action@v0.1.7
         with:
@@ -63,22 +51,21 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: 22
           script: |
-            # Load nvm and node
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            nvm use 18
-            
-            # Install TypeScript globally
-            npm install -g typescript
-            
             cd ~/backend
+            
+            # Install dependencies
+            npm install typescript --save-dev
+            npm install express @types/express
+            npm install
+            
+            # Initialize TypeScript configuration if not exists
+            ./node_modules/.bin/tsc --init || true
+            
             set -a
             source .env
             set +a
-            
-            # Install project dependencies
-            npm install --save-dev
-            npx tsc --init
             ./run install
 
       - name: Verify Deployment
@@ -92,7 +79,10 @@ jobs:
             echo "Verifying deployment..."
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            ls -la ~/backend
+            cd ~/backend
+            ls -la
             node --version
             npm --version
-            tsc --version
+            ./node_modules/.bin/tsc --version
+            # Verify express installation
+            npm list express
