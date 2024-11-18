@@ -54,7 +54,7 @@ jobs:
             curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
             source ~/.bashrc
             nvm install 18
-            npm install express
+            npm install express --no-fund --no-audit --loglevel=error
 
       - name: Install Dependencies and Configure
         uses: appleboy/ssh-action@v0.1.7
@@ -71,10 +71,11 @@ jobs:
             rm -rf node_modules
             rm -f package-lock.json
             
-            # Install all dependencies
-            npm install typescript @types/node --save-dev
-            npm install @types/express
-            npm install
+            # Install dependencies with reduced noise
+            npm install --no-fund --no-audit --loglevel=error typescript@latest @types/node@latest --save-dev
+            npm install --no-fund --no-audit --loglevel=error @types/express@latest
+            npm install --no-fund --no-audit --loglevel=error rimraf@latest
+            npm install --no-fund --no-audit --loglevel=error
             
             # Initialize TypeScript configuration if not exists
             npx tsc --init || true
