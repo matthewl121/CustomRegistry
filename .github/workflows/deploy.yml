@@ -101,7 +101,7 @@ jobs:
           overwrite: true
           timeout: 120s
 
-      - name: Install and Configure
+      - name: Install Dependencies and Configure
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -109,6 +109,17 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: 22
           script: |
+            # Install Node.js and npm if not present
+            if ! command -v node &> /dev/null; then
+              curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+              sudo apt-get install -y nodejs
+            fi
+            
+            # Install TypeScript globally if not present
+            if ! command -v tsc &> /dev/null; then
+              sudo npm install -g typescript
+            fi
+            
             cd ~/backend
             set -a
             source .env
@@ -125,3 +136,6 @@ jobs:
           script: |
             echo "Verifying deployment..."
             ls -la ~/backend
+            node --version
+            npm --version
+            tsc --version
