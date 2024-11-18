@@ -31,6 +31,20 @@ jobs:
           overwrite: true
           timeout: 120s
 
+      - name: Install and Configure
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          script: |
+            cd ~/backend
+            set -a
+            source .env
+            set +a
+            ./run install
+
       - name: Verify Deployment
         uses: appleboy/ssh-action@v0.1.7
         with:
