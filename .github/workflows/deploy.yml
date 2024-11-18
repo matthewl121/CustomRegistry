@@ -43,7 +43,7 @@ jobs:
           overwrite: true
           timeout: 120s
 
-      - name: Install Node.js and Dependencies
+      - name: Install NVM and Node.js
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -51,24 +51,25 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: 22
           script: |
-            # Update package lists
-            sudo apt-get update
-            
-            # Install curl if not present
-            sudo apt-get install -y curl
-            
-            # Install Node.js and npm
-            curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-            sudo apt-get update
-            sudo apt-get install -y nodejs
-            
-            # Verify Node.js and npm installation
-            export PATH="$PATH:/usr/bin"
-            node --version
-            npm --version
+            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+            source ~/.bashrc
+            nvm install 18
+
+      - name: Install Dependencies and Configure
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          script: |
+            # Load nvm and node
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            nvm use 18
             
             # Install TypeScript globally
-            sudo npm install -g typescript
+            npm install -g typescript
             
             cd ~/backend
             set -a
@@ -89,7 +90,8 @@ jobs:
           port: 22
           script: |
             echo "Verifying deployment..."
-            export PATH="$PATH:/usr/bin"
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             ls -la ~/backend
             node --version
             npm --version
