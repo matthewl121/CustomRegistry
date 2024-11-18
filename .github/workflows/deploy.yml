@@ -13,8 +13,8 @@ jobs:
       - name: Deploy to EC2
         uses: appleboy/scp-action@v0.1.3
         with:
-          host:  # Use public DNS
-          username: #
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: 22
           source: "."
@@ -28,8 +28,8 @@ jobs:
       - name: Verify Deployment
         uses: appleboy/ssh-action@v0.1.7
         with:
-          host:   # Use public DNS
-          username: #
+          host:  ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: 22
           script: |
