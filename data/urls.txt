@@ -1,7 +1,1 @@
-https://www.npmjs.com/package/socket.io
 https://github.com/wycats/jspec
-https://github.com/defunkt/exception_logger
-https://github.com/defunkt/ambition
-https://github.com/technoweenie/restful-authentication
-https://github.com/prathameshnetake/libvlc
-https://www.npmjs.com/package/react

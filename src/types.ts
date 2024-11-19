@@ -107,16 +107,16 @@ export interface Metrics {
     URL: string;
     NetScore: number;
     NetScore_Latency: number;
-    RampUp: number;
-    RampUp_Latency: number;
+    // RampUp: number;
+    // RampUp_Latency: number;
     Correctness: number;
     Correctness_Latency: number;
     BusFactor: number;
     BusFactor_Latency: number;
     ResponsiveMaintainer: number;
     ResponsiveMaintainer_Latency: number;
-    License: number;
-    License_Latency: number;
+    // License: number;
+    // License_Latency: number;
     // DependencyPinning: number;         // New metric
     // DependencyPinning_Latency: number; // New metric
     CodeReview: number;                // New metric

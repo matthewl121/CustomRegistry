@@ -46,20 +46,20 @@ export const metricsCalculator: MetricsCalculator = {
             // Launch parallel workers for each metric calculation
             const busFactorWorker = runWorker(owner, repo, token, repoURL, repoData, "busFactor"); // Calculate Bus Factor
             const correctnessWorker = runWorker(owner, repo, token, repoURL, repoData, "correctness"); // Calculate Correctness
-            const rampUpWorker = runWorker(owner, repo, token, repoURL, repoData, "rampUp"); // Calculate Ramp Up
+            // const rampUpWorker = runWorker(owner, repo, token, repoURL, repoData, "rampUp"); // Calculate Ramp Up
             const responsivenessWorker = runWorker(owner, repo, token, repoURL, repoData, "responsiveness"); // Calculate Responsiveness
-            const licenseWorker = runWorker(owner, repo, token, repoURL, repoData, "license"); // Calculate License 
-            const dependencyPinningWorker = runWorker(owner, repo, token, repoURL, repoData, "dependencyPinning"); // Calculate Dependency Pinning
+            // const licenseWorker = runWorker(owner, repo, token, repoURL, repoData, "license"); // Calculate License 
+            // const dependencyPinningWorker = runWorker(owner, repo, token, repoURL, repoData, "dependencyPinning"); // Calculate Dependency Pinning
             const codeReviewWorker = runWorker(owner, repo, token, repoURL, repoData, "codeReview"); // Calculate Code Review
 
             // Wait for all metric calculations to complete
             const results = await Promise.all([
                 busFactorWorker,
                 correctnessWorker,
-                rampUpWorker,
+                // rampUpWorker,
                 responsivenessWorker,
-                licenseWorker,
-                dependencyPinningWorker,
+                // licenseWorker,
+                // dependencyPinningWorker,
                 codeReviewWorker
             ]);
 
@@ -67,10 +67,10 @@ export const metricsCalculator: MetricsCalculator = {
             const [
                 { score: busFactor, latency: busFactorLatency },
                 { score: correctness, latency: correctnessLatency },
-                { score: rampUp, latency: rampUpLatency },
+                // { score: rampUp, latency: rampUpLatency },
                 { score: responsiveness, latency: responsivenessLatency },
-                { score: license, latency: licenseLatency },
-                { score: dependencyPinning, latency: dependencyPinningLatency },
+                // { score: license, latency: licenseLatency },
+                // { score: dependencyPinning, latency: dependencyPinningLatency },
                 { score: codeReview, latency: codeReviewLatency } 
             ] = results;
 
@@ -78,10 +78,10 @@ export const metricsCalculator: MetricsCalculator = {
             const scores = {
                 busFactor,
                 correctness,
-                rampUp,
+                // rampUp,
                 responsiveness,
-                license,
-                dependencyPinning,
+                // license,
+                // dependencyPinning,
                 codeReview
             };
 
@@ -98,18 +98,18 @@ export const metricsCalculator: MetricsCalculator = {
                 URL: inputURL,
                 NetScore: netScore,
                 NetScore_Latency: netScoreLatency,
-                RampUp: rampUp,
-                RampUp_Latency: rampUpLatency,
+                // RampUp: rampUp,
+                // RampUp_Latency: rampUpLatency,
                 Correctness: correctness,
                 Correctness_Latency: correctnessLatency,
                 BusFactor: busFactor,
                 BusFactor_Latency: busFactorLatency,
                 ResponsiveMaintainer: responsiveness,
                 ResponsiveMaintainer_Latency: responsivenessLatency,
-                License: license,
-                License_Latency: licenseLatency,
-                DependencyPinning: dependencyPinning,                // Add new metric
-                DependencyPinning_Latency: dependencyPinningLatency,  // Add new metric
+                // License: license,
+                // License_Latency: licenseLatency,
+                // DependencyPinning: dependencyPinning,                // Add new metric
+                // DependencyPinning_Latency: dependencyPinningLatency,  // Add new metric
                 CodeReview: codeReview,                              // Add new metric
                 CodeReview_Latency: codeReviewLatency                // Add new metric
             };
