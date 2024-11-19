@@ -32,6 +32,7 @@ export function runWorker(
             });
             worker.on('error', (error) => {
                 console.error('Worker error:', error);
+                console.error('Worker error IN INDEX.TS', error);
                 reject(error);
                 worker.terminate();
             });

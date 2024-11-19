@@ -75,6 +75,7 @@ parentPort.on('message', async (params: WorkerParams) => {
         parentPort.postMessage(response);
     } catch (error) {
         console.error('Worker error:', error);
+        console.error('Worker error IN WORKER>TS', error);
         
         const errorResponse: WorkerResponse = {
             score: -1,
