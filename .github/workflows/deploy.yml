@@ -18,15 +18,10 @@ jobs:
       - name: Set executable permissions for ./run
         run: chmod +x run
 
-      - name: Create LOGS directory and file
-        run: |
-          mkdir -p LOGS
-          touch LOGS/log_file.txt
-
       - name: Create .env file
         run: |
           echo "GITHUB_TOKEN=${{ secrets.TOKEN }}" >> .env
-          echo "LOG_FILE=/LOGS/log_file.txt" >> .env
+          echo "LOG_FILE=LOGS/log_file.txt" >> .env
           echo "LOG_LEVEL=2" >> .env
 
       - name: Deploy to EC2
@@ -55,6 +50,8 @@ jobs:
             source ~/.bashrc
             nvm install 18
             cd ~/backend
+            mkdir -p LOGS
+            touch LOGS/log_file.txt
             npm ci --no-fund --no-audit --loglevel=error
             ./run install
 
