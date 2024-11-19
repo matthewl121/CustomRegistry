@@ -78,6 +78,7 @@ parentPort.on('message', async (params: WorkerParams) => {
         console.log(response);
         
         parentPort.postMessage(response);
+        console.log(metric);
     } catch (error) {
         console.log('Worker error IN WORKER.TS');
         console.error('Worker error:', error);
