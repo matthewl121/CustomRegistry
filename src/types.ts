@@ -107,8 +107,8 @@ export interface Metrics {
     URL: string;
     NetScore: number;
     NetScore_Latency: number;
-    // RampUp: number;
-    // RampUp_Latency: number;
+    RampUp: number;
+    RampUp_Latency: number;
     Correctness: number;
     Correctness_Latency: number;
     BusFactor: number;
