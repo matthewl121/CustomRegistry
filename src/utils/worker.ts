@@ -30,11 +30,14 @@ if (!parentPort) {
     throw new Error('This module must be run as a worker');
 }
 
+// TODO: THIS IS WHERE THE ERROR IS COMING FROM
 parentPort.on('message', async (params: WorkerParams) => {
     try {
         const begin = Date.now();
+       
         const { owner, repo, token, repoURL, repoData, metric } = params;
-        
+        console.log(params);
+
         logToFile(`Worker: ${owner}, ${repo}, ${repoURL}, ${metric}`, 2);
         
         let result: number;
@@ -71,6 +74,8 @@ parentPort.on('message', async (params: WorkerParams) => {
             score: result,
             latency: (end - begin) / 1000
         };
+        console.log('Response');
+        console.log(response);
         
         parentPort.postMessage(response);
     } catch (error) {

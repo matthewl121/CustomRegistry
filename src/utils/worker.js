@@ -48,6 +48,7 @@ var calcCodeReview = require('../metrics/codeReview').calcCodeReview;
 if (!parentPort) {
     throw new Error('This module must be run as a worker');
 }
+// TODO: THIS IS WHERE THE ERROR IS COMING FROM
 parentPort.on('message', function (params) { return __awaiter(void 0, void 0, void 0, function () {
     var begin, owner, repo, token, repoURL, repoData, metric, result, _a, end, response, error_1, errorResponse;
     return __generator(this, function (_b) {
@@ -56,6 +57,7 @@ parentPort.on('message', function (params) { return __awaiter(void 0, void 0, vo
                 _b.trys.push([0, 15, , 16]);
                 begin = Date.now();
                 owner = params.owner, repo = params.repo, token = params.token, repoURL = params.repoURL, repoData = params.repoData, metric = params.metric;
+                console.log(params);
                 logToFile("Worker: ".concat(owner, ", ").concat(repo, ", ").concat(repoURL, ", ").concat(metric), 2);
                 result = void 0;
                 _a = metric;
@@ -102,10 +104,13 @@ parentPort.on('message', function (params) { return __awaiter(void 0, void 0, vo
                     score: result,
                     latency: (end - begin) / 1000
                 };
+                console.log('Response');
+                console.log(response);
                 parentPort.postMessage(response);
                 return [3 /*break*/, 16];
             case 15:
                 error_1 = _b.sent();
+                console.log('Worker error IN WORKER.TS');
                 console.error('Worker error:', error_1);
                 errorResponse = {
                     score: -1,

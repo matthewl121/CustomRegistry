@@ -59,6 +59,7 @@ function runWorker(owner, repo, token, repoURL, repoData, metric) {
                 worker_1.terminate();
             });
             worker_1.on('error', function (error) {
+                console.log('Worker error IN INDEX.TS');
                 console.error('Worker error:', error);
                 reject(error);
                 worker_1.terminate();
