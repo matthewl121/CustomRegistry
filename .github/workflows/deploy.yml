@@ -1,31 +1,34 @@
 name: Deploy to EC2
-
 on:
   push:
     branches:
       - aws_cd_dev
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        
+
       - name: Fix file permissions
         run: |
           chmod -R 755 .
           git config --global --add safe.directory '*'
-          
+
       - name: Set executable permissions for ./run
         run: chmod +x run
-        
+
+      - name: Create LOGS directory and file
+        run: |
+          mkdir -p LOGS
+          touch LOGS/log_file.txt
+
       - name: Create .env file
         run: |
           echo "GITHUB_TOKEN=${{ secrets.TOKEN }}" >> .env
           echo "LOG_FILE=/LOGS/log_file.txt" >> .env
           echo "LOG_LEVEL=2" >> .env
-        
+
       - name: Deploy to EC2
         uses: appleboy/scp-action@v0.1.3
         with:
@@ -39,7 +42,7 @@ jobs:
           rm: true
           overwrite: true
           timeout: 60s
-          
+
       - name: Install and Setup
         uses: appleboy/ssh-action@v0.1.7
         with:
