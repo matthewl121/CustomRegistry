@@ -47,13 +47,13 @@ parentPort.on('message', async (params: WorkerParams) => {
                 result = await calcBusFactor(owner, repo, token);
                 break;
             case "correctness":
-                result = calcCorrectness(repoData);
+                result = await calcCorrectness(repoData);
                 break;
             case "rampUp":
                 result = await calcRampUp(repoData);
                 break;
             case "responsiveness":
-                result = calcResponsiveness(repoData);
+                result = await calcResponsiveness(repoData);
                 break;
             case "license":
                 result = await calcLicense(owner, repo, repoURL);
