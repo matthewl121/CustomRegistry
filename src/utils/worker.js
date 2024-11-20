@@ -107,6 +107,7 @@ parentPort.on('message', function (params) { return __awaiter(void 0, void 0, vo
                 console.log('Response');
                 console.log(response);
                 parentPort.postMessage(response);
+                console.log(metric);
                 return [3 /*break*/, 16];
             case 15:
                 error_1 = _b.sent();

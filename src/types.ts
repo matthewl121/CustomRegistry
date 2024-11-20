@@ -105,8 +105,8 @@ export interface GraphQLResponse {
 // Interface for metrics data
 export interface Metrics {
     URL: string;
-    NetScore: number;
-    NetScore_Latency: number;
+    // NetScore: number;
+    // NetScore_Latency: number;
     // RampUp: number;
     // RampUp_Latency: number;
     Correctness: number;

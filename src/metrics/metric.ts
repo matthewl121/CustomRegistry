@@ -47,7 +47,7 @@ export const metricsCalculator: MetricsCalculator = {
             const busFactorWorker = runWorker(owner, repo, token, repoURL, repoData, "busFactor"); // Calculate Bus Factor
             const correctnessWorker = runWorker(owner, repo, token, repoURL, repoData, "correctness"); // Calculate Correctness
             // const rampUpWorker = runWorker(owner, repo, token, repoURL, repoData, "rampUp"); // Calculate Ramp Up
-            const responsivenessWorker = runWorker(owner, repo, token, repoURL, repoData, "responsiveness"); // Calculate Responsiveness
+            // const responsivenessWorker = runWorker(owner, repo, token, repoURL, repoData, "responsiveness"); // Calculate Responsiveness
             // const licenseWorker = runWorker(owner, repo, token, repoURL, repoData, "license"); // Calculate License 
             // const dependencyPinningWorker = runWorker(owner, repo, token, repoURL, repoData, "dependencyPinning"); // Calculate Dependency Pinning
             const codeReviewWorker = runWorker(owner, repo, token, repoURL, repoData, "codeReview"); // Calculate Code Review
@@ -57,7 +57,7 @@ export const metricsCalculator: MetricsCalculator = {
                 busFactorWorker,
                 correctnessWorker,
                 // rampUpWorker,
-                responsivenessWorker,
+                // responsivenessWorker,
                 // licenseWorker,
                 // dependencyPinningWorker,
                 codeReviewWorker
@@ -68,7 +68,7 @@ export const metricsCalculator: MetricsCalculator = {
                 { score: busFactor, latency: busFactorLatency },
                 { score: correctness, latency: correctnessLatency },
                 // { score: rampUp, latency: rampUpLatency },
-                { score: responsiveness, latency: responsivenessLatency },
+                // { score: responsiveness, latency: responsivenessLatency },
                 // { score: license, latency: licenseLatency },
                 // { score: dependencyPinning, latency: dependencyPinningLatency },
                 { score: codeReview, latency: codeReviewLatency } 
@@ -79,7 +79,7 @@ export const metricsCalculator: MetricsCalculator = {
                 busFactor,
                 correctness,
                 // rampUp,
-                responsiveness,
+                //responsiveness,
                 // license,
                 // dependencyPinning,
                 codeReview
@@ -96,16 +96,16 @@ export const metricsCalculator: MetricsCalculator = {
             // Construct final metrics object
             const metrics: Metrics = {
                 URL: inputURL,
-                NetScore: netScore,
-                NetScore_Latency: netScoreLatency,
+                // NetScore: netScore,
+                // NetScore_Latency: netScoreLatency,
                 // RampUp: rampUp,
                 // RampUp_Latency: rampUpLatency,
                 Correctness: correctness,
                 Correctness_Latency: correctnessLatency,
                 BusFactor: busFactor,
                 BusFactor_Latency: busFactorLatency,
-                ResponsiveMaintainer: responsiveness,
-                ResponsiveMaintainer_Latency: responsivenessLatency,
+                // ResponsiveMaintainer: responsiveness,
+                // ResponsiveMaintainer_Latency: responsivenessLatency,
                 // License: license,
                 // License_Latency: licenseLatency,
                 // DependencyPinning: dependencyPinning,                // Add new metric
