@@ -58,40 +58,43 @@ require("./responsiveMaintainer");
 exports.metricsCalculator = {
     calculateMetrics: function (owner, repo, token, repoURL, repoData, inputURL) {
         return __awaiter(this, void 0, void 0, function () {
-            var busFactorWorker, correctnessWorker, codeReviewWorker, results, _a, busFactor, busFactorLatency, _b, correctness, correctnessLatency, _c, codeReview, codeReviewLatency, scores, _d, netScore, netScoreLatency, metrics, error_1;
-            return __generator(this, function (_e) {
-                switch (_e.label) {
+            var busFactorWorker, correctnessWorker, responsivenessWorker, licenseWorker, dependencyPinningWorker, codeReviewWorker, results, _a, busFactor, busFactorLatency, _b, correctness, correctnessLatency, _c, responsiveness, responsivenessLatency, _d, license, licenseLatency, _e, dependencyPinning, dependencyPinningLatency, _f, codeReview, codeReviewLatency, scores, _g, netScore, netScoreLatency, metrics, error_1;
+            return __generator(this, function (_h) {
+                switch (_h.label) {
                     case 0:
-                        _e.trys.push([0, 2, , 3]);
+                        _h.trys.push([0, 2, , 3]);
                         busFactorWorker = (0, index_1.runWorker)(owner, repo, token, repoURL, repoData, "busFactor");
                         correctnessWorker = (0, index_1.runWorker)(owner, repo, token, repoURL, repoData, "correctness");
+                        responsivenessWorker = (0, index_1.runWorker)(owner, repo, token, repoURL, repoData, "responsiveness");
+                        licenseWorker = (0, index_1.runWorker)(owner, repo, token, repoURL, repoData, "license");
+                        dependencyPinningWorker = (0, index_1.runWorker)(owner, repo, token, repoURL, repoData, "dependencyPinning");
                         codeReviewWorker = (0, index_1.runWorker)(owner, repo, token, repoURL, repoData, "codeReview");
                         return [4 /*yield*/, Promise.all([
                                 busFactorWorker,
                                 correctnessWorker,
                                 // rampUpWorker,
-                                // responsivenessWorker,
-                                // licenseWorker,
-                                // dependencyPinningWorker,
+                                responsivenessWorker,
+                                licenseWorker,
+                                dependencyPinningWorker,
                                 codeReviewWorker
                             ])];
                     case 1:
-                        results = _e.sent();
-                        _a = results[0], busFactor = _a.score, busFactorLatency = _a.latency, _b = results[1], correctness = _b.score, correctnessLatency = _b.latency, _c = results[2], codeReview = _c.score, codeReviewLatency = _c.latency;
+                        results = _h.sent();
+                        _a = results[0], busFactor = _a.score, busFactorLatency = _a.latency, _b = results[1], correctness = _b.score, correctnessLatency = _b.latency, _c = results[2], responsiveness = _c.score, responsivenessLatency = _c.latency, _d = results[3], license = _d.score, licenseLatency = _d.latency, _e = results[4], dependencyPinning = _e.score, dependencyPinningLatency = _e.latency, _f = results[5], codeReview = _f.score, codeReviewLatency = _f.latency;
                         scores = {
                             busFactor: busFactor,
                             correctness: correctness,
                             // rampUp,
-                            //responsiveness,
-                            // license,
-                            // dependencyPinning,
+                            responsiveness: responsiveness,
+                            license: license,
+                            dependencyPinning: dependencyPinning,
                             codeReview: codeReview
                         };
                         if (!(0, netScore_1.validateMetricScores)(scores)) {
                             (0, log_1.logToFile)("One or more critical metrics could not be calculated", 1);
                             return [2 /*return*/, null];
                         }
-                        _d = (0, netScore_1.calculateNetScore)(scores), netScore = _d.score, netScoreLatency = _d.latency;
+                        _g = (0, netScore_1.calculateNetScore)(scores), netScore = _g.score, netScoreLatency = _g.latency;
                         metrics = {
                             URL: inputURL,
                             // NetScore: netScore,
@@ -102,18 +105,18 @@ exports.metricsCalculator = {
                             Correctness_Latency: correctnessLatency,
                             BusFactor: busFactor,
                             BusFactor_Latency: busFactorLatency,
-                            // ResponsiveMaintainer: responsiveness,
-                            // ResponsiveMaintainer_Latency: responsivenessLatency,
-                            // License: license,
-                            // License_Latency: licenseLatency,
-                            // DependencyPinning: dependencyPinning,                // Add new metric
-                            // DependencyPinning_Latency: dependencyPinningLatency,  // Add new metric
+                            ResponsiveMaintainer: responsiveness,
+                            ResponsiveMaintainer_Latency: responsivenessLatency,
+                            License: license,
+                            License_Latency: licenseLatency,
+                            DependencyPinning: dependencyPinning,
+                            DependencyPinning_Latency: dependencyPinningLatency,
                             CodeReview: codeReview,
                             CodeReview_Latency: codeReviewLatency // Add new metric
                         };
                         return [2 /*return*/, metrics];
                     case 2:
-                        error_1 = _e.sent();
+                        error_1 = _h.sent();
                         (0, log_1.logToFile)("Error in calculateMetrics: ".concat(error_1 instanceof Error ? error_1.message : String(error_1)), 1);
                         return [2 /*return*/, null];
                     case 3: return [2 /*return*/];

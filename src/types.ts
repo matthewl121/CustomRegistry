@@ -115,10 +115,10 @@ export interface Metrics {
     BusFactor_Latency: number;
     ResponsiveMaintainer: number;
     ResponsiveMaintainer_Latency: number;
-    // License: number;
-    // License_Latency: number;
-    // DependencyPinning: number;         // New metric
-    // DependencyPinning_Latency: number; // New metric
+    License: number;
+    License_Latency: number;
+    DependencyPinning: number;         // New metric
+    DependencyPinning_Latency: number; // New metric
     CodeReview: number;                // New metric
     CodeReview_Latency: number;        // New metric
 }
