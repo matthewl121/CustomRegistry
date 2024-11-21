@@ -92,7 +92,6 @@
 //         parentPort.postMessage(errorResponse);
 //     }
 // });
-
 import { ApiResponse, GraphQLResponse } from '../types';
 import { logToFile } from './log';
 import { calcBusFactor } from '../metrics/busFactor';
@@ -120,13 +119,12 @@ interface MetricResponse {
 
 export async function calculateMetric(params: MetricParams): Promise<MetricResponse> {
     try {
-        const begin = Date.now();
         const { owner, repo, token, repoURL, repoData, metric } = params;
-        
         logToFile(`Processing: ${owner}, ${repo}, ${repoURL}, ${metric}`, 2);
-
+        
         let result: number;
-
+        const begin = Date.now(); // Moved here to measure just the calculation time
+        
         switch (metric) {
             case "busFactor":
                 result = await calcBusFactor(owner, repo, token);
@@ -144,7 +142,7 @@ export async function calculateMetric(params: MetricParams): Promise<MetricRespo
                 result = await calcLicense(owner, repo, repoURL);
                 break;
             case "dependencyPinning":
-                result = await calcDependencyPinning(owner, repo, token);
+                result = await calcDependencyPinning(repoData);
                 break;
             case "codeReview":
                 result = await calcCodeReview(owner, repo, token);
@@ -152,15 +150,14 @@ export async function calculateMetric(params: MetricParams): Promise<MetricRespo
             default:
                 throw new Error(`Unknown metric: ${metric}`);
         }
-
+        
         const end = Date.now();
         const response: MetricResponse = {
             score: result,
-            latency: (end - begin) / 1000
+            latency: (end - begin) / 1000  // This now measures just the calculation time
         };
-
+        
         return response;
-
     } catch (error) {
         console.error('Processing error:', error);
         return {

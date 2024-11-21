@@ -49,15 +49,15 @@ var dependencyPinning_1 = require("../metrics/dependencyPinning");
 var codeReview_1 = require("../metrics/codeReview");
 function calculateMetric(params) {
     return __awaiter(this, void 0, void 0, function () {
-        var begin, owner, repo, token, repoURL, repoData, metric, result, _a, end, response, error_1;
+        var owner, repo, token, repoURL, repoData, metric, result, begin, _a, end, response, error_1;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
                     _b.trys.push([0, 17, , 18]);
-                    begin = Date.now();
                     owner = params.owner, repo = params.repo, token = params.token, repoURL = params.repoURL, repoData = params.repoData, metric = params.metric;
                     (0, log_1.logToFile)("Processing: ".concat(owner, ", ").concat(repo, ", ").concat(repoURL, ", ").concat(metric), 2);
                     result = void 0;
+                    begin = Date.now();
                     _a = metric;
                     switch (_a) {
                         case "busFactor": return [3 /*break*/, 1];
@@ -89,7 +89,7 @@ function calculateMetric(params) {
                 case 10:
                     result = _b.sent();
                     return [3 /*break*/, 16];
-                case 11: return [4 /*yield*/, (0, dependencyPinning_1.calcDependencyPinning)(owner, repo, token)];
+                case 11: return [4 /*yield*/, (0, dependencyPinning_1.calcDependencyPinning)(repoData)];
                 case 12:
                     result = _b.sent();
                     return [3 /*break*/, 16];
@@ -102,7 +102,7 @@ function calculateMetric(params) {
                     end = Date.now();
                     response = {
                         score: result,
-                        latency: (end - begin) / 1000
+                        latency: (end - begin) / 1000 // This now measures just the calculation time
                     };
                     return [2 /*return*/, response];
                 case 17:
