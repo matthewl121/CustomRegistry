@@ -56,7 +56,6 @@ function calculateMetric(params) {
                     _b.trys.push([0, 17, , 18]);
                     begin = Date.now();
                     owner = params.owner, repo = params.repo, token = params.token, repoURL = params.repoURL, repoData = params.repoData, metric = params.metric;
-                    console.log(params);
                     (0, log_1.logToFile)("Processing: ".concat(owner, ", ").concat(repo, ", ").concat(repoURL, ", ").concat(metric), 2);
                     result = void 0;
                     _a = metric;
@@ -105,13 +104,9 @@ function calculateMetric(params) {
                         score: result,
                         latency: (end - begin) / 1000
                     };
-                    console.log('Response');
-                    console.log(response);
-                    console.log(metric);
                     return [2 /*return*/, response];
                 case 17:
                     error_1 = _b.sent();
-                    console.log('Error in calculateMetric');
                     console.error('Processing error:', error_1);
                     return [2 /*return*/, {
                             score: -1,

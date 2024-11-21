@@ -123,7 +123,6 @@ export async function calculateMetric(params: MetricParams): Promise<MetricRespo
         const begin = Date.now();
         const { owner, repo, token, repoURL, repoData, metric } = params;
         
-        console.log(params);
         logToFile(`Processing: ${owner}, ${repo}, ${repoURL}, ${metric}`, 2);
 
         let result: number;
@@ -160,14 +159,9 @@ export async function calculateMetric(params: MetricParams): Promise<MetricRespo
             latency: (end - begin) / 1000
         };
 
-        console.log('Response');
-        console.log(response);
-        console.log(metric);
-
         return response;
 
     } catch (error) {
-        console.log('Error in calculateMetric');
         console.error('Processing error:', error);
         return {
             score: -1,
