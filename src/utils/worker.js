@@ -1,4 +1,6 @@
 "use strict";
+// // src/utils/worker.ts
+// import { ApiResponse, GraphQLResponse } from '../types';
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -36,91 +38,89 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
-var _a = require('worker_threads'), Worker = _a.Worker, parentPort = _a.parentPort;
-var logToFile = require('./log').logToFile;
-var calcBusFactor = require('../metrics/busFactor').calcBusFactor;
-var calcCorrectness = require('../metrics/correctness').calcCorrectness;
-var calcResponsiveness = require('../metrics/responsiveMaintainer').calcResponsiveness;
-var calcLicense = require('../metrics/license').calcLicense;
-var calcRampUp = require('../metrics/rampUp').calcRampUp;
-var calcDependencyPinning = require('../metrics/dependencyPinning').calcDependencyPinning;
-var calcCodeReview = require('../metrics/codeReview').calcCodeReview;
-if (!parentPort) {
-    throw new Error('This module must be run as a worker');
-}
-// TODO: THIS IS WHERE THE ERROR IS COMING FROM
-parentPort.on('message', function (params) { return __awaiter(void 0, void 0, void 0, function () {
-    var begin, owner, repo, token, repoURL, repoData, metric, result, _a, end, response, error_1, errorResponse;
-    return __generator(this, function (_b) {
-        switch (_b.label) {
-            case 0:
-                _b.trys.push([0, 15, , 16]);
-                begin = Date.now();
-                owner = params.owner, repo = params.repo, token = params.token, repoURL = params.repoURL, repoData = params.repoData, metric = params.metric;
-                console.log(params);
-                logToFile("Worker: ".concat(owner, ", ").concat(repo, ", ").concat(repoURL, ", ").concat(metric), 2);
-                result = void 0;
-                _a = metric;
-                switch (_a) {
-                    case "busFactor": return [3 /*break*/, 1];
-                    case "correctness": return [3 /*break*/, 3];
-                    case "rampUp": return [3 /*break*/, 4];
-                    case "responsiveness": return [3 /*break*/, 6];
-                    case "license": return [3 /*break*/, 7];
-                    case "dependencyPinning": return [3 /*break*/, 9];
-                    case "codeReview": return [3 /*break*/, 11];
-                }
-                return [3 /*break*/, 13];
-            case 1: return [4 /*yield*/, calcBusFactor(owner, repo, token)];
-            case 2:
-                result = _b.sent();
-                return [3 /*break*/, 14];
-            case 3:
-                result = calcCorrectness(repoData);
-                return [3 /*break*/, 14];
-            case 4: return [4 /*yield*/, calcRampUp(repoData)];
-            case 5:
-                result = _b.sent();
-                return [3 /*break*/, 14];
-            case 6:
-                result = calcResponsiveness(repoData);
-                return [3 /*break*/, 14];
-            case 7: return [4 /*yield*/, calcLicense(owner, repo, repoURL)];
-            case 8:
-                result = _b.sent();
-                return [3 /*break*/, 14];
-            case 9: return [4 /*yield*/, calcDependencyPinning(owner, repo, token)];
-            case 10:
-                result = _b.sent();
-                return [3 /*break*/, 14];
-            case 11: return [4 /*yield*/, calcCodeReview(owner, repo, token)];
-            case 12:
-                result = _b.sent();
-                return [3 /*break*/, 14];
-            case 13: throw new Error("Unknown metric: ".concat(metric));
-            case 14:
-                end = Date.now();
-                response = {
-                    score: result,
-                    latency: (end - begin) / 1000
-                };
-                console.log('Response');
-                console.log(response);
-                parentPort.postMessage(response);
-                console.log(metric);
-                return [3 /*break*/, 16];
-            case 15:
-                error_1 = _b.sent();
-                console.log('Worker error IN WORKER.TS');
-                console.error('Worker error:', error_1);
-                errorResponse = {
-                    score: -1,
-                    latency: 0,
-                    error: error_1 instanceof Error ? error_1.message : String(error_1)
-                };
-                parentPort.postMessage(errorResponse);
-                return [3 /*break*/, 16];
-            case 16: return [2 /*return*/];
-        }
+exports.calculateMetric = void 0;
+var log_1 = require("./log");
+var busFactor_1 = require("../metrics/busFactor");
+var correctness_1 = require("../metrics/correctness");
+var responsiveMaintainer_1 = require("../metrics/responsiveMaintainer");
+var license_1 = require("../metrics/license");
+var rampUp_1 = require("../metrics/rampUp");
+var dependencyPinning_1 = require("../metrics/dependencyPinning");
+var codeReview_1 = require("../metrics/codeReview");
+function calculateMetric(params) {
+    return __awaiter(this, void 0, void 0, function () {
+        var begin, owner, repo, token, repoURL, repoData, metric, result, _a, end, response, error_1;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0:
+                    _b.trys.push([0, 17, , 18]);
+                    begin = Date.now();
+                    owner = params.owner, repo = params.repo, token = params.token, repoURL = params.repoURL, repoData = params.repoData, metric = params.metric;
+                    console.log(params);
+                    (0, log_1.logToFile)("Processing: ".concat(owner, ", ").concat(repo, ", ").concat(repoURL, ", ").concat(metric), 2);
+                    result = void 0;
+                    _a = metric;
+                    switch (_a) {
+                        case "busFactor": return [3 /*break*/, 1];
+                        case "correctness": return [3 /*break*/, 3];
+                        case "rampUp": return [3 /*break*/, 5];
+                        case "responsiveness": return [3 /*break*/, 7];
+                        case "license": return [3 /*break*/, 9];
+                        case "dependencyPinning": return [3 /*break*/, 11];
+                        case "codeReview": return [3 /*break*/, 13];
+                    }
+                    return [3 /*break*/, 15];
+                case 1: return [4 /*yield*/, (0, busFactor_1.calcBusFactor)(owner, repo, token)];
+                case 2:
+                    result = _b.sent();
+                    return [3 /*break*/, 16];
+                case 3: return [4 /*yield*/, (0, correctness_1.calcCorrectness)(repoData)];
+                case 4:
+                    result = _b.sent();
+                    return [3 /*break*/, 16];
+                case 5: return [4 /*yield*/, (0, rampUp_1.calcRampUp)(repoData)];
+                case 6:
+                    result = _b.sent();
+                    return [3 /*break*/, 16];
+                case 7: return [4 /*yield*/, (0, responsiveMaintainer_1.calcResponsiveness)(repoData)];
+                case 8:
+                    result = _b.sent();
+                    return [3 /*break*/, 16];
+                case 9: return [4 /*yield*/, (0, license_1.calcLicense)(owner, repo, repoURL)];
+                case 10:
+                    result = _b.sent();
+                    return [3 /*break*/, 16];
+                case 11: return [4 /*yield*/, (0, dependencyPinning_1.calcDependencyPinning)(owner, repo, token)];
+                case 12:
+                    result = _b.sent();
+                    return [3 /*break*/, 16];
+                case 13: return [4 /*yield*/, (0, codeReview_1.calcCodeReview)(owner, repo, token)];
+                case 14:
+                    result = _b.sent();
+                    return [3 /*break*/, 16];
+                case 15: throw new Error("Unknown metric: ".concat(metric));
+                case 16:
+                    end = Date.now();
+                    response = {
+                        score: result,
+                        latency: (end - begin) / 1000
+                    };
+                    console.log('Response');
+                    console.log(response);
+                    console.log(metric);
+                    return [2 /*return*/, response];
+                case 17:
+                    error_1 = _b.sent();
+                    console.log('Error in calculateMetric');
+                    console.error('Processing error:', error_1);
+                    return [2 /*return*/, {
+                            score: -1,
+                            latency: 0,
+                            error: error_1 instanceof Error ? error_1.message : String(error_1)
+                        }];
+                case 18: return [2 /*return*/];
+            }
+        });
     });
-}); });
+}
+exports.calculateMetric = calculateMetric;

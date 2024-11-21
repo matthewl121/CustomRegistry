@@ -1,8 +1,8 @@
 "use strict";
-/**
- * @fileoverview Main metrics calculator that orchestrates the calculation of various
- * repository quality metrics and combines them into a weighted net score.
- */
+// /**
+//  * @fileoverview Main metrics calculator that orchestrates the calculation of various
+//  * repository quality metrics and combines them into a weighted net score.
+//  */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -41,9 +41,124 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 exports.__esModule = true;
 exports.calculateMetrics = exports.metricsCalculator = void 0;
+// import { logToFile } from '../utils/log';
+// import { ApiResponse, GraphQLResponse, Metrics } from '../types';
+// import { runWorker } from '../index';
+// import { calculateNetScore, validateMetricScores } from './netScore';
+// import './busFactor';
+// import './codeReview';
+// import './correctness';
+// import './dependencyPinning';
+// import './license';
+// import './rampUp';
+// import './responsiveMaintainer';
+// /**
+//  * Interface defining the contract for metrics calculation
+//  */
+// export interface MetricsCalculator {
+//     calculateMetrics(
+//         owner: string,          // Repository owner
+//         repo: string,           // Repository name
+//         token: string,          // GitHub API token
+//         repoURL: string,        // Repository URL
+//         repoData: ApiResponse<GraphQLResponse | null>,  // Repository data from GitHub API
+//         inputURL: string        // Original input URL
+//     ): Promise<Metrics | null>;
+// }
+// /**
+//  * Implementation of the MetricsCalculator interface that handles parallel
+//  * calculation of all metrics and their aggregation into a final score
+//  */
+// export const metricsCalculator: MetricsCalculator = {
+//     async calculateMetrics(
+//         owner: string,
+//         repo: string,
+//         token: string,
+//         repoURL: string,
+//         repoData: ApiResponse<GraphQLResponse | null>,
+//         inputURL: string
+//     ): Promise<Metrics | null> {
+//         try {
+//             // Launch parallel workers for each metric calculation
+//             const busFactorWorker = runWorker(owner, repo, token, repoURL, repoData, "busFactor"); // Calculate Bus Factor
+//             const correctnessWorker = runWorker(owner, repo, token, repoURL, repoData, "correctness"); // Calculate Correctness
+//             // const rampUpWorker = runWorker(owner, repo, token, repoURL, repoData, "rampUp"); // Calculate Ramp Up
+//             const responsivenessWorker = runWorker(owner, repo, token, repoURL, repoData, "responsiveness"); // Calculate Responsiveness
+//             const licenseWorker = runWorker(owner, repo, token, repoURL, repoData, "license"); // Calculate License 
+//             const dependencyPinningWorker = runWorker(owner, repo, token, repoURL, repoData, "dependencyPinning"); // Calculate Dependency Pinning
+//             const codeReviewWorker = runWorker(owner, repo, token, repoURL, repoData, "codeReview"); // Calculate Code Review
+//             // Wait for all metric calculations to complete
+//             const results = await Promise.all([
+//                 busFactorWorker,
+//                 correctnessWorker,
+//                 // rampUpWorker,
+//                 responsivenessWorker,
+//                 licenseWorker,
+//                 dependencyPinningWorker,
+//                 codeReviewWorker
+//             ]);
+//             // Destructure results into scores and latencies
+//             const [
+//                 { score: busFactor, latency: busFactorLatency },
+//                 { score: correctness, latency: correctnessLatency },
+//                 // { score: rampUp, latency: rampUpLatency },
+//                 { score: responsiveness, latency: responsivenessLatency },
+//                 { score: license, latency: licenseLatency },
+//                 { score: dependencyPinning, latency: dependencyPinningLatency },
+//                 { score: codeReview, latency: codeReviewLatency } 
+//             ] = results;
+//             // Validate metrics
+//             const scores = {
+//                 busFactor,
+//                 correctness,
+//                 // rampUp,
+//                 responsiveness,
+//                 license,
+//                 dependencyPinning,
+//                 codeReview
+//             };
+//             if (!validateMetricScores(scores)) {
+//                 logToFile("One or more critical metrics could not be calculated", 1);
+//                 return null;
+//             }
+//             // Calculate net score
+//             const { score: netScore, latency: netScoreLatency } = calculateNetScore(scores);
+//             // Construct final metrics object
+//             const metrics: Metrics = {
+//                 URL: inputURL,
+//                 // NetScore: netScore,
+//                 // NetScore_Latency: netScoreLatency,
+//                 // RampUp: rampUp,
+//                 // RampUp_Latency: rampUpLatency,
+//                 Correctness: correctness,
+//                 Correctness_Latency: correctnessLatency,
+//                 BusFactor: busFactor,
+//                 BusFactor_Latency: busFactorLatency,
+//                 ResponsiveMaintainer: responsiveness,
+//                 ResponsiveMaintainer_Latency: responsivenessLatency,
+//                 License: license,
+//                 License_Latency: licenseLatency,
+//                 DependencyPinning: dependencyPinning,                // Add new metric
+//                 DependencyPinning_Latency: dependencyPinningLatency,  // Add new metric
+//                 CodeReview: codeReview,                              // Add new metric
+//                 CodeReview_Latency: codeReviewLatency                // Add new metric
+//             };
+//             return metrics;
+//         } catch (error) {
+//             logToFile(`Error in calculateMetrics: ${error instanceof Error ? error.message : String(error)}`, 1);
+//             return null;
+//         }
+//     }
+// };
+// // Export the main calculateMetrics function
+// export const { calculateMetrics } = metricsCalculator;
+/**
+ * @fileoverview Main metrics calculator that orchestrates the sequential calculation
+ * of various repository quality metrics and combines them into a weighted net score.
+ */
 var log_1 = require("../utils/log");
-var index_1 = require("../index");
 var netScore_1 = require("./netScore");
+var worker_1 = require("../utils/worker"); // Import the sequential calculation function we created
 require("./busFactor");
 require("./codeReview");
 require("./correctness");
@@ -52,39 +167,86 @@ require("./license");
 require("./rampUp");
 require("./responsiveMaintainer");
 /**
- * Implementation of the MetricsCalculator interface that handles parallel
+ * Implementation of the MetricsCalculator interface that handles sequential
  * calculation of all metrics and their aggregation into a final score
  */
 exports.metricsCalculator = {
     calculateMetrics: function (owner, repo, token, repoURL, repoData, inputURL) {
         return __awaiter(this, void 0, void 0, function () {
-            var busFactorWorker, correctnessWorker, responsivenessWorker, licenseWorker, dependencyPinningWorker, codeReviewWorker, results, _a, busFactor, busFactorLatency, _b, correctness, correctnessLatency, _c, responsiveness, responsivenessLatency, _d, license, licenseLatency, _e, dependencyPinning, dependencyPinningLatency, _f, codeReview, codeReviewLatency, scores, _g, netScore, netScoreLatency, metrics, error_1;
-            return __generator(this, function (_h) {
-                switch (_h.label) {
+            var busFactorResult, correctnessResult, responsivenessResult, licenseResult, dependencyPinningResult, codeReviewResult, busFactor, busFactorLatency, correctness, correctnessLatency, responsiveness, responsivenessLatency, license, licenseLatency, dependencyPinning, dependencyPinningLatency, codeReview, codeReviewLatency, scores, _a, netScore, netScoreLatency, metrics, error_1;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
                     case 0:
-                        _h.trys.push([0, 2, , 3]);
-                        busFactorWorker = (0, index_1.runWorker)(owner, repo, token, repoURL, repoData, "busFactor");
-                        correctnessWorker = (0, index_1.runWorker)(owner, repo, token, repoURL, repoData, "correctness");
-                        responsivenessWorker = (0, index_1.runWorker)(owner, repo, token, repoURL, repoData, "responsiveness");
-                        licenseWorker = (0, index_1.runWorker)(owner, repo, token, repoURL, repoData, "license");
-                        dependencyPinningWorker = (0, index_1.runWorker)(owner, repo, token, repoURL, repoData, "dependencyPinning");
-                        codeReviewWorker = (0, index_1.runWorker)(owner, repo, token, repoURL, repoData, "codeReview");
-                        return [4 /*yield*/, Promise.all([
-                                busFactorWorker,
-                                correctnessWorker,
-                                // rampUpWorker,
-                                responsivenessWorker,
-                                licenseWorker,
-                                dependencyPinningWorker,
-                                codeReviewWorker
-                            ])];
+                        _b.trys.push([0, 7, , 8]);
+                        return [4 /*yield*/, (0, worker_1.calculateMetric)({
+                                owner: owner,
+                                repo: repo,
+                                token: token,
+                                repoURL: repoURL,
+                                repoData: repoData,
+                                metric: "busFactor"
+                            })];
                     case 1:
-                        results = _h.sent();
-                        _a = results[0], busFactor = _a.score, busFactorLatency = _a.latency, _b = results[1], correctness = _b.score, correctnessLatency = _b.latency, _c = results[2], responsiveness = _c.score, responsivenessLatency = _c.latency, _d = results[3], license = _d.score, licenseLatency = _d.latency, _e = results[4], dependencyPinning = _e.score, dependencyPinningLatency = _e.latency, _f = results[5], codeReview = _f.score, codeReviewLatency = _f.latency;
+                        busFactorResult = _b.sent();
+                        return [4 /*yield*/, (0, worker_1.calculateMetric)({
+                                owner: owner,
+                                repo: repo,
+                                token: token,
+                                repoURL: repoURL,
+                                repoData: repoData,
+                                metric: "correctness"
+                            })];
+                    case 2:
+                        correctnessResult = _b.sent();
+                        return [4 /*yield*/, (0, worker_1.calculateMetric)({
+                                owner: owner,
+                                repo: repo,
+                                token: token,
+                                repoURL: repoURL,
+                                repoData: repoData,
+                                metric: "responsiveness"
+                            })];
+                    case 3:
+                        responsivenessResult = _b.sent();
+                        return [4 /*yield*/, (0, worker_1.calculateMetric)({
+                                owner: owner,
+                                repo: repo,
+                                token: token,
+                                repoURL: repoURL,
+                                repoData: repoData,
+                                metric: "license"
+                            })];
+                    case 4:
+                        licenseResult = _b.sent();
+                        return [4 /*yield*/, (0, worker_1.calculateMetric)({
+                                owner: owner,
+                                repo: repo,
+                                token: token,
+                                repoURL: repoURL,
+                                repoData: repoData,
+                                metric: "dependencyPinning"
+                            })];
+                    case 5:
+                        dependencyPinningResult = _b.sent();
+                        return [4 /*yield*/, (0, worker_1.calculateMetric)({
+                                owner: owner,
+                                repo: repo,
+                                token: token,
+                                repoURL: repoURL,
+                                repoData: repoData,
+                                metric: "codeReview"
+                            })];
+                    case 6:
+                        codeReviewResult = _b.sent();
+                        busFactor = busFactorResult.score, busFactorLatency = busFactorResult.latency;
+                        correctness = correctnessResult.score, correctnessLatency = correctnessResult.latency;
+                        responsiveness = responsivenessResult.score, responsivenessLatency = responsivenessResult.latency;
+                        license = licenseResult.score, licenseLatency = licenseResult.latency;
+                        dependencyPinning = dependencyPinningResult.score, dependencyPinningLatency = dependencyPinningResult.latency;
+                        codeReview = codeReviewResult.score, codeReviewLatency = codeReviewResult.latency;
                         scores = {
                             busFactor: busFactor,
                             correctness: correctness,
-                            // rampUp,
                             responsiveness: responsiveness,
                             license: license,
                             dependencyPinning: dependencyPinning,
@@ -94,13 +256,9 @@ exports.metricsCalculator = {
                             (0, log_1.logToFile)("One or more critical metrics could not be calculated", 1);
                             return [2 /*return*/, null];
                         }
-                        _g = (0, netScore_1.calculateNetScore)(scores), netScore = _g.score, netScoreLatency = _g.latency;
+                        _a = (0, netScore_1.calculateNetScore)(scores), netScore = _a.score, netScoreLatency = _a.latency;
                         metrics = {
                             URL: inputURL,
-                            // NetScore: netScore,
-                            // NetScore_Latency: netScoreLatency,
-                            // RampUp: rampUp,
-                            // RampUp_Latency: rampUpLatency,
                             Correctness: correctness,
                             Correctness_Latency: correctnessLatency,
                             BusFactor: busFactor,
@@ -112,14 +270,14 @@ exports.metricsCalculator = {
                             DependencyPinning: dependencyPinning,
                             DependencyPinning_Latency: dependencyPinningLatency,
                             CodeReview: codeReview,
-                            CodeReview_Latency: codeReviewLatency // Add new metric
+                            CodeReview_Latency: codeReviewLatency
                         };
                         return [2 /*return*/, metrics];
-                    case 2:
-                        error_1 = _h.sent();
+                    case 7:
+                        error_1 = _b.sent();
                         (0, log_1.logToFile)("Error in calculateMetrics: ".concat(error_1 instanceof Error ? error_1.message : String(error_1)), 1);
                         return [2 /*return*/, null];
-                    case 3: return [2 /*return*/];
+                    case 8: return [2 /*return*/];
                 }
             });
         });
