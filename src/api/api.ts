@@ -1,5 +1,6 @@
 // api.ts
-const BASE_URL = "https://6t3q6qnrv5.execute-api.us-east-1.amazonaws.com/dev";
+// API Gateway dev URL: "https://6t3q6qnrv5.execute-api.us-east-1.amazonaws.com/dev"
+const BASE_URL = "https://ec2-34-205-19-248.compute-1.amazonaws.com:5000";
 
 type RequestOptions = {
   headers?: Record<string, string>;
