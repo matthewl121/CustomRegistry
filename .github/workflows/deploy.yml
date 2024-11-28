@@ -98,10 +98,15 @@ jobs:
          echo "LOG_LEVEL=2" >> .env
          
      - name: Test Basic SSH Connectivity  
-       run: |
-         echo "${{ secrets.SSH_KEY }}" > ssh_key.pem
-         chmod 600 ssh_key.pem
-         ssh -i ssh_key.pem -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} echo "Connection test"
+      run: |
+        echo "${{ secrets.SSH_KEY }}" > ssh_key.pem
+        chmod 600 ssh_key.pem
+        ssh -vvv -i ssh_key.pem -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} echo "Connection test"
+
+    - name: Check Network
+      run: |
+        nc -zv ${{ secrets.EC2_HOST }} 22
+        curl -v telnet://${{ secrets.EC2_HOST }}:22
      
      - name: Deploy to EC2
        uses: appleboy/scp-action@v0.1.3
