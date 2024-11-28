@@ -38,12 +38,184 @@ const deleteObjects = async (s3, bucket, objects) => {
   await s3.send(new DeleteObjectsCommand(params));
 };
 
+// Helper functions for GitHub URL
+const extractGitHubOwnerAndRepo = (parsedURL) => {
+  const pathParts = parsedURL.pathname.split('/').filter(part => part);
+  if (pathParts.length < 2) {
+    throw new Error("/package: Invalid GitHub URL. Expected format: https://github.com/{owner}/{repo}");
+  }
+  const [owner, repo] = pathParts;
+  return { owner, repo };
+}
+const getGitHubDefaultBranch = async (owner, repo, githubToken = null) => {
+  const repoApiUrl = `https://api.github.com/repos/${owner}/${repo}`;
+  const headers = {
+    'Accept': 'application/vnd.github.v3+json',
+    'User-Agent': 'AWS-Lambda', // GitHub API requires a User-Agent header
+  };
+  if (githubToken) {
+    headers['Authorization'] = `token ${githubToken}`;
+  }
+  const repoResponse = await fetch(repoApiUrl, { headers });
+  if (!repoResponse.ok) {
+    throw new Error(`GitHub API error when fetching repository info: ${repoResponse.statusText}`);
+  }
+  const repoData = await repoResponse.json();
+  const defaultBranch = repoData.default_branch || "main";
+  return defaultBranch;
+};
+const getLatestReleaseVersion = async (owner, repo, githubToken = null, versionRegex = /[A-Za-z]*\s*(\d+\.\d+\.\d+)/i) => {
+  const latestReleaseUrl = `https://api.github.com/repos/${owner}/${repo}/releases/latest`;
+  const headers = {
+    'Accept': 'application/vnd.github.v3+json',
+    'User-Agent': 'AWS-Lambda', // GitHub API requires a User-Agent header
+  };
+  if (githubToken) {
+    headers['Authorization'] = `token ${githubToken}`;
+  }
+  const latestReleaseResponse = await fetch(latestReleaseUrl, { headers });
+  let versionFound = false;
+  let packageVersion = null;
+  if (latestReleaseResponse.ok) {
+    const latestReleaseData = await latestReleaseResponse.json();
+    const tagName = latestReleaseData.tag_name;
+    if (tagName) {
+      const match = tagName.match(versionRegex);
+      if (match) {
+        packageVersion = match[1]; // Extracted version
+        versionFound = true;
+        console.log(`Extracted version from latest release tag: ${packageVersion}`);
+      } else {
+        console.warn(`Latest release tag "${tagName}" does not match version pattern.`);
+      }
+    } else {
+      console.warn("Latest release does not have a tag_name.");
+    }
+  } else if (latestReleaseResponse.status === 404) {
+    console.warn("No releases found for this repository.");
+  } else {
+    throw new Error(`GitHub API error when fetching latest release: ${latestReleaseResponse.statusText}`);
+  }
+  return { version: packageVersion, found: versionFound };
+};
+const getPackageJsonVersion = async (owner, repo, defaultBranch, githubToken = null, versionRegex = /v?(\d+\.\d+\.\d+)/i) => {
+  const packageJsonUrl = `https://api.github.com/repos/${owner}/${repo}/contents/package.json?ref=${defaultBranch}`;
+  const headers = {
+    'Accept': 'application/vnd.github.v3.raw', // Fetch raw content
+    'User-Agent': 'AWS-Lambda', // GitHub API requires a User-Agent header
+  };
+  if (githubToken) {
+    headers['Authorization'] = `token ${githubToken}`;
+  }
+  let packageVersion = null;
+  let versionFound = false;
+  try {
+    const packageJsonResponse = await fetch(packageJsonUrl, { headers });
+    if (packageJsonResponse.ok) {
+      const packageJsonText = await packageJsonResponse.text();
+      let packageJson;
+      try {
+        packageJson = JSON.parse(packageJsonText);
+      } catch (parseError) {
+        console.warn(`Failed to parse package.json: ${parseError.message}`);
+        return { version: null, found: false };
+      }
+      const pkgVersion = packageJson.version;
+      if (pkgVersion) {
+        const matchPkg = pkgVersion.match(versionRegex);
+        if (matchPkg) {
+          packageVersion = matchPkg[1];
+          versionFound = true;
+          console.log(`Extracted version from package.json: ${packageVersion}`);
+        } else {
+          console.warn(`package.json version "${pkgVersion}" does not match version pattern.`);
+        }
+      } else {
+        console.warn("package.json does not contain a version field.");
+      }
+    } else {
+      console.warn(`Failed to fetch package.json: ${packageJsonResponse.statusText}`);
+    }
+  } catch (error) {
+    console.warn(`Error fetching package.json: ${error.message}`);
+  }
+  return { version: packageVersion, found: versionFound };
+};
+const getGithubTarballContent = async (owner, repo, defaultBranch, githubToken = null) => {
+  const tarballUrl = `https://api.github.com/repos/${owner}/${repo}/tarball/${defaultBranch}`;
+  const headers = {
+    'Accept': 'application/vnd.github.v3.tarball',
+    'User-Agent': 'AWS-Lambda', // GitHub API requires a User-Agent header
+  };
+  if (githubToken) {
+    headers['Authorization'] = `token ${githubToken}`;
+  }
+  try {
+    const tarballResponse = await fetch(tarballUrl, { headers });
+    if (!tarballResponse.ok) {
+      throw new Error(`Failed to fetch tarball from GitHub URL: ${tarballResponse.statusText}`);
+    }
+    const arrayBuffer = await tarballResponse.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    console.log(`Successfully fetched tarball from ${tarballUrl}`);
+    return buffer;
+  } catch (error) {
+    console.error(`Error fetching tarball: ${error.message}`);
+    throw error; // Rethrow the error to be handled by the caller
+  }
+};
+
+// Helper functions for npm URL
+const extractNpmPackageName = (parsedURL) => {
+  const regex = /\/package\/([^/]+)\/?/;
+  const match = parsedURL.pathname.match(regex);
+  if (!match || match.length < 2) {
+    throw new Error("Invalid NPM package URL format. Expected format: https://www.npmjs.com/package/{packageName}");
+  }
+  const packageName = match[1];
+  console.log(`Extracted package name from npm URL: ${packageName}`);
+  return packageName;
+};
+const getNpmPackageInfo = async (packageName) => {
+  const npmRegistryUrl = `https://registry.npmjs.org/${encodeURIComponent(packageName)}`;
+  try {
+    const npmInfoResponse = await fetch(npmRegistryUrl);
+    if (!npmInfoResponse.ok) {
+      throw new Error(`/package: Failed to fetch package info: ${npmInfoResponse.statusText}`);
+    }
+    const npmData = await npmInfoResponse.json();
+    if (!npmData['dist-tags'] || !npmData['dist-tags'].latest) {
+      throw new Error(`/package: Could not determine the latest version for package "${packageName}".`);
+    }
+    const latestVersion = npmData['dist-tags'].latest;
+    console.log(`Fetched npm package info for "${packageName}": Latest version is "${latestVersion}"`);
+    return { latestVersion, npmData };
+  } catch (error) {
+    console.error(`/package: Error fetching npm package info for "${packageName}": ${error.message}`);
+    throw error; // Rethrow the error to be handled by the caller
+  }
+};
+const getNpmTarballContent = async (tarballUrl, options = {}) => {
+  try {
+    const response = await fetch(tarballUrl, options);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch tarball from URL: ${response.statusText}`);
+    }
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    console.log(`Successfully fetched tarball from ${tarballUrl}`);
+    return buffer;
+  } catch (error) {
+    console.error(`Error fetching tarball from URL "${tarballUrl}": ${error.message}`);
+    throw error; // Rethrow the error to be handled by the caller
+  }
+};
+
 
 export const handler = async (event) => {
   // MIGHT NEETO TO ADD 'pathParameters' OR SIMILAR TO 'event' FIELDS
-  // might need to add 'pathParameters' or similar
   const bucketName = "acmeregistrys3";
-  const debloat = event.debloat || false;
+  const debloat = event.debloat === "true";
 
   let packageName;
   let content;
@@ -67,91 +239,40 @@ export const handler = async (event) => {
         uploadVia = "github";
 
         // Get owner and repo from Github URL
-        const pathParts = parsedURL.pathname.split('/').filter(part => part);
-        if (pathParts.length < 2) {
-          throw new Error("/package: Invalid GitHub URL. Expected format: https://github.com/{owner}/{repo}");
+        let owner, repo;
+        try {
+          ({ owner, repo } = extractGitHubOwnerAndRepo(parsedURL));
+        } catch (error) {
+          throw new Error(`/package: ${error.message}`);
         }
-        const owner = pathParts[0];
-        const repo = pathParts[1];
         packageName = repo;
 
         // Fetch repository info to get the default branch
-        const repoApiUrl = `https://api.github.com/repos/${owner}/${repo}`;
-        const repoResponse = await fetch(repoApiUrl, {
-          headers: {
-            'Accept': 'application/vnd.github.v3+json',
-            // 'Authorization': `token YOUR_GITHUB_TOKEN`
-          },
-        });
-        if (!repoResponse.ok) {
-          throw new Error(`GitHub API error when fetching repository info: ${repoResponse.statusText}`);
-        }
-        const repoData = await repoResponse.json();
-        const defaultBranch = repoData.default_branch || "main";
-
-        // Find version number for GitHub URL
-        const versionRegex = /[A-Za-z]*\s*(\d+\.\d+\.\d+)/i;
-        const latestReleaseUrl = `https://api.github.com/repos/${owner}/${repo}/releases/latest`;
-        const latestReleaseResponse = await fetch(latestReleaseUrl, { 
-          headers: {
-            'Accept': 'application/vnd.github.v3+json',
-            'User-Agent': 'AWS-Lambda',
-            // If you have a GitHub token, you can include it here for higher rate limits
-            // 'Authorization': `token YOUR_GITHUB_TOKEN`
-          }
-         });
-         let versionFound = false;
-         if (latestReleaseResponse.ok) {
-          const latestReleaseData = await latestReleaseResponse.json();
-          let tagName = latestReleaseData.tag_name;
-        
-          if (tagName) {
-            const match = tagName.match(versionRegex);
-            if (match) {
-              packageVersion = match[1]; // Extracted version
-              versionFound = true;
-              console.log(`Extracted version from latest release tag: ${packageVersion}`);
-            } else {
-              console.warn(`Latest release tag "${tagName}" does not match version pattern.`);
-            }
-          } else {
-            console.warn("Latest release does not have a tag_name.");
-          }
-        } else if (latestReleaseResponse.status === 404) {
-          console.warn("No releases found for this repository.");
-        } else {
-          throw new Error(`GitHub API error when fetching latest release: ${latestReleaseResponse.statusText}`);
+        let defaultBranch;
+        try {
+          defaultBranch = await getGitHubDefaultBranch(owner, repo, process.env.GITHUB_TOKEN);
+        } catch (error) {
+          throw new Error(`/package: ${error.message}`);
         }
 
+        // Find version number for GitHub URL using release info
+        let versionFound = false;
+        try {
+          const { version, found } = await getLatestReleaseVersion(owner, repo, process.env.GITHUB_TOKEN);
+          if (found) {
+            packageVersion = version;
+            versionFound = true;
+          }
+        } catch (error) {
+          throw new Error(`/package: ${error.message}`);
+        }
+
+        // Find version number for GitHub URL using package.json info
         if (!versionFound) {
-          const packageJsonUrl = `https://api.github.com/repos/${owner}/${repo}/contents/package.json?ref=${defaultBranch}`;
-          const packageJsonResponse = await fetch(packageJsonUrl, { 
-            headers: {
-              'Accept': 'application/vnd.github.v3.raw', // For raw package.json content
-              'User-Agent': 'AWS-Lambda', // Customize as needed
-              // If you have a GitHub token, you can include it here for higher rate limits
-              // 'Authorization': `token YOUR_GITHUB_TOKEN`
-            }
-           });
-        
-          if (packageJsonResponse.ok) {
-            const packageJson = await packageJsonResponse.json();
-            const pkgVersion = packageJson.version;
-        
-            if (pkgVersion) {
-              const matchPkg = pkgVersion.match(versionRegex);
-              if (matchPkg) {
-                packageVersion = matchPkg[1];
-                versionFound = true;
-                console.log(`Extracted version from package.json: ${packageVersion}`);
-              } else {
-                console.warn(`package.json version "${pkgVersion}" does not match version pattern.`);
-              }
-            } else {
-              console.warn("package.json does not contain a version field.");
-            }
-          } else {
-            console.warn(`Failed to fetch package.json: ${packageJsonResponse.statusText}`);
+          const { version, found } = await getPackageJsonVersion(owner, repo, defaultBranch, process.env.GITHUB_TOKEN);
+          if (found) {
+            packageVersion = version;
+            versionFound = true;
           }
         }
         
@@ -160,62 +281,43 @@ export const handler = async (event) => {
           packageVersion = "1.0.0";
         }
         
-        // Construct the tarball URL using GitHub's API
-        const tarballUrl = `https://api.github.com/repos/${owner}/${repo}/tarball/${defaultBranch}`;
-
-        // Fetch the tarball from GitHub
-        const tarballResponse = await fetch(tarballUrl, {
-          headers: {
-            'Accept': 'application/vnd.github.v3.tarball',
-            'User-Agent': 'AWS-Lambda' // GitHub API requires a User-Agent header
-            // If you have a GitHub token, you can include it here for higher rate limits
-            // 'Authorization': `token YOUR_GITHUB_TOKEN`
-          }
-        });
-
-        if (!tarballResponse.ok) {
-          throw new Error(`Failed to fetch tarball from GitHub URL: ${tarballResponse.statusText}`);
+        // Fetch content using tarball
+        try {
+          content = await getGithubTarballContent(owner, repo, defaultBranch, process.env.GITHUB_TOKEN);
+        } catch (error) {
+          throw new Error(`/package: ${error.message}`);
         }
-
-        // Convert the response to an ArrayBuffer and then to a Buffer
-        const arrayBuffer = await tarballResponse.arrayBuffer();
-        content = Buffer.from(arrayBuffer);
 
       } else if (parsedURL.hostname === "www.npmjs.com" || parsedURL.hostname === "npmjs.com") {
         uploadVia = "npm";
 
         // Get repo name
-        const regex = /\/package\/([^/]+)\/?/;
-        const match = parsedURL.pathname.match(regex);
-        if (!match || match.length < 2) {
-          throw new Error("Invalid NPM package URL format. Expected format: https://www.npmjs.com/package/{packageName}");
+        try {
+          packageName = extractNpmPackageName(parsedURL);
+        } catch (error) {
+          throw new Error(`/package: ${error.message}`);
         }
-        packageName = match[1];        
 
-        // Handle npm registry URL
-        const npmInfoResponse = await fetch(`https://registry.npmjs.org/${packageName}`);
-        if (!npmInfoResponse.ok) {
-          throw new Error(`/package: Failed to fetch package info: ${response.statusText}`);
-        }
-  
-        const npmData = await npmInfoResponse.json();
-        const latestVersion = npmData['dist-tags'].latest;
+        // Get version and tarball URL from npm URL
+        const { latestVersion, npmData } = await getNpmPackageInfo(packageName);
         packageVersion = latestVersion;
-        const tarballUrl = npmData.versions[latestVersion].dist.tarball;
-
-        // Fetch tarball from npm
-        const tarballResponse = await fetch(tarballUrl);
-        if (!tarballResponse.ok) {
-          throw new Error(`Failed to fetch tarball from npm URL: ${tarballResponse.statusText}`);
+        const tarballUrl = npmData.versions[latestVersion]?.dist?.tarball;
+        if (!tarballUrl) {
+          throw new Error(`/package: Could not find tarball URL for version "${latestVersion}" of package "${packageName}".`);
         }
 
-        const arrayBuffer = await tarballResponse.arrayBuffer();
-        content = Buffer.from(arrayBuffer);
+        // Fetch content using tarball
+        try {
+          content = await getNpmTarballContent(tarballUrl);
+        } catch (error) {
+          throw new Error(`/package: Failed to fetch tarball from npm URL: ${error.message}`);
+        }
 
       } else {
         throw new Error("Unsupported URL hostname. Only GitHub and npm registry URLs are supported.");
       }
     } catch (error) {
+      console.error(`/package: Error processing URL: ${error.message}`);
       return {
         statusCode: 400,
         headers: {
@@ -228,7 +330,8 @@ export const handler = async (event) => {
     }
   } else {
     // Neither Content nor URL is provided
-    return {
+      console.error("/package: Either Content or URL must be provided.");
+      return {
       statusCode: 400,
       headers: {
         'Access-Control-Allow-Origin': '*',
