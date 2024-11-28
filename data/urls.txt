@@ -1,1 +1,2 @@
 https://github.com/wycats/jspec
+https://github.com/wycats/jspec
