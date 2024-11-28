@@ -36,7 +36,7 @@ jobs:
           strip_components: 1
           rm: true
           overwrite: true
-          timeout: 60s
+          timeout: 180s
 
       - name: Install and Setup
         uses: appleboy/ssh-action@v0.1.7
