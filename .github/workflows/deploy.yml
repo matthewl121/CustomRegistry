@@ -1,158 +1,158 @@
-# name: Deploy to EC2
-# on:
-#   push:
-#     branches:
-#       - aws_cd_dev
-# jobs:
-#   deploy:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v3
-
-#       - name: Fix file permissions
-#         run: |
-#           chmod -R 755 .
-#           git config --global --add safe.directory '*'
-
-#       - name: Set executable permissions for ./run
-#         run: chmod +x run
-
-#       - name: Create .env file
-#         run: |
-#           echo "GITHUB_TOKEN=${{ secrets.TOKEN }}" >> .env
-#           echo "LOG_FILE=LOGS/log_file.txt" >> .env
-#           echo "LOG_LEVEL=2" >> .env
-
-#       - name: Deploy to EC2
-#         uses: appleboy/scp-action@v0.1.3
-#         with:
-#           host: ${{ secrets.EC2_HOST }}
-#           username: ${{ secrets.EC2_USER }}
-#           key: ${{ secrets.SSH_KEY }}
-#           port: 22
-#           source: "."
-#           target: "~/backend"
-#           strip_components: 1
-#           rm: true
-#           overwrite: true
-#           timeout: 180s
-
-#       - name: Install and Setup
-#         uses: appleboy/ssh-action@v0.1.7
-#         with:
-#           host: ${{ secrets.EC2_HOST }}
-#           username: ${{ secrets.EC2_USER }}
-#           key: ${{ secrets.SSH_KEY }}
-#           port: 22
-#           script: |
-#             curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-#             source ~/.bashrc
-#             nvm install 18
-#             cd ~/backend
-#             mkdir -p LOGS
-#             touch LOGS/log_file.txt
-#             npm ci --no-fund --no-audit --loglevel=error
-#             ./run install
-
-#       - name: Verify Deployment
-#         uses: appleboy/ssh-action@v0.1.7
-#         with:
-#           host: ${{ secrets.EC2_HOST }}
-#           username: ${{ secrets.EC2_USER }}
-#           key: ${{ secrets.SSH_KEY }}
-#           port: 22
-#           script: |
-#             source ~/.bashrc
-#             cd ~/backend
-#             node --version
-#             npm --version
-
-
 name: Deploy to EC2
 on:
- push:
-   branches:
-     - aws_cd_dev
+  push:
+    branches:
+      - aws_cd_dev
 jobs:
- deploy:
-   runs-on: ubuntu-latest
-   steps:
-     - uses: actions/checkout@v3
-     
-     - name: Debug Environment
-       run: |
-         echo "Workspace: $GITHUB_WORKSPACE"
-         ls -la
-     
-     - name: Fix Permissions
-       run: |
-         chmod -R 755 .
-         git config --global --add safe.directory '*'
-         chmod +x run
-     
-     - name: Create .env
-       run: |
-         echo "GITHUB_TOKEN=${{ secrets.TOKEN }}" >> .env
-         echo "LOG_FILE=LOGS/log_file.txt" >> .env
-         echo "LOG_LEVEL=2" >> .env
-         
-     - name: Test SSH Connection
-       run: |
-         echo "${{ secrets.SSH_KEY }}" > ssh_key.pem
-         chmod 600 ssh_key.pem
-         ssh -vvv -i ssh_key.pem -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} echo "Connection test"
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-     - name: Check Network
-       run: |
-         nc -zv ${{ secrets.EC2_HOST }} 22
-         curl -v telnet://${{ secrets.EC2_HOST }}:22
+      - name: Fix file permissions
+        run: |
+          chmod -R 755 .
+          git config --global --add safe.directory '*'
+
+      - name: Set executable permissions for ./run
+        run: chmod +x run
+
+      - name: Create .env file
+        run: |
+          echo "GITHUB_TOKEN=${{ secrets.TOKEN }}" >> .env
+          echo "LOG_FILE=LOGS/log_file.txt" >> .env
+          echo "LOG_LEVEL=2" >> .env
+
+      - name: Deploy to EC2
+        uses: appleboy/scp-action@v0.1.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          source: "."
+          target: "~/backend"
+          strip_components: 1
+          rm: true
+          overwrite: true
+          timeout: 180s
+
+      - name: Install and Setup
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          script: |
+            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+            source ~/.bashrc
+            nvm install 18
+            cd ~/backend
+            mkdir -p LOGS
+            touch LOGS/log_file.txt
+            npm ci --no-fund --no-audit --loglevel=error
+            ./run install
+
+      - name: Verify Deployment
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          script: |
+            source ~/.bashrc
+            cd ~/backend
+            node --version
+            npm --version
+
+
+# name: Deploy to EC2
+# on:
+#  push:
+#    branches:
+#      - aws_cd_dev
+# jobs:
+#  deploy:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v3
      
-     - name: Deploy to EC2
-       uses: appleboy/scp-action@v0.1.3
-       with:
-         host: ${{ secrets.EC2_HOST }}
-         username: ${{ secrets.EC2_USER }} 
-         key: ${{ secrets.SSH_KEY }}
-         port: 22
-         source: "."
-         target: "~/backend"
-         strip_components: 1
-         rm: true
-         overwrite: true
-         timeout: 600s
-         debug: true
-         use_insecure_cipher: true
-         command_timeout: 600s
+#      - name: Debug Environment
+#        run: |
+#          echo "Workspace: $GITHUB_WORKSPACE"
+#          ls -la
      
-     - name: Install and Setup
-       uses: appleboy/ssh-action@v0.1.7
-       with:
-         host: ${{ secrets.EC2_HOST }}
-         username: ${{ secrets.EC2_USER }}
-         key: ${{ secrets.SSH_KEY }}
-         port: 22
-         command_timeout: 180s
-         script: |
-           curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-           source ~/.bashrc
-           nvm install 18
-           cd ~/backend
-           mkdir -p LOGS
-           touch LOGS/log_file.txt
-           npm ci --no-fund --no-audit --loglevel=error
-           ./run install
+#      - name: Fix Permissions
+#        run: |
+#          chmod -R 755 .
+#          git config --global --add safe.directory '*'
+#          chmod +x run
      
-     - name: Verify Deployment
-       uses: appleboy/ssh-action@v0.1.7
-       with:
-         host: ${{ secrets.EC2_HOST }}
-         username: ${{ secrets.EC2_USER }}
-         key: ${{ secrets.SSH_KEY }}
-         port: 22
-         script: |
-           source ~/.bashrc
-           cd ~/backend
-           node --version
-           npm --version
-           ls -la
+#      - name: Create .env
+#        run: |
+#          echo "GITHUB_TOKEN=${{ secrets.TOKEN }}" >> .env
+#          echo "LOG_FILE=LOGS/log_file.txt" >> .env
+#          echo "LOG_LEVEL=2" >> .env
+         
+#      - name: Test SSH Connection
+#        run: |
+#          echo "${{ secrets.SSH_KEY }}" > ssh_key.pem
+#          chmod 600 ssh_key.pem
+#          ssh -vvv -i ssh_key.pem -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} echo "Connection test"
+
+#      - name: Check Network
+#        run: |
+#          nc -zv ${{ secrets.EC2_HOST }} 22
+#          curl -v telnet://${{ secrets.EC2_HOST }}:22
+     
+#      - name: Deploy to EC2
+#        uses: appleboy/scp-action@v0.1.3
+#        with:
+#          host: ${{ secrets.EC2_HOST }}
+#          username: ${{ secrets.EC2_USER }} 
+#          key: ${{ secrets.SSH_KEY }}
+#          port: 22
+#          source: "."
+#          target: "~/backend"
+#          strip_components: 1
+#          rm: true
+#          overwrite: true
+#          timeout: 600s
+#          debug: true
+#          use_insecure_cipher: true
+#          command_timeout: 600s
+     
+#      - name: Install and Setup
+#        uses: appleboy/ssh-action@v0.1.7
+#        with:
+#          host: ${{ secrets.EC2_HOST }}
+#          username: ${{ secrets.EC2_USER }}
+#          key: ${{ secrets.SSH_KEY }}
+#          port: 22
+#          command_timeout: 180s
+#          script: |
+#            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+#            source ~/.bashrc
+#            nvm install 18
+#            cd ~/backend
+#            mkdir -p LOGS
+#            touch LOGS/log_file.txt
+#            npm ci --no-fund --no-audit --loglevel=error
+#            ./run install
+     
+#      - name: Verify Deployment
+#        uses: appleboy/ssh-action@v0.1.7
+#        with:
+#          host: ${{ secrets.EC2_HOST }}
+#          username: ${{ secrets.EC2_USER }}
+#          key: ${{ secrets.SSH_KEY }}
+#          port: 22
+#          script: |
+#            source ~/.bashrc
+#            cd ~/backend
+#            node --version
+#            npm --version
+#            ls -la
