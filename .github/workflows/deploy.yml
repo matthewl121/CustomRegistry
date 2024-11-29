@@ -1,72 +1,72 @@
-# name: Deploy to EC2
-# on:
-#   push:
-#     branches:
-#       - aws_cd_dev
-# jobs:
-#   deploy:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v3
+name: Deploy to EC2
+on:
+  push:
+    branches:
+      - aws_cd_dev
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-#       - name: Fix file permissions
-#         run: |
-#           chmod -R 755 .
-#           git config --global --add safe.directory '*'
+      - name: Fix file permissions
+        run: |
+          chmod -R 755 .
+          git config --global --add safe.directory '*'
 
-#       - name: Set executable permissions for ./run
-#         run: chmod +x run
+      - name: Set executable permissions for ./run
+        run: chmod +x run
 
-#       - name: Create .env file
-#         run: |
-#           echo "GITHUB_TOKEN=${{ secrets.TOKEN }}" >> .env
-#           echo "LOG_FILE=LOGS/log_file.txt" >> .env
-#           echo "LOG_LEVEL=2" >> .env
+      - name: Create .env file
+        run: |
+          echo "GITHUB_TOKEN=${{ secrets.TOKEN }}" >> .env
+          echo "LOG_FILE=LOGS/log_file.txt" >> .env
+          echo "LOG_LEVEL=2" >> .env
 
-#       - name: Deploy to EC2
-#         uses: appleboy/scp-action@v0.1.3
-#         with:
-#           host: ${{ secrets.EC2_HOST }}
-#           username: ${{ secrets.EC2_USER }}
-#           key: ${{ secrets.SSH_KEY }}
-#           port: 22
-#           source: "."
-#           target: "~/backend"
-#           strip_components: 1
-#           rm: true
-#           overwrite: true
-#           timeout: 180s
+      - name: Deploy to EC2
+        uses: appleboy/scp-action@v0.1.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          source: "."
+          target: "~/backend"
+          strip_components: 1
+          rm: true
+          overwrite: true
+          timeout: 180s
 
-#       - name: Install and Setup
-#         uses: appleboy/ssh-action@v0.1.7
-#         with:
-#           host: ${{ secrets.EC2_HOST }}
-#           username: ${{ secrets.EC2_USER }}
-#           key: ${{ secrets.SSH_KEY }}
-#           port: 22
-#           script: |
-#             curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-#             source ~/.bashrc
-#             nvm install 18
-#             cd ~/backend
-#             mkdir -p LOGS
-#             touch LOGS/log_file.txt
-#             npm ci --no-fund --no-audit --loglevel=error
-#             ./run install
+      - name: Install and Setup
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          script: |
+            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+            source ~/.bashrc
+            nvm install 18
+            cd ~/backend
+            mkdir -p LOGS
+            touch LOGS/log_file.txt
+            npm ci --no-fund --no-audit --loglevel=error
+            ./run install
 
-#       - name: Verify Deployment
-#         uses: appleboy/ssh-action@v0.1.7
-#         with:
-#           host: ${{ secrets.EC2_HOST }}
-#           username: ${{ secrets.EC2_USER }}
-#           key: ${{ secrets.SSH_KEY }}
-#           port: 22
-#           script: |
-#             source ~/.bashrc
-#             cd ~/backend
-#             node --version
-#             npm --version
+      - name: Verify Deployment
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          script: |
+            source ~/.bashrc
+            cd ~/backend
+            node --version
+            npm --version
 
 
 # name: Deploy to EC2
@@ -223,173 +223,173 @@
 #             node --version
 #             npm --version
 
-# name: Deploy to EC2
-# on:
-#   push:
-#     branches:
-#       - aws_cd_dev
-# jobs:
-#   deploy:
-#     runs-on: ubuntu-latest
-#     steps:
-#       # Checkout the repository
-#       - name: Checkout code
-#         uses: actions/checkout@v3
+# # name: Deploy to EC2
+# # on:
+# #   push:
+# #     branches:
+# #       - aws_cd_dev
+# # jobs:
+# #   deploy:
+# #     runs-on: ubuntu-latest
+# #     steps:
+# #       # Checkout the repository
+# #       - name: Checkout code
+# #         uses: actions/checkout@v3
 
-#       # Fix file permissions
-#       - name: Fix file permissions
-#         run: chmod -R 755 .
+# #       # Fix file permissions
+# #       - name: Fix file permissions
+# #         run: chmod -R 755 .
 
-#       # Create .env file
-#       - name: Create .env file
-#         run: |
-#           echo "GITHUB_TOKEN=${{ secrets.TOKEN }}" >> .env
-#           echo "LOG_FILE=LOGS/log_file.txt" >> .env
-#           echo "LOG_LEVEL=2" >> .env
+# #       # Create .env file
+# #       - name: Create .env file
+# #         run: |
+# #           echo "GITHUB_TOKEN=${{ secrets.TOKEN }}" >> .env
+# #           echo "LOG_FILE=LOGS/log_file.txt" >> .env
+# #           echo "LOG_LEVEL=2" >> .env
 
-#       # Debug SSH Connectivity
-#       - name: Debug SSH Connectivity
-#         run: |
-#           echo "Testing SSH connection to EC2..."
-#           ssh -o StrictHostKeyChecking=no -i ${{ secrets.SSH_KEY }} -p 22 ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} exit
-#         continue-on-error: true  # Allow workflow to continue if SSH fails to debug further
+# #       # Debug SSH Connectivity
+# #       - name: Debug SSH Connectivity
+# #         run: |
+# #           echo "Testing SSH connection to EC2..."
+# #           ssh -o StrictHostKeyChecking=no -i ${{ secrets.SSH_KEY }} -p 22 ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} exit
+# #         continue-on-error: true  # Allow workflow to continue if SSH fails to debug further
 
-#       # Deploy to EC2
-#       - name: Deploy to EC2
-#         uses: appleboy/scp-action@v0.1.3
-#         with:
-#           host: ${{ secrets.EC2_HOST }}
-#           username: ${{ secrets.EC2_USER }}
-#           key: ${{ secrets.SSH_KEY }}
-#           port: 22
-#           source: "."
-#           target: "~/backend"
-#           scpignore: ".scpignore"  # Ignore unnecessary files during transfer
-#           timeout: 300s           # Extended timeout
+# #       # Deploy to EC2
+# #       - name: Deploy to EC2
+# #         uses: appleboy/scp-action@v0.1.3
+# #         with:
+# #           host: ${{ secrets.EC2_HOST }}
+# #           username: ${{ secrets.EC2_USER }}
+# #           key: ${{ secrets.SSH_KEY }}
+# #           port: 22
+# #           source: "."
+# #           target: "~/backend"
+# #           scpignore: ".scpignore"  # Ignore unnecessary files during transfer
+# #           timeout: 300s           # Extended timeout
 
-#       # Install and setup on EC2
-#       - name: Install and Setup
-#         uses: appleboy/ssh-action@v0.1.7
-#         with:
-#           host: ${{ secrets.EC2_HOST }}
-#           username: ${{ secrets.EC2_USER }}
-#           key: ${{ secrets.SSH_KEY }}
-#           port: 22
-#           script: |
-#             set -e  # Exit on any error
-#             echo "Setting up NVM and Node.js..."
-#             export NVM_DIR="$HOME/.nvm"
-#             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-#             curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-#             nvm install 18
-#             echo "Preparing project..."
-#             cd ~/backend
-#             mkdir -p LOGS
-#             touch LOGS/log_file.txt
-#             npm ci --no-fund --no-audit --loglevel=error
-#             ./run install
+# #       # Install and setup on EC2
+# #       - name: Install and Setup
+# #         uses: appleboy/ssh-action@v0.1.7
+# #         with:
+# #           host: ${{ secrets.EC2_HOST }}
+# #           username: ${{ secrets.EC2_USER }}
+# #           key: ${{ secrets.SSH_KEY }}
+# #           port: 22
+# #           script: |
+# #             set -e  # Exit on any error
+# #             echo "Setting up NVM and Node.js..."
+# #             export NVM_DIR="$HOME/.nvm"
+# #             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+# #             curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+# #             nvm install 18
+# #             echo "Preparing project..."
+# #             cd ~/backend
+# #             mkdir -p LOGS
+# #             touch LOGS/log_file.txt
+# #             npm ci --no-fund --no-audit --loglevel=error
+# #             ./run install
 
-#       # Verify Deployment
-#       - name: Verify Deployment
-#         uses: appleboy/ssh-action@v0.1.7
-#         with:
-#           host: ${{ secrets.EC2_HOST }}
-#           username: ${{ secrets.EC2_USER }}
-#           key: ${{ secrets.SSH_KEY }}
-#           port: 22
-#           script: |
-#             set -e
-#             echo "Verifying Node.js installation..."
-#             export NVM_DIR="$HOME/.nvm"
-#             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-#             cd ~/backend
-#             node --version
-#             npm --version
+# #       # Verify Deployment
+# #       - name: Verify Deployment
+# #         uses: appleboy/ssh-action@v0.1.7
+# #         with:
+# #           host: ${{ secrets.EC2_HOST }}
+# #           username: ${{ secrets.EC2_USER }}
+# #           key: ${{ secrets.SSH_KEY }}
+# #           port: 22
+# #           script: |
+# #             set -e
+# #             echo "Verifying Node.js installation..."
+# #             export NVM_DIR="$HOME/.nvm"
+# #             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+# #             cd ~/backend
+# #             node --version
+# #             npm --version
 
-#       # Debug SCP Transfer
-#       - name: Debug SCP Transfer
-#         run: |
-#           echo "Testing file transfer with SCP..."
-#           scp -o StrictHostKeyChecking=no -i ${{ secrets.SSH_KEY }} -P 22 test_file.txt ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/test_file.txt
-#         continue-on-error: true  # Allow workflow to continue even if SCP fails
+# #       # Debug SCP Transfer
+# #       - name: Debug SCP Transfer
+# #         run: |
+# #           echo "Testing file transfer with SCP..."
+# #           scp -o StrictHostKeyChecking=no -i ${{ secrets.SSH_KEY }} -P 22 test_file.txt ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/test_file.txt
+# #         continue-on-error: true  # Allow workflow to continue even if SCP fails
 
 
-name: Deploy to EC2
-on:
-  push:
-    branches:
-      - aws_cd_dev
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+# # name: Deploy to EC2
+# # on:
+# #   push:
+# #     branches:
+# #       - aws_cd_dev
+# # jobs:
+# #   deploy:
+# #     runs-on: ubuntu-latest
+# #     steps:
+# #       - name: Checkout code
+# #         uses: actions/checkout@v3
 
-      - name: Create .env file
-        run: |
-          echo "GITHUB_TOKEN=${{ secrets.TOKEN }}" >> .env
-          echo "LOG_FILE=LOGS/log_file.txt" >> .env
-          echo "LOG_LEVEL=2" >> .env
+# #       - name: Create .env file
+# #         run: |
+# #           echo "GITHUB_TOKEN=${{ secrets.TOKEN }}" >> .env
+# #           echo "LOG_FILE=LOGS/log_file.txt" >> .env
+# #           echo "LOG_LEVEL=2" >> .env
 
-      # Debug SSH Connectivity
-      - name: Debug SSH Connectivity
-        run: |
-          echo "Testing SSH connection to EC2..."
-          ssh -v -o StrictHostKeyChecking=no -i ${{ secrets.SSH_KEY }} -p 22 ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} exit
-        continue-on-error: false
+# #       # Debug SSH Connectivity
+# #       - name: Debug SSH Connectivity
+# #         run: |
+# #           echo "Testing SSH connection to EC2..."
+# #           ssh -v -o StrictHostKeyChecking=no -i ${{ secrets.SSH_KEY }} -p 22 ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} exit
+# #         continue-on-error: false
 
-      # Debug SCP Transfer
-      - name: Debug SCP Transfer
-        run: |
-          echo "Testing file transfer with SCP..."
-          scp -v -o StrictHostKeyChecking=no -i ${{ secrets.SSH_KEY }} -P 22 test_file.txt ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/test_file.txt
-        continue-on-error: false
+# #       # Debug SCP Transfer
+# #       - name: Debug SCP Transfer
+# #         run: |
+# #           echo "Testing file transfer with SCP..."
+# #           scp -v -o StrictHostKeyChecking=no -i ${{ secrets.SSH_KEY }} -P 22 test_file.txt ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/test_file.txt
+# #         continue-on-error: false
 
-      - name: Deploy to EC2
-        uses: appleboy/scp-action@v0.1.3
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          port: 22
-          source: "."
-          target: "~/backend"
-          timeout: 600s
-          scpignore: ".scpignore"
+# #       - name: Deploy to EC2
+# #         uses: appleboy/scp-action@v0.1.3
+# #         with:
+# #           host: ${{ secrets.EC2_HOST }}
+# #           username: ${{ secrets.EC2_USER }}
+# #           key: ${{ secrets.SSH_KEY }}
+# #           port: 22
+# #           source: "."
+# #           target: "~/backend"
+# #           timeout: 600s
+# #           scpignore: ".scpignore"
 
-      - name: Install and Setup
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          port: 22
-          script: |
-            set -e
-            echo "Setting up NVM and Node.js..."
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-            nvm install 18
-            echo "Preparing project..."
-            cd ~/backend
-            mkdir -p LOGS
-            touch LOGS/log_file.txt
-            npm ci --no-fund --no-audit --loglevel=error
-            ./run install
+# #       - name: Install and Setup
+# #         uses: appleboy/ssh-action@v0.1.7
+# #         with:
+# #           host: ${{ secrets.EC2_HOST }}
+# #           username: ${{ secrets.EC2_USER }}
+# #           key: ${{ secrets.SSH_KEY }}
+# #           port: 22
+# #           script: |
+# #             set -e
+# #             echo "Setting up NVM and Node.js..."
+# #             export NVM_DIR="$HOME/.nvm"
+# #             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+# #             curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+# #             nvm install 18
+# #             echo "Preparing project..."
+# #             cd ~/backend
+# #             mkdir -p LOGS
+# #             touch LOGS/log_file.txt
+# #             npm ci --no-fund --no-audit --loglevel=error
+# #             ./run install
 
-      - name: Verify Deployment
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          port: 22
-          script: |
-            set -e
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            cd ~/backend
-            node --version
-            npm --version
+# #       - name: Verify Deployment
+# #         uses: appleboy/ssh-action@v0.1.7
+# #         with:
+# #           host: ${{ secrets.EC2_HOST }}
+# #           username: ${{ secrets.EC2_USER }}
+# #           key: ${{ secrets.SSH_KEY }}
+# #           port: 22
+# #           script: |
+# #             set -e
+# #             export NVM_DIR="$HOME/.nvm"
+# #             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+# #             cd ~/backend
+# #             node --version
+# #             npm --version
