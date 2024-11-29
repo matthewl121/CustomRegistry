@@ -337,7 +337,7 @@ jobs:
         run: |
           echo "Testing SSH connection to EC2..."
           ssh -v -o StrictHostKeyChecking=no -i ${{ secrets.SSH_KEY }} -p 22 ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} exit
-        continue-on-error: true
+        continue-on-error: false
 
       # Debug SCP Transfer
       - name: Debug SCP Transfer
