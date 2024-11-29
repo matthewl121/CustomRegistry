@@ -24,12 +24,6 @@ jobs:
           echo "LOG_FILE=LOGS/log_file.txt" >> .env
           echo "LOG_LEVEL=2" >> .env
 
-      - name: Set up SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/new-key.pem
-          chmod 400 ~/.ssh/new-key.pem
-
       - name: Deploy to EC2
         uses: appleboy/scp-action@v0.1.3
         with:
