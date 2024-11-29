@@ -419,6 +419,9 @@ jobs:
           echo "GITHUB_TOKEN=${{ secrets.TOKEN }}" >> .env
           echo "LOG_FILE=LOGS/log_file.txt" >> .env
           echo "LOG_LEVEL=2" >> .env
+      
+      - name: Debug EC2_HOST
+        run: echo "EC2_HOST is ${{ secrets.EC2_HOST }}"
 
       - name: Deploy to EC2 (scp)
         uses: appleboy/scp-action@v0.1.3
