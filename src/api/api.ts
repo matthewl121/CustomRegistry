@@ -35,6 +35,7 @@ export const apiGet = async (endpoint: string, options?: RequestOptions) => {
 
 // POST request
 export const apiPost = async (endpoint: string, options?: RequestOptions) => {
+  console.log(options)
   try {
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       method: 'POST',

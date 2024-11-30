@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { CustomTextInput, DebloatCheckbox } from '.';
+import { apiPost } from '../api/api.ts';
 
 export const UploadPackage = () => {
     const [uploadMode, setUploadMode] = useState('url');  // State to switch between 'url' and 'content' mode
@@ -15,53 +16,49 @@ export const UploadPackage = () => {
             console.error("URL must be provided.");
             return;
         }
-
+    
         if (uploadMode === 'content' && !file) {
             console.error("File must be provided.");
             return;
         }
-
+    
         // Prepare package data based on the upload mode
         let packageData = {
             JSProgram: jsProgram,  // Use the input JSProgram
         };
-
+    
         if (uploadMode === 'content') {
             // Convert the file to base64 if a file is selected
             const content = await fileToBase64(file);
             packageData.Content = content;  // Attach content as base64
-            packageData.Name = packageName
-            packageData.debloat = debloat
+            packageData.Name = packageName;
+            packageData.debloat = debloat;
         }
-
+    
         if (uploadMode === 'url') {
             packageData.URL = url;  // Attach URL if provided
         }
-
+    
         // Ensure Content and URL are not both set simultaneously
         if (packageData.Content && packageData.URL) {
             console.error('Both Content and URL cannot be set at the same time.');
             return;
         }
-
+    
         try {
-            const response = await fetch('/package', {
-                method: 'POST',
+            // Use apiPost function to send the POST request
+            const response = await apiPost('/package', {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(packageData),
+                body: packageData,
             });
-
-            if (!response.ok) {
-                throw new Error('Upload failed');
-            }
-
-            const data = await response.json();
-            console.log('Package uploaded successfully:', data);
-
+    
+            // Parse the JSON response from the server
+            console.log('Package uploaded successfully:', response);
+    
             // Save metadata from the response
-            setMetadata(data.metadata);
+            setMetadata(response.metadata);
         } catch (error) {
             console.error('Error uploading package:', error);
         }
