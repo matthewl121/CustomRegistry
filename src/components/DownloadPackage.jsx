@@ -13,14 +13,16 @@ const DownloadPackage = () => {
             console.error("Package name and version are required.");
             return;
         }
-
+    
         const packageId = `${pkg}--${version}`;
         try {
             const data = await apiGet(`/package/${packageId}`);
+            console.log('Received data:', data);  // Add this to inspect the data
+    
             const { metadata, data: packageData } = data;
-
+    
             setMetadata(metadata);
-            setFileContent(packageData.Content);
+            setFileContent(packageData.Content);  // Ensure packageData.Content exists
         } catch (error) {
             console.error('Error retrieving package:', error);
         }
