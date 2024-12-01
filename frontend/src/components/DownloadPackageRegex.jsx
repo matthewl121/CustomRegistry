@@ -1,56 +1,59 @@
 import React, { useState } from 'react';
 import { CustomTextInput } from '.';
-import { apiGet } from '../api/api.ts'; // Assuming you have an apiGet method for GET requests
+import { apiPost } from '../api/api.ts';
 
-const PackageCost = () => {
-    const [pkgId, setPkgId] = useState("");
-    const [includeDependencies, setIncludeDependencies] = useState(false);
-    const [cost, setCost] = useState(null);
+const DownloadPackageRegex = () => {
+    const [regex, setRegex] = useState("");
+    const [packages, setPackages] = useState([]);
     const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
 
-    const handleCost = async () => {
-        if (!pkgId) {
-            console.error("Package ID is required.");
+    const handleDownload = async () => {
+        if (!regex) {
+            console.error("Regular Expression is required.");
             return;
         }
 
+        setLoading(true);
+
         try {
-            // Make the API call to fetch the cost, including dependency if selected
-            const { data } = await apiGet(`/package/${pkgId}/cost`, {
-                params: { dependency: includeDependencies },
+            const response = await apiPost('/package/byRegEx', {
+                body: { RegEx: regex },
             });
 
-            setCost(data[pkgId]?.totalCost || 'N/A'); // Assuming the package cost is under the provided ID
-            setError("");  // Clear any previous errors
+            console.log("data:", response)
+
+            setPackages(response);
+            setError("");
         } catch (err) {
-            setError('Error fetching cost: ' + err.message);  // Handle errors
-            setCost(null);  // Clear previous cost on error
+            setError('Error fetching packages: ' + err.message);
+            setPackages([]);
+        } finally {
+            setLoading(false);
         }
+    };
+
+    const handleDownloadPackage = (packageId) => {
+        // Function to handle the actual package download
+        // You can implement download logic based on how the backend serves the files.
+        console.log(`Downloading package with ID: ${packageId}`);
     };
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <h1>Cost</h1>
+            <h1>Download Package by Regular Expression</h1>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <CustomTextInput
-                    placeholder="Enter Package ID"
-                    input={pkgId}
-                    setInput={setPkgId}
+                    placeholder="Enter Regular Expression"
+                    input={regex}
+                    setInput={setRegex}
                 />
-                <div>
-                    <label>
-                        <input
-                            type="checkbox"
-                            checked={includeDependencies}
-                            onChange={() => setIncludeDependencies(!includeDependencies)}
-                        />
-                        Include Dependencies
-                    </label>
-                </div>
             </div>
 
-            <button onClick={handleCost}>Get Cost</button>
+            <button onClick={handleDownload} disabled={loading}>
+                {loading ? 'Loading...' : 'Search Packages'}
+            </button>
 
             {error && (
                 <div style={{ color: 'red', marginTop: '10px' }}>
@@ -58,14 +61,23 @@ const PackageCost = () => {
                 </div>
             )}
 
-            {cost !== null && (
+            {packages && packages.length > 0 && (
                 <div style={{ marginTop: '20px' }}>
-                    <h3>Package Cost:</h3>
-                    <p>Total Cost: ${cost}</p>
+                    <h3>Matching Packages:</h3>
+                    <ul>
+                        {packages.map((pkg) => (
+                            <li key={pkg.ID}>
+                                <p>{pkg.Name} - {pkg.Version}</p>
+                                <button onClick={() => handleDownloadPackage(pkg.ID)}>
+                                    Download
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
                 </div>
             )}
         </div>
     );
 };
 
-export default PackageCost;
+export default DownloadPackageRegex;

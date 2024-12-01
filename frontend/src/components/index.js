@@ -3,6 +3,7 @@ export { default as CustomTextInput } from './custom/CustomTextInput';
 export { default as DebloatCheckbox } from './DebloatCheckbox';
 export { default as DropdownMenu } from './DropdownMenu';
 export { default as DownloadPackage } from './DownloadPackage';
+export { default as DownloadPackageRegex } from './DownloadPackageRegex';
 export { default as DownloadPackages } from './DownloadPackages';
 export { default as Home } from './Home';
 export { default as PackageCost } from './PackageCost';
