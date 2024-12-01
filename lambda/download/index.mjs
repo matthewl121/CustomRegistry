@@ -2,7 +2,7 @@ import { S3Client, GetObjectCommand, HeadObjectCommand} from "@aws-sdk/client-s3
 
 const s3 = new S3Client({ region: "us-east-1" });
 
-export const handler = async (event) => {
+export const downloadPackageHandler = async (event) => {
   // console.log("Received event:", JSON.stringify(event, null, 2)); // Log event for debugging
 
   const bucketName = "acmeregistrys3";
