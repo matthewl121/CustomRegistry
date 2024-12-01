@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { apiGet } from '../api/api.ts';
-import { CustomTextInput } from '.';
+import { CustomTextInput } from './index.js';
 
 const DownloadPackages = () => {
     const [pkgQuery, setPkgQuery] = useState("*");

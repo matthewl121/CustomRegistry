@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CustomTextInput } from '.';
+import { CustomTextInput } from './index.js';
 import { apiGet } from '../api/api.ts';
 
 export const PackageRating = () => {

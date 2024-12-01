@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CustomTextInput, DebloatCheckbox } from '.';
+import { CustomTextInput, DebloatCheckbox } from './index.js';
 import { apiPost } from '../api/api.ts';
 
 export const UpdatePackage = () => {
