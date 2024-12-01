@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { apiGet } from '../api/api.ts';
+import { apiPost } from '../api/api.ts'; // Assuming you have an apiPost method for POST requests
 import { CustomTextInput } from './index.js';
 
 const DownloadPackages = () => {
-    const [pkgQuery, setPkgQuery] = useState("*");
-    const [version, setVersion] = useState("");
-    const [packages, setPackages] = useState([]);
-    const [offset, setOffset] = useState(null);
+    const [pkgQuery, setPkgQuery] = useState(""); // Default query is "*"
+    const [version, setVersion] = useState(""); // Store version input
+    const [packages, setPackages] = useState([]); // Store the list of packages
 
     const handleSearch = async () => {
         if (!pkgQuery || !version) {
@@ -22,34 +21,12 @@ const DownloadPackages = () => {
         ];
 
         try {
-            const { data, headers } = await apiGet('/packages', { body });
+            const response = await apiPost('/packages', { body });
+            console.log(response)
 
-            setPackages(data);
-            const nextOffset = headers['offset'] || null;
-            setOffset(nextOffset);
+            setPackages(response); // Set the list of packages
         } catch (error) {
             console.error('Error retrieving packages:', error);
-        }
-    };
-
-    const handlePagination = async () => {
-        if (!offset) return;
-
-        const body = [
-            {
-                Version: version,
-                Name: pkgQuery,
-            },
-        ];
-
-        try {
-            const { data, headers } = await apiGet('/packages', { body, params: { offset } });
-
-            setPackages(prevPackages => [...prevPackages, ...data]);
-            const nextOffset = headers['offset'] || null;
-            setOffset(nextOffset);
-        } catch (error) {
-            console.error('Error retrieving more packages:', error);
         }
     };
 
@@ -81,10 +58,6 @@ const DownloadPackages = () => {
                             ))}
                         </ul>
                     </div>
-                )}
-
-                {offset && (
-                    <button onClick={handlePagination}>Load More</button>
                 )}
             </div>
         </div>
