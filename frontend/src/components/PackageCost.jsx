@@ -3,24 +3,31 @@ import { CustomTextInput } from './index.js';
 import { apiGet } from '../api/api.ts';
 
 const PackageCost = () => {
-    const [pkgId, setPkgId] = useState("");
-    const [includeDependencies, setIncludeDependencies] = useState(false);
-    const [cost, setCost] = useState(null);
-    const [error, setError] = useState("");
+    const [pkgId, setPkgId] = useState(""); // Store package ID
+    const [includeDependencies, setIncludeDependencies] = useState(false); // Control checkbox for including dependencies
+    const [cost, setCost] = useState(null); // Store package cost
+    const [error, setError] = useState(""); // Store error message
 
     const handleCost = async () => {
         if (!pkgId) {
-            console.error("Package ID is required.");
+            setError("Package ID is required.");
+            setCost(null); // Reset cost if package ID is missing
             return;
         }
 
         try {
-            // Make the API call to fetch the cost, including dependency if selected
-            const { data } = await apiGet(`/package/${pkgId}/cost`, {
-                params: { dependency: includeDependencies },
+            // Make the API call to fetch the cost, including dependencies if selected
+            const response = await apiGet(`/package/${pkgId}/cost`, {
+                params: { dependency: includeDependencies.toString() }, // Send dependency as a string ("true" or "false")
             });
 
-            setCost(data[pkgId]?.totalCost || 'N/A'); // Assuming the package cost is under the provided ID
+            // Update cost state based on the response (use the provided ID for cost lookup)
+            if (response[pkgId]) {
+                setCost(data[pkgId].totalCost || 'N/A'); // Use total cost if available
+            } else {
+                setCost('N/A'); // Fallback if no cost is found
+            }
+
             setError("");  // Clear any previous errors
         } catch (err) {
             setError('Error fetching cost: ' + err.message);  // Handle errors
@@ -41,7 +48,7 @@ const PackageCost = () => {
                         <input
                             type="checkbox"
                             checked={includeDependencies}
-                            onChange={() => setIncludeDependencies(!includeDependencies)}
+                            onChange={() => setIncludeDependencies(!includeDependencies)} // Toggle dependencies checkbox
                         />
                         Include Dependencies
                     </label>
