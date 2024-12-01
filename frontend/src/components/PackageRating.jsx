@@ -14,8 +14,9 @@ export const PackageRating = () => {
         }
 
         try {
-            const { data } = await apiGet(`/package/${pkgId}/rate`);
-            setRating(data);  // Store the returned rating data
+            const response = await apiGet(`/package/${pkgId}/rate`);
+            console.log(response)
+            setRating(response);  // Store the returned rating data
             setError("");  // Clear any previous errors
         } catch (err) {
             setError('Error fetching rating: ' + err.message);  // Handle errors
