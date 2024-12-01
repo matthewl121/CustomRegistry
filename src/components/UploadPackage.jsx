@@ -48,9 +48,6 @@ export const UploadPackage = () => {
         try {
             // Use apiPost function to send the POST request
             const response = await apiPost('/package', {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
                 body: packageData,
             });
     

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { CustomTextInput, DebloatCheckbox } from '.';
+import { apiPost } from '../api/api.ts';
 
 export const UpdatePackage = () => {
     const [uploadMode, setUploadMode] = useState('url');  // State to switch between 'url' and 'content' mode
@@ -47,12 +48,15 @@ export const UpdatePackage = () => {
             const content = await fileToBase64(file);  // Convert the file to base64
             packageData.data.Content = content;  // Add the content if it's a file update
             packageData.metadata.Name = packageName
+            packageData.data.Name = packageName
             packageData.data.debloat = debloat
         }
 
         if (uploadMode === 'url' && url) {
             packageData.data.URL = url;  // Add the URL if it's a URL-based update
             packageData.metadata.Name = url.split('/').pop()
+            packageData.data.Name = url.split('/').pop()
+
         }
 
         // Ensure Content and URL are not both set simultaneously
@@ -62,10 +66,8 @@ export const UpdatePackage = () => {
         }
 
         try {
-            const response = await fetch(`/package/${packageData.metadata.ID}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(packageData),
+            const response = await apiPost(`/package/${packageData.metadata.ID}`, {
+                body: packageData,
             });
 
             if (!response.ok) {

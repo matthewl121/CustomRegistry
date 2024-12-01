@@ -35,8 +35,8 @@ export const apiGet = async (endpoint: string, options?: RequestOptions) => {
 
 // POST request
 export const apiPost = async (endpoint: string, options?: RequestOptions) => {
-  console.log(options)
   try {
+    console.log("Payload being sent:", JSON.stringify(options?.body)); // Log the body before sending
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       method: 'POST',
       headers: {
