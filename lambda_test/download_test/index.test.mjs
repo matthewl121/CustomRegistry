@@ -1,7 +1,6 @@
 import { S3Client, GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
-import { downloadPackageHandler } from './downloadPackageHandler';
+import { downloadPackageHandler } from '../../lambda/download/index.mjs';
 import { Readable } from 'stream';
-import _ from 'lodash';
 
 // Mock the AWS SDK
 jest.mock("@aws-sdk/client-s3");
@@ -17,12 +16,15 @@ describe('downloadPackageHandler', () => {
 
   const createMockStream = (data) => Readable.from([Buffer.from(data)]);
 
-  const generateMetadata = (overrides = {}) => _.defaults(overrides, {
-    author: 'default-author',
-    version: '1.0.0',
-    description: 'default-description',
-    id: 'default-id'
-  });
+  const generateMetadata = (overrides = {}) => {
+    const defaults = {
+      author: 'default-author',
+      version: '1.0.0',
+      description: 'default-description',
+      id: 'default-id'
+    };
+    return { ...defaults, ...overrides };
+  };
 
   const verifyHeaders = (headers) => {
     const expectedHeaders = {
@@ -39,15 +41,11 @@ describe('downloadPackageHandler', () => {
       version: '2.0.0'
     });
 
-    const mockFileContent = _.repeat('test-content', 10);
+    const mockFileContent = 'test-content'.repeat(10);
     
-    // Chain mock implementations using lodash
-    _.forEach([
-      () => ({ Metadata: mockMetadata }),
-      () => ({ Body: createMockStream(mockFileContent) })
-    ], (implementation) => {
-      mockS3Send.mockImplementationOnce(async () => implementation());
-    });
+    mockS3Send
+      .mockResolvedValueOnce({ Metadata: mockMetadata })
+      .mockResolvedValueOnce({ Body: createMockStream(mockFileContent) });
 
     const result = await downloadPackageHandler('test-package-id');
 
@@ -57,8 +55,7 @@ describe('downloadPackageHandler', () => {
 
     const parsedBody = JSON.parse(result.body);
     
-    // Use lodash for deep comparison
-    expect(_.get(parsedBody, 'metadata')).toEqual({
+    expect(parsedBody.metadata).toEqual({
       'Author': 'test-author',
       'Version': '2.0.0',
       'Description': 'default-description',
@@ -66,7 +63,7 @@ describe('downloadPackageHandler', () => {
     });
 
     const expectedContent = Buffer.from(mockFileContent).toString('base64');
-    expect(_.get(parsedBody, 'data.Content')).toBe(expectedContent);
+    expect(parsedBody.data.Content).toBe(expectedContent);
 
     // Verify S3 calls
     expect(mockS3Send).toHaveBeenCalledTimes(2);
@@ -76,7 +73,7 @@ describe('downloadPackageHandler', () => {
     expect(getCall[0]).toBeInstanceOf(GetObjectCommand);
     
     // Verify command parameters
-    _.forEach([headCall[0].input, getCall[0].input], (params) => {
+    [headCall[0].input, getCall[0].input].forEach(params => {
       expect(params).toEqual({
         Bucket: 'acmeregistrys3',
         Key: 'test-package-id'
@@ -87,7 +84,7 @@ describe('downloadPackageHandler', () => {
   test('returns 404 when package does not exist', async () => {
     mockS3Send.mockRejectedValueOnce(new Error('Object not found'));
 
-    const result = await downloadPackageHandler(_.uniqueId('non-existent-'));
+    const result = await downloadPackageHandler('non-existent-package');
     
     expect(result.statusCode).toBe(404);
     verifyHeaders(result.headers);
@@ -100,7 +97,7 @@ describe('downloadPackageHandler', () => {
       .mockResolvedValueOnce({ Metadata: generateMetadata() })
       .mockRejectedValueOnce(new Error(errorMessage));
 
-    const result = await downloadPackageHandler(_.uniqueId('failed-'));
+    const result = await downloadPackageHandler('failed-package');
 
     expect(result.statusCode).toBe(400);
     verifyHeaders(result.headers);
@@ -121,16 +118,16 @@ describe('downloadPackageHandler', () => {
         .mockResolvedValueOnce({ Metadata: testCase.input })
         .mockResolvedValueOnce({ Body: createMockStream('test') });
 
-      const result = await downloadPackageHandler(_.uniqueId('test-'));
+      const result = await downloadPackageHandler('test-package');
       const parsedBody = JSON.parse(result.body);
 
-      // Verify each key is properly capitalized regardless of input case
-      _.forEach(parsedBody.metadata, (value, key) => {
+      // Verify each key is properly capitalized
+      Object.keys(parsedBody.metadata).forEach(key => {
         expect(key).toMatch(/^[A-Z][a-z]+$|^ID$/);
       });
 
       // Verify expected keys are present
-      expect(_.keys(parsedBody.metadata)).toEqual(
+      expect(Object.keys(parsedBody.metadata)).toEqual(
         expect.arrayContaining(['Author', 'Version', 'Description', 'ID'])
       );
     }
@@ -148,17 +145,17 @@ describe('downloadPackageHandler', () => {
         .mockResolvedValueOnce(metadata)
         .mockResolvedValueOnce({ Body: createMockStream('test') });
 
-      const result = await downloadPackageHandler(_.uniqueId('empty-'));
+      const result = await downloadPackageHandler('empty-package');
       expect(result.statusCode).toBe(200);
       
       const parsedBody = JSON.parse(result.body);
       expect(parsedBody.metadata).toBeDefined();
-      expect(_.isEmpty(parsedBody.metadata)).toBe(true);
+      expect(Object.keys(parsedBody.metadata).length).toBe(0);
     }
   });
 
   test('handles large file downloads efficiently', async () => {
-    const largeContent = _.repeat('x', 1024 * 1024); // 1MB of data
+    const largeContent = 'x'.repeat(1024 * 1024); // 1MB of data
     
     mockS3Send
       .mockResolvedValueOnce({ Metadata: generateMetadata() })
