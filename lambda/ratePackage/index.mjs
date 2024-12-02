@@ -14,7 +14,7 @@ const execAsync = promisify(exec);
 const BUCKET_NAME = "acmeregistrys3";
 const DEFAULT_SCORE = "-1";
 const ALLOWED_UPLOAD_SOURCES = ['github', 'npm', 'content'];
-const URL_FILE_PATH = 'CustomRegistry/pahse1/data/url.txt';
+const URL_FILE_PATH = '../../phase1/data/url.txt';
 
 // Initialize AWS SDK and S3 client
 const s3Client = new S3Client({ region: "us-east-1" });
@@ -103,7 +103,7 @@ const runCustomRegistryProgram = async (url) => {
         await fs.writeFile(URL_FILE_PATH, url);
 
         // Execute the program
-        const { stdout, stderr } = await execAsync(`cd CustomRegistry/phase1 && ./run data/url.txt`);
+        const { stdout, stderr } = await execAsync(`cd ../../phase1 && ./run data/url.txt`);
         console.log('Program output:', stdout);
         if (stderr) {
             console.error('Program stderr:', stderr);
