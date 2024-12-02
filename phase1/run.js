@@ -1,0 +1,111 @@
+#!/usr/bin/env node
+const fs = require('fs');
+const {exec, execSync} = require('child_process');
+
+try {
+    execSync('npm -v', { stdio: 'ignore' });
+} catch (error) {
+    console.log('NPM not found. Please install Node.js and NPM before running this script');
+    process.exit(1);
+}
+
+try {
+    execSync('npm install commander', { stdio: 'ignore' });
+    // console.log('Commander has been successfully installed');
+} catch (installError) {
+    // console.error('Error: Failed to install commander. Please try installing it manually.');
+    process.exit(1);
+}
+
+
+const {Command} = require('commander');
+
+const program = new Command();
+
+program
+    .command('install')
+    .description('install all dependencies')
+    .action(() => {
+        exec('npm install --save-dev && tsc --init', (error, stdout, stderr) => {
+            if (error) {
+                console.error(`%cError installing dependencies: ${error}`, `color: red`);
+                console.error(`%cError installing dependencies: ${stderr}`, `color: red`);
+                process.exit(1);
+            }
+            const addedPackages = stdout.match(/added (\d+) packages?/);
+            if (addedPackages && addedPackages[1]) {
+                const count = addedPackages[1];
+                console.log(`${count} dependencies were installed`);
+            } else {
+                console.log(`All dependencies are installed and up to date`);
+            }
+            // console.log(`%c${stdout}`, 'color: green');
+        });
+    });
+
+program
+    .argument('<file>', 'file to run')
+    .description('process URL of the file to run and output metrics in NDJSON format')
+    .action((file) => { 
+        try {
+            execSync('tsc src/index.ts', { stdio: 'ignore' });
+        } catch(error) {
+            // console.log('TSC file compiled successfully');
+        }
+        
+        const {main} =  require('./src/index');
+        fs.readFile(file, 'utf8', (err, data) => {
+            if (err) {
+                console.error(`%cError reading file: ${err}`, `color: red`);
+                process.exit(1);
+            } else if(process.env.LOG_FILE == null || process.env.LOG_FILE == '') {
+                console.log('LOG_FILE environment variable is not set');
+                process.exit(1);
+            } else if(process.env.GITHUB_TOKEN == null || process.env.GITHUB_TOKEN == '') {
+                console.log('GITHUB_TOKEN environment variable is not set');
+                process.exit(1);
+            } else if(process.env.LOG_LEVEL == null || process.env.LOG_LEVEL == '') {
+                console.log('LOG_LEVEL environment variable is not set');
+                process.exit(1);
+            }
+            const urls = data.split('\n').map(line => line.trim()).filter(line => line !== '');
+            urls.forEach(url => {
+                // console.log(`Processing URL: ${url}`);
+                const metrics = main(url);
+                // console.log(JSON.stringify(metrics));
+            });
+        });
+    });
+    //include the commands to run the tests etc
+
+program
+    .command('test')
+    .description('run tests, compile TypeScript, and execute compiled JavaScript')
+    .action(() => {
+        try {
+            // Run Jest tests and output results to a file
+            // console.log('Running Jest tests...');
+            execSync('npx jest --silent > test/jest-output.txt 2>&1', { stdio: 'ignore' });
+            // console.log('Tests completed. Output written to test/jest-output.txt');
+        } catch (error) {
+            continueOnError = true;
+        }
+
+        try {
+            execSync('npx tsc test/test_output.ts', { stdio: 'ignore' });
+        } catch(error) {
+            continueOnError = true;
+        }
+
+        try {
+            // Execute the compiled JavaScript file
+            // console.log('Running compiled JavaScript...');
+            execSync('node test/test_output.js', { stdio: 'inherit' });
+            // console.log('Test execution completed.');
+        } catch (error) {
+            continueOnError = true;
+        }
+    });
+
+
+program.parse(process.argv);
