@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { ratePackageHandler } from './index.mjs';
+import { ratePackageHandler } from '../../lambda/ratePackage/index.mjs';
 import { S3Client } from "@aws-sdk/client-s3";
 import { Readable } from 'stream';
 import AdmZip from 'adm-zip';
