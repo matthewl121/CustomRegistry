@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// run.js
 const fs = require('fs');
 const {exec, execSync} = require('child_process');
 
