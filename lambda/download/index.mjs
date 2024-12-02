@@ -1,94 +1,178 @@
+import { jest } from '@jest/globals';
 import { S3Client, GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
+import { downloadPackageHandler } from '../../lambda/download/index.mjs';
+import { Readable } from 'stream';
 
-const s3 = new S3Client({ region: "us-east-1" });
+// Mock the AWS SDK
+jest.mock("@aws-sdk/client-s3", () => ({
+  S3Client: jest.fn(() => ({
+    send: jest.fn()
+  })),
+  GetObjectCommand: jest.fn(),
+  HeadObjectCommand: jest.fn()
+}));
 
-const capitalizeFirstLetter = (str) => {
-  if (str === 'id') {
-    return 'ID'; // Special case for 'id' key to become 'ID'
-  }
-  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-};
+describe('downloadPackageHandler', () => {
+  let mockS3Send;
 
-const capitalizeKeys = (obj) => {
-  const result = {};
-  for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
-      const capitalizedKey = capitalizeFirstLetter(key);
-      result[capitalizedKey] = obj[key];
-    }
-  }
-  return result;
-};
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockS3Send = jest.fn();
+    S3Client.prototype.send = mockS3Send;
+  });
 
-export const downloadPackageHandler = async (packageId) => {
-  // console.log("Received event:", JSON.stringify(event, null, 2)); // Log event
-  const bucketName = "acmeregistrys3";
-  const params = {
-    Bucket: bucketName,
-    Key: packageId,
+  const createMockStream = (data) => Readable.from([Buffer.from(data)]);
+
+  const generateMetadata = (overrides = {}) => {
+    const defaults = {
+      author: 'default-author',
+      version: '1.0.0',
+      description: 'default-description',
+      id: 'default-id'
+    };
+    return { ...defaults, ...overrides };
   };
 
-  // Check if old package exists in S3
-  let response0;
-  try {
-    const command0 = new HeadObjectCommand(params);
-    response0 = await s3.send(command0);
-  } catch (error) {
-    console.error(`/package/{id} GET: ${error}`);
-    return {
-      statusCode: 404,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-      // body: JSON.stringify(`/package/{id} GET: ${error}`)
+  const verifyHeaders = (headers) => {
+    const expectedHeaders = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type'
     };
-  }
+    expect(headers).toMatchObject(expectedHeaders);
+  };
 
-  // retrieve metadata from package name
-  const packageMetadata = response0.Metadata;
-
-  try {
-    // retrieve zip file data
-    const data = await s3.send(new GetObjectCommand(params));
-    
-    // Collect the file data into chunks
-    const chunks = [];
-    for await (const chunk of data.Body) {
-      chunks.push(chunk);
-    }
-    const fileData = Buffer.concat(chunks);
-    console.log(`File downloaded successfully. File size: ${fileData.length} bytes`);
-
-    // craft response body
-    const responseBody = JSON.stringify({
-      metadata: capitalizeKeys(packageMetadata),
-      data: {
-        'Content': fileData.toString('base64'), // Convert Buffer to Base64 string
-      }
+  test('successfully downloads and processes a package', async () => {
+    const mockMetadata = generateMetadata({
+      author: 'test-author',
+      version: '2.0.0'
     });
 
-    return {
-      statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Content-Type': 'application/json',
-      },
-      body: responseBody,
-    };
-  } catch (error) {
-    console.error(`/package/{id} GET: Error downloading file: ${error.message}`);
-    return {
-      statusCode: 400, // supposed to be statusCode 500 but it's not in spec
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-      body: JSON.stringify({ message: `/package/{id} GET: Error downloading file: ${error.message}` }),
-    };
-  }
-};
+    const mockFileContent = 'test-content'.repeat(10);
+    
+    mockS3Send
+      .mockResolvedValueOnce({ Metadata: mockMetadata })
+      .mockResolvedValueOnce({ Body: createMockStream(mockFileContent) });
+
+    const result = await downloadPackageHandler('test-package-id');
+
+    expect(result.statusCode).toBe(200);
+    verifyHeaders(result.headers);
+    expect(result.headers['Content-Type']).toBe('application/json');
+
+    const parsedBody = JSON.parse(result.body);
+    
+    expect(parsedBody.metadata).toEqual({
+      'Author': 'test-author',
+      'Version': '2.0.0',
+      'Description': 'default-description',
+      'ID': 'default-id'  // Changed to match handler's ID capitalization
+    });
+
+    const expectedContent = Buffer.from(mockFileContent).toString('base64');
+    expect(parsedBody.data.Content).toBe(expectedContent);
+
+    expect(mockS3Send).toHaveBeenCalledTimes(2);
+    
+    const [headCall, getCall] = mockS3Send.mock.calls;
+    expect(headCall[0]).toBeInstanceOf(HeadObjectCommand);
+    expect(getCall[0]).toBeInstanceOf(GetObjectCommand);
+    
+    [headCall[0].input, getCall[0].input].forEach(params => {
+      expect(params).toEqual({
+        Bucket: 'acmeregistrys3',
+        Key: 'test-package-id'
+      });
+    });
+  });
+
+  test('returns 404 when package does not exist', async () => {
+    mockS3Send.mockRejectedValueOnce(new Error('Object not found'));
+
+    const result = await downloadPackageHandler('non-existent-package');
+    
+    expect(result.statusCode).toBe(404);
+    verifyHeaders(result.headers);
+    expect(mockS3Send).toHaveBeenCalledTimes(1);
+  });
+
+  test('returns 400 when download fails', async () => {
+    const errorMessage = 'Download failed';
+    mockS3Send
+      .mockResolvedValueOnce({ Metadata: generateMetadata() })
+      .mockRejectedValueOnce(new Error(errorMessage));
+
+    const result = await downloadPackageHandler('failed-package');
+
+    expect(result.statusCode).toBe(400);
+    verifyHeaders(result.headers);
+    
+    const parsedBody = JSON.parse(result.body);
+    expect(parsedBody.message).toBe(`/package/{id} GET: Error downloading file: ${errorMessage}`);
+  });
+
+  test('properly capitalizes metadata with various cases', async () => {
+    const testCases = [
+      { input: { author: 'test', VERSION: '1.0', Description: 'test', id: 'test' } },
+      { input: { AUTHOR: 'test', version: '1.0', description: 'test', ID: 'test' } },
+      { input: { Author: 'test', Version: '1.0', DESCRIPTION: 'test', Id: 'test' } }
+    ];
+
+    for (const testCase of testCases) {
+      mockS3Send
+        .mockResolvedValueOnce({ Metadata: testCase.input })
+        .mockResolvedValueOnce({ Body: createMockStream('test') });
+
+      const result = await downloadPackageHandler('test-package');
+      const parsedBody = JSON.parse(result.body);
+
+      // Updated to match handler's capitalization rules
+      Object.keys(parsedBody.metadata).forEach(key => {
+        if (key === 'ID') {
+          expect(key).toBe('ID');
+        } else {
+          expect(key).toMatch(/^[A-Z][a-z]+$/);
+        }
+      });
+
+      expect(Object.keys(parsedBody.metadata)).toEqual(
+        expect.arrayContaining(['Author', 'Version', 'Description', 'ID'])
+      );
+    }
+  });
+
+  test('handles empty and missing metadata gracefully', async () => {
+    const testCases = [
+      { Metadata: {} },
+      { Metadata: null },
+      {}
+    ];
+
+    for (const metadata of testCases) {
+      mockS3Send
+        .mockResolvedValueOnce(metadata)
+        .mockResolvedValueOnce({ Body: createMockStream('test') });
+
+      const result = await downloadPackageHandler('empty-package');
+      expect(result.statusCode).toBe(200);
+      
+      const parsedBody = JSON.parse(result.body);
+      expect(parsedBody.metadata).toBeDefined();
+      expect(Object.keys(parsedBody.metadata).length).toBe(0);
+    }
+  });
+
+  test('handles large file downloads efficiently', async () => {
+    const largeContent = 'x'.repeat(1024 * 1024); // 1MB of data
+    
+    mockS3Send
+      .mockResolvedValueOnce({ Metadata: generateMetadata() })
+      .mockResolvedValueOnce({ Body: createMockStream(largeContent) });
+
+    const result = await downloadPackageHandler('large-file');
+    expect(result.statusCode).toBe(200);
+    
+    const parsedBody = JSON.parse(result.body);
+    expect(parsedBody.data.Content.length).toBe(Buffer.from(largeContent).toString('base64').length);
+  });
+});
