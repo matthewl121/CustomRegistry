@@ -11,7 +11,8 @@ export const UpdatePackage = () => {
     const [packageName, setPackageName] = useState('');  // Package Name input for content
     const [packageId, setPackageId] = useState('');  // Package ID input for display purposes
     const [jsProgram, setJsProgram] = useState('');  // JSProgram input
-    const [metadata, setMetadata] = useState(null);  // Store metadata after update
+    const [uploadSuccess, setUploadSuccess] = useState(false);  // To show success message after upload
+    const [uploadError, setUploadError] = useState("");  // To store any error message
 
     const handleUploadModeChange = (mode) => {
         setUploadMode(mode);
@@ -27,8 +28,8 @@ export const UpdatePackage = () => {
     };
 
     const handleUpdate = async () => {
-        if (!version) {
-            console.error("Version must be provided.");
+        if (!version || !packageId) {
+            console.error("Version and Package ID must be provided.");
             return;
         }
 
@@ -47,16 +48,15 @@ export const UpdatePackage = () => {
         if (uploadMode === 'content' && file) {
             const content = await fileToBase64(file);  // Convert the file to base64
             packageData.data.Content = content;  // Add the content if it's a file update
-            packageData.metadata.Name = packageName
-            packageData.data.Name = packageName
-            packageData.data.debloat = debloat
+            packageData.metadata.Name = packageName;
+            packageData.data.Name = packageName;
+            packageData.data.debloat = debloat;
         }
 
         if (uploadMode === 'url' && url) {
             packageData.data.URL = url;  // Add the URL if it's a URL-based update
-            packageData.metadata.Name = url.split('/').pop()
-            packageData.data.Name = url.split('/').pop()
-
+            packageData.metadata.Name = url.split('/').pop();
+            packageData.data.Name = url.split('/').pop();
         }
 
         // Ensure Content and URL are not both set simultaneously
@@ -70,17 +70,12 @@ export const UpdatePackage = () => {
                 body: packageData,
             });
 
-            if (!response.ok) {
-                throw new Error('Update failed');
-            }
-
-            const data = await response.json();
-            console.log('Package updated successfully:', data);
-
-            // Save metadata from the response
-            setMetadata(data.metadata);
+            console.log('Package updated successfully:', response);
+            setUploadSuccess(true);  // Mark upload as successful
+            setUploadError("");  // Clear any previous errors
         } catch (error) {
-            console.error('Error updating package:', error);
+            setUploadSuccess(false);  // Reset success state on error
+            setUploadError('Error updating package: ' + error.message);  // Display error message
         }
     };
 
@@ -151,14 +146,16 @@ export const UpdatePackage = () => {
             />
             <button onClick={handleUpdate}>Update</button>
 
-            {metadata && (
-                <div style={{ marginTop: '20px' }}>
+            {uploadSuccess && (
+                <div style={{ marginTop: '20px', color: 'green' }}>
                     <h3>Update Successful!</h3>
-                    <p><strong>Package Name:</strong> {metadata.Name}</p>
-                    <p><strong>Version:</strong> {metadata.Version}</p>
-                    <p><strong>Package ID:</strong> {metadata.ID}</p>
-                    <p><strong>Package Metadata:</strong></p>
-                    <pre>{JSON.stringify(metadata, null, 2)}</pre>
+                    <p>Package {packageId} has been updated successfully.</p>
+                </div>
+            )}
+
+            {uploadError && (
+                <div style={{ marginTop: '20px', color: 'red' }}>
+                    <strong>{uploadError}</strong>
                 </div>
             )}
         </div>

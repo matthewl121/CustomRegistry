@@ -6,10 +6,12 @@ const DownloadPackages = () => {
     const [pkgQuery, setPkgQuery] = useState(""); // Default query is "*"
     const [version, setVersion] = useState(""); // Store version input
     const [packages, setPackages] = useState([]); // Store the list of packages
+    const [error, setError] = useState(""); // State to handle error message
 
     const handleSearch = async () => {
         if (!pkgQuery || !version) {
             console.error("Package query and version are required.");
+            setError("Package query and version are required."); // Show error
             return;
         }
 
@@ -22,11 +24,13 @@ const DownloadPackages = () => {
 
         try {
             const response = await apiPost('/packages', { body });
-            console.log(response)
+            console.log(response);
 
             setPackages(response); // Set the list of packages
+            setError(""); // Clear any previous errors if the request is successful
         } catch (error) {
             console.error('Error retrieving packages:', error);
+            setError(`Error retrieving packages: ${error.message}`); // Show error
         }
     };
 
@@ -45,6 +49,13 @@ const DownloadPackages = () => {
                 />
                 <button onClick={handleSearch}>Search Packages</button>
             </div>
+
+            {/* Error visualization */}
+            {error && (
+                <div style={{ color: 'red', marginTop: '10px' }}>
+                    <strong>{error}</strong>
+                </div>
+            )}
 
             <div style={{ marginTop: '20px' }}>
                 {packages.length > 0 && (

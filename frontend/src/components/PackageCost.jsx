@@ -23,7 +23,7 @@ const PackageCost = () => {
 
             // Update cost state based on the response (use the provided ID for cost lookup)
             if (response[pkgId]) {
-                setCost(data[pkgId].totalCost || 'N/A'); // Use total cost if available
+                setCost(response[pkgId].totalCost || 'N/A'); // Use total cost if available
             } else {
                 setCost('N/A'); // Fallback if no cost is found
             }

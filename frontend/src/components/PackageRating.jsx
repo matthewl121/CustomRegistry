@@ -12,6 +12,8 @@ export const PackageRating = () => {
             console.error("Package ID is required.");
             return;
         }
+        setError("");  // Clear any previous errors
+
 
         try {
             const response = await apiGet(`/package/${pkgId}/rate`);

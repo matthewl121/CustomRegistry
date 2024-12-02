@@ -10,15 +10,16 @@ export const UploadPackage = () => {
     const [packageName, setPackageName] = useState('');  // Package name
     const [jsProgram, setJsProgram] = useState('');  // JSProgram input
     const [metadata, setMetadata] = useState(null);  // Store metadata after upload
+    const [error, setError] = useState("");  // Store error message
 
     const handleUpload = async () => {
         if (uploadMode === 'url' && !url) {
-            console.error("URL must be provided.");
+            setError("URL must be provided.");
             return;
         }
-    
+
         if (uploadMode === 'content' && !file) {
-            console.error("File must be provided.");
+            setError("File must be provided.");
             return;
         }
     
@@ -41,7 +42,7 @@ export const UploadPackage = () => {
     
         // Ensure Content and URL are not both set simultaneously
         if (packageData.Content && packageData.URL) {
-            console.error('Both Content and URL cannot be set at the same time.');
+            setError('Both Content and URL cannot be set at the same time.');
             return;
         }
     
@@ -50,14 +51,15 @@ export const UploadPackage = () => {
             const response = await apiPost('/package', {
                 body: packageData,
             });
-    
-            // Parse the JSON response from the server
-            console.log('Package uploaded successfully:', response);
-    
+
+            console.log(response)
+
             // Save metadata from the response
-            setMetadata(response.metadata);
-        } catch (error) {
-            console.error('Error uploading package:', error);
+            setMetadata(response.metadata);  // Save the response (metadata)
+            setError("");  // Clear any previous errors
+        } catch (err) {
+            setError('Error uploading package: ' + err.message);  // Handle errors
+            setMetadata(null);  // Clear previous metadata on error
         }
     };
 
@@ -81,6 +83,7 @@ export const UploadPackage = () => {
         setPackageName('');
         setJsProgram('');
         setDebloat(false);
+        setError("");  // Clear error message on mode change
     };
 
     return (
@@ -135,14 +138,19 @@ export const UploadPackage = () => {
 
             <button onClick={handleUpload}>Upload</button>
 
+            {error && (
+                <div style={{ color: 'red', marginTop: '10px' }}>
+                    <strong>{error}</strong>
+                </div>
+            )}
+
             {metadata && (
                 <div style={{ marginTop: '20px' }}>
                     <h3>Upload Successful!</h3>
-                    <p><strong>Package Name:</strong> {metadata.Name}</p>
-                    <p><strong>Version:</strong> {metadata.Version}</p>
-                    <p><strong>Package ID:</strong> {metadata.ID}</p>
                     <p><strong>Package Metadata:</strong></p>
-                    <pre>{JSON.stringify(metadata, null, 2)}</pre>
+                    <p><strong>Name:</strong> {metadata.Name}</p>
+                    <p><strong>Version:</strong> {metadata.Version}</p>
+                    <p><strong>ID:</strong> {metadata.ID}</p>
                 </div>
             )}
         </div>
