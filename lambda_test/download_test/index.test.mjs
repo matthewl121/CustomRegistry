@@ -65,7 +65,7 @@ describe('downloadPackageHandler', () => {
       'Author': 'test-author',
       'Version': '2.0.0',
       'Description': 'default-description',
-      'Id': 'default-id'  // Changed to match actual implementation
+      'ID': 'default-id'  // Now matches actual implementation
     });
 
     const expectedContent = Buffer.from(mockFileContent).toString('base64');
@@ -125,13 +125,17 @@ describe('downloadPackageHandler', () => {
       const result = await downloadPackageHandler('test-package');
       const parsedBody = JSON.parse(result.body);
 
+      // Special case for 'ID', others should follow standard capitalization
       Object.keys(parsedBody.metadata).forEach(key => {
-        // Updated regex to match actual implementation
-        expect(key).toMatch(/^[A-Z][a-z]*$/);
+        if (key === 'ID') {
+          expect(key).toBe('ID');
+        } else {
+          expect(key).toMatch(/^[A-Z][a-z]+$/);
+        }
       });
 
       expect(Object.keys(parsedBody.metadata)).toEqual(
-        expect.arrayContaining(['Author', 'Version', 'Description', 'Id'])  // Changed ID to Id
+        expect.arrayContaining(['Author', 'Version', 'Description', 'ID'])
       );
     }
   });
