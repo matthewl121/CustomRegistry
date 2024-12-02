@@ -1,4 +1,10 @@
 "use strict";
+/**
+* apiUtils.ts
+* Utility functions for making HTTP requests to APIs with retry logic and rate limiting
+* Includes GET and POST request handlers with configurable retry attempts and delays
+* Handles authentication tokens, rate limits, and error responses
+*/
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -50,8 +56,14 @@ exports.__esModule = true;
 exports.apiPostRequest = exports.apiGetRequest = void 0;
 var axios_1 = require("axios");
 var log_1 = require("../utils/log");
+// Helper function to add delay between retries
 var delay = function (ms) { return new Promise(function (resolve) { return setTimeout(resolve, ms); }); };
-var apiGetRequest = function (url, token, retries, retryDelay) {
+// Makes GET request with retry logic and rate limit handling
+var apiGetRequest = function (url, // API endpoint URL
+token, // Optional auth token
+retries, // Number of retry attempts 
+retryDelay // Delay between retries in ms
+) {
     if (retries === void 0) { retries = 10; }
     if (retryDelay === void 0) { retryDelay = 2000; }
     return __awaiter(void 0, void 0, void 0, function () {
@@ -88,21 +100,25 @@ var apiGetRequest = function (url, token, retries, retryDelay) {
                     return [4 /*yield*/, (0, exports.apiGetRequest)(url, token, retries - 1, retryDelay * 2)];
                 case 7: return [2 /*return*/, _f.sent()];
                 case 8:
-                    // legacy code (not sure if needed or not):
-                    // Check for 404 error and specific GitHub License API documentation URL
-                    // if (error.response?.status === 404 && error.response?.data?.documentation_url === 'https://docs.github.com/rest/licenses/licenses#get-the-license-for-a-repository') {
-                    //     console.warn('No license found for this repository.');
-                    //     return { data: null, error: "Not Found" };
-                    // }
+                    // Log error and return error response
                     (0, log_1.logToFile)("Error details: ".concat(((_c = error_1.response) === null || _c === void 0 ? void 0 : _c.data) || error_1.message || error_1), 1);
-                    return [2 /*return*/, { data: null, error: ((_e = (_d = error_1.response) === null || _d === void 0 ? void 0 : _d.data) === null || _e === void 0 ? void 0 : _e.message) || error_1.message || 'Something went wrong' }];
+                    return [2 /*return*/, {
+                            data: null,
+                            error: ((_e = (_d = error_1.response) === null || _d === void 0 ? void 0 : _d.data) === null || _e === void 0 ? void 0 : _e.message) || error_1.message || 'Something went wrong'
+                        }];
                 case 9: return [2 /*return*/];
             }
         });
     });
 };
 exports.apiGetRequest = apiGetRequest;
-var apiPostRequest = function (url, data, token, retries, retryDelay) {
+// Makes POST request with retry logic and rate limit handling
+var apiPostRequest = function (url, // API endpoint URL
+data, // POST request body
+token, // Optional auth token
+retries, // Number of retry attempts
+retryDelay // Delay between retries in ms
+) {
     if (retries === void 0) { retries = 10; }
     if (retryDelay === void 0) { retryDelay = 2000; }
     return __awaiter(void 0, void 0, void 0, function () {
@@ -132,41 +148,15 @@ var apiPostRequest = function (url, data, token, retries, retryDelay) {
                     return [4 /*yield*/, (0, exports.apiPostRequest)(url, data, token, retries - 1, retryDelay * 2)];
                 case 4: return [2 /*return*/, _f.sent()];
                 case 5:
+                    // Log error and return error response
                     (0, log_1.logToFile)("Error details: ".concat(((_c = error_2.response) === null || _c === void 0 ? void 0 : _c.data) || error_2.message || error_2), 1);
-                    return [2 /*return*/, { data: null, error: ((_e = (_d = error_2.response) === null || _d === void 0 ? void 0 : _d.data) === null || _e === void 0 ? void 0 : _e.message) || error_2.message || 'Something went wrong' }];
+                    return [2 /*return*/, {
+                            data: null,
+                            error: ((_e = (_d = error_2.response) === null || _d === void 0 ? void 0 : _d.data) === null || _e === void 0 ? void 0 : _e.message) || error_2.message || 'Something went wrong'
+                        }];
                 case 6: return [2 /*return*/];
             }
         });
     });
 };
 exports.apiPostRequest = apiPostRequest;
-// export const apiGetRequest_NoOutput = async <T>(
-//     url: string, 
-//     token?: string, 
-//     retries: number = 10,
-//     retryDelay: number = 2000
-// ): Promise<ApiResponse<T>> => {
-//     try {
-//         const config: AxiosRequestConfig = {
-//             headers: {
-//                 'Content-Type': 'application/json',
-//                 ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-//             },
-//         };
-//         let response = await axios.get<T>(url, config);
-//         if (response.status === 202 && retries > 0) {
-//             // console.log(`Received 202, retrying in ${retryDelay / 1000} seconds...`);
-//             await delay(retryDelay);
-//             return await apiGetRequest<T>(url, token, retries - 1, retryDelay);
-//         }
-//         return { data: response.data, error: null };
-//     } catch (error: any) {
-//         // Check for 404 error and specific GitHub License API documentation URL
-//         if (error.response?.status === 404 && error.response?.data?.documentation_url === 'https://docs.github.com/rest/licenses/licenses#get-the-license-for-a-repository') {
-//             // console.warn('No license found for this repository.');
-//             return { data: null, error: "Not Found" };
-//         }
-//         // console.error('Error details:', error.response?.data || error.message || error);
-//         return { data: null, error: error.response?.data?.message || error.message || 'Something went wrong' };
-//     }
-// };

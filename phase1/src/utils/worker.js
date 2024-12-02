@@ -1,6 +1,8 @@
 "use strict";
-// // src/utils/worker.ts
-// import { ApiResponse, GraphQLResponse } from '../types';
+/**
+* worker.ts
+* Handles calculation of different repository metrics
+*/
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -47,9 +49,14 @@ var license_1 = require("../metrics/license");
 var rampUp_1 = require("../metrics/rampUp");
 var dependencyPinning_1 = require("../metrics/dependencyPinning");
 var codeReview_1 = require("../metrics/codeReview");
+/**
+* Calculates specified metric for a repository
+* @param params - Repository and metric parameters
+* @returns Score and calculation latency
+*/
 function calculateMetric(params) {
     return __awaiter(this, void 0, void 0, function () {
-        var owner, repo, token, repoURL, repoData, metric, result, begin, _a, end, response, error_1;
+        var owner, repo, token, repoURL, repoData, metric, result, begin, _a, error_1;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
@@ -98,13 +105,12 @@ function calculateMetric(params) {
                     result = _b.sent();
                     return [3 /*break*/, 16];
                 case 15: throw new Error("Unknown metric: ".concat(metric));
-                case 16:
-                    end = Date.now();
-                    response = {
+                case 16: 
+                // Return score and calculation time
+                return [2 /*return*/, {
                         score: result,
-                        latency: (end - begin) / 1000 // This now measures just the calculation time
-                    };
-                    return [2 /*return*/, response];
+                        latency: (Date.now() - begin) / 1000
+                    }];
                 case 17:
                     error_1 = _b.sent();
                     console.error('Processing error:', error_1);
@@ -119,3 +125,84 @@ function calculateMetric(params) {
     });
 }
 exports.calculateMetric = calculateMetric;
+// TODO: OLD CONCURRENCY CODE 
+// src/utils/worker.ts
+// import { ApiResponse, GraphQLResponse } from '../types';
+// const { Worker, parentPort } = require('worker_threads');
+// const { logToFile } = require('./log');
+// const { calcBusFactor } = require('../metrics/busFactor');
+// const { calcCorrectness } = require('../metrics/correctness');
+// const { calcResponsiveness } = require('../metrics/responsiveMaintainer');
+// const { calcLicense } = require('../metrics/license');
+// const { calcRampUp } = require('../metrics/rampUp');
+// const { calcDependencyPinning } = require('../metrics/dependencyPinning');
+// const { calcCodeReview } = require('../metrics/codeReview');
+// interface WorkerParams {
+//     owner: string;
+//     repo: string;
+//     token: string;
+//     repoURL: string;
+//     repoData: ApiResponse<GraphQLResponse | null>;
+//     metric: string;
+// }
+// interface WorkerResponse {
+//     score: number;
+//     latency: number;
+//     error?: string;
+// }
+// if (!parentPort) {
+//     throw new Error('This module must be run as a worker');
+// }
+// // TODO: THIS IS WHERE THE ERROR IS COMING FROM
+// parentPort.on('message', async (params: WorkerParams) => {
+//     try {
+//         const begin = Date.now();
+//         const { owner, repo, token, repoURL, repoData, metric } = params;
+//         console.log(params);
+//         logToFile(`Worker: ${owner}, ${repo}, ${repoURL}, ${metric}`, 2);
+//         let result: number;
+//         switch (metric) {
+//             case "busFactor":
+//                 result = await calcBusFactor(owner, repo, token);
+//                 break;
+//             case "correctness":
+//                 result = await calcCorrectness(repoData);
+//                 break;
+//             case "rampUp":
+//                 result = await calcRampUp(repoData);
+//                 break;
+//             case "responsiveness":
+//                 result = await calcResponsiveness(repoData);
+//                 break;
+//             case "license":
+//                 result = await calcLicense(owner, repo, repoURL);
+//                 break;
+//             case "dependencyPinning":  // Add new case
+//                 result = await calcDependencyPinning(owner, repo, token); 
+//                 break;
+//             case "codeReview": 
+//                 result = await calcCodeReview(owner, repo, token);
+//                 break;
+//             default:
+//                 throw new Error(`Unknown metric: ${metric}`);
+//         }
+//         const end = Date.now();
+//         const response: WorkerResponse = {
+//             score: result,
+//             latency: (end - begin) / 1000
+//         };
+//         console.log('Response');
+//         console.log(response);
+//         parentPort.postMessage(response);
+//         console.log(metric);
+//     } catch (error) {
+//         console.log('Worker error IN WORKER.TS');
+//         console.error('Worker error:', error);
+//         const errorResponse: WorkerResponse = {
+//             score: -1,
+//             latency: 0,
+//             error: error instanceof Error ? error.message : String(error)
+//         };
+//         parentPort.postMessage(errorResponse);
+//     }
+// });

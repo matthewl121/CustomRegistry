@@ -1,3 +1,8 @@
+/**
+* index.test.ts
+* Test suite for package metrics and utilities
+*/
+
 import { fetchCodeReviewActivity, fetchContributorActivity, fetchRepoData, checkFolderExists, getReadmeDetails } from "../src/api/githubApi";
 import { getRepoDetails, extractDomainFromUrl, extractNpmPackageName, extractGithubOwnerAndRepo } from '../src/utils/urlHandler';
 import { calculateMetrics} from "../src/metrics/metric";

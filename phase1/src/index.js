@@ -1,4 +1,8 @@
 "use strict";
+/**
+* index.ts
+* Main entry point for metric calculation system
+*/
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -42,11 +46,11 @@ var githubApi_1 = require("./api/githubApi");
 var urlHandler_1 = require("./utils/urlHandler");
 var log_1 = require("./utils/log");
 var metric_1 = require("./metrics/metric");
-// CommonJS-style import for dotenv
 var dotenv = require('dotenv');
-// Load environment variables from .env file
 dotenv.config();
-// Function to create and manage worker threads
+/**
+* Creates and manages worker thread for metric calculation
+*/
 function runWorker(owner, repo, token, repoURL, repoData, metric) {
     return new Promise(function (resolve, reject) {
         try {
@@ -59,7 +63,6 @@ function runWorker(owner, repo, token, repoURL, repoData, metric) {
                 worker_1.terminate();
             });
             worker_1.on('error', function (error) {
-                console.log('Worker error IN INDEX.TS');
                 console.error('Worker error:', error);
                 reject(error);
                 worker_1.terminate();
@@ -77,40 +80,40 @@ function runWorker(owner, repo, token, repoURL, repoData, metric) {
     });
 }
 exports.runWorker = runWorker;
-// Main function to calculate the metrics
+/**
+* Main function - fetches repo data and calculates metrics
+*/
 var main = function (url) { return __awaiter(void 0, void 0, void 0, function () {
-    var token, inputURL, repoDetails, owner, repo, repoURL, repoData, metrics, error_1;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
+    var token, inputURL, _a, owner, repo, repoURL, repoData, metrics, error_1;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
             case 0:
                 token = process.env.GITHUB_TOKEN || "";
                 inputURL = url;
                 (0, log_1.initLogFile)();
-                _a.label = 1;
+                _b.label = 1;
             case 1:
-                _a.trys.push([1, 5, , 6]);
+                _b.trys.push([1, 5, , 6]);
                 return [4 /*yield*/, (0, urlHandler_1.getRepoDetails)(token, inputURL)];
             case 2:
-                repoDetails = _a.sent();
-                owner = repoDetails[0], repo = repoDetails[1], repoURL = repoDetails[2];
+                _a = _b.sent(), owner = _a[0], repo = _a[1], repoURL = _a[2];
                 return [4 /*yield*/, (0, githubApi_1.fetchRepoData)(owner, repo, token)];
             case 3:
-                repoData = _a.sent();
+                repoData = _b.sent();
                 if (!repoData.data) {
                     (0, log_1.logToFile)("Error fetching repo data", 1);
                     return [2 /*return*/];
                 }
                 return [4 /*yield*/, (0, metric_1.calculateMetrics)(owner, repo, token, repoURL, repoData, inputURL)];
             case 4:
-                metrics = _a.sent();
-                if (metrics == null) {
+                metrics = _b.sent();
+                if (metrics == null)
                     return [2 /*return*/];
-                }
                 (0, log_1.logToFile)(JSON.stringify(metrics, null, 2), 1);
                 (0, log_1.metricsLogToStdout)(metrics, 1);
                 return [3 /*break*/, 6];
             case 5:
-                error_1 = _a.sent();
+                error_1 = _b.sent();
                 (0, log_1.logToFile)("Error in main: ".concat(error_1 instanceof Error ? error_1.message : String(error_1)), 1);
                 return [3 /*break*/, 6];
             case 6: return [2 /*return*/];
@@ -118,7 +121,7 @@ var main = function (url) { return __awaiter(void 0, void 0, void 0, function ()
     });
 }); };
 exports.main = main;
-// Entry point when the script is run directly
+// Run main when called directly
 if (require.main === module) {
     var args = process.argv.slice(2);
     if (args.length > 0) {

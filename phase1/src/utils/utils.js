@@ -1,4 +1,8 @@
 "use strict";
+/**
+* utils.ts
+* Utility functions for file operations and text analysis
+*/
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -38,6 +42,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 exports.__esModule = true;
 exports.hasLicenseHeading = exports.writeFile = void 0;
 var fs_1 = require("fs");
+/**
+* Writes formatted JSON data to file
+*/
 var writeFile = function (data, filename) { return __awaiter(void 0, void 0, void 0, function () {
     var dataString;
     return __generator(this, function (_a) {
@@ -52,6 +59,9 @@ var writeFile = function (data, filename) { return __awaiter(void 0, void 0, voi
     });
 }); };
 exports.writeFile = writeFile;
+/**
+* Checks if readme contains License heading using regex
+*/
 var hasLicenseHeading = function (readmeText) {
     var licenseHeadingRegex = /^(#+)\s*License\b/m;
     var match = licenseHeadingRegex.exec(readmeText);

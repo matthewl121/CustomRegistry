@@ -1,4 +1,8 @@
 "use strict";
+/**
+* npmApi.ts
+* Functions for interacting with NPM registry API to fetch package details
+*/
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -38,20 +42,31 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 exports.__esModule = true;
 exports.fetchGithubUrlFromNpm = void 0;
 var apiUtils_1 = require("./apiUtils");
+// Base URL for NPM registry
 var NPM_BASE_URL = "https://registry.npmjs.org";
+/**
+* Fetches and normalizes GitHub repository URL from NPM package
+* @param packageName - NPM package name to look up
+* @returns Normalized GitHub repo URL or error
+*/
 var fetchGithubUrlFromNpm = function (packageName) { return __awaiter(void 0, void 0, void 0, function () {
     var url, response, repoUrl;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
+    var _a, _b;
+    return __generator(this, function (_c) {
+        switch (_c.label) {
             case 0:
                 url = "".concat(NPM_BASE_URL, "/").concat(packageName);
                 return [4 /*yield*/, (0, apiUtils_1.apiGetRequest)(url)];
             case 1:
-                response = _a.sent();
-                if (response.error || !response.data || !response.data.repository || !response.data.repository.url) {
+                response = _c.sent();
+                // Validate response data
+                if (response.error || !((_b = (_a = response.data) === null || _a === void 0 ? void 0 : _a.repository) === null || _b === void 0 ? void 0 : _b.url)) {
                     return [2 /*return*/, { data: null, error: 'Repository URL not found' }];
                 }
-                repoUrl = response.data.repository.url.replace(/^git\+/, '').replace(/\.git$/, '');
+                repoUrl = response.data.repository.url
+                    .replace(/^git\+/, '') // Remove git+ prefix
+                    .replace(/\.git$/, '');
+                // Convert various Git URL formats to HTTPS
                 if (repoUrl.startsWith('ssh://')) {
                     repoUrl = repoUrl.replace('ssh://git@', 'https://');
                 }

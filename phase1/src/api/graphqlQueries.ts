@@ -1,6 +1,11 @@
+/**
+* graphqlQueries.ts
+* GraphQL query to fetch repository data via GitHub's GraphQL API
+*/
 export const getRepoDataQuery = (owner: string, repo: string) => `
 {
   repository(owner: "${owner}", name: "${repo}") {
+    # Fetch open issues
     openIssues: issues(first: 100, states: [OPEN], orderBy: {field: CREATED_AT, direction: DESC}) {
       totalCount
       nodes {
@@ -10,6 +15,7 @@ export const getRepoDataQuery = (owner: string, repo: string) => `
       }
     }
 
+    # Fetch closed issues
     closedIssues: issues(first: 100, states: [CLOSED], orderBy: {field: CREATED_AT, direction: DESC}) {
       totalCount
       nodes {
@@ -19,6 +25,7 @@ export const getRepoDataQuery = (owner: string, repo: string) => `
       }
     }
 
+    # Fetch pull requests
     pullRequests(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {
       totalCount
       nodes {
@@ -27,15 +34,18 @@ export const getRepoDataQuery = (owner: string, repo: string) => `
         closedAt
       }
     }
-
+    
+    # Check if repo is archived
     isArchived
 
+    # Fetch readme with lowercase filename
     readmemd: object(expression: "HEAD:readme.md") {
       ... on Blob {
         text
       }
     }
-
+    
+    # Rest of readme variants with lowercase ...
     readmenoext: object(expression: "HEAD:readme") {
       ... on Blob {
         text
@@ -47,7 +57,7 @@ export const getRepoDataQuery = (owner: string, repo: string) => `
         text
       }
     }
-
+    
     readmerdoc: object(expression: "HEAD:readme.rdoc") { 
       ... on Blob {
         text
@@ -89,7 +99,8 @@ export const getRepoDataQuery = (owner: string, repo: string) => `
         text
       }
     }
-
+    
+    # Fetch readme with uppercase filename ...
     READMEMD: object(expression: "HEAD:README.md") {
       ... on Blob {
         text
@@ -149,7 +160,8 @@ export const getRepoDataQuery = (owner: string, repo: string) => `
         text
       }
     }
-
+    
+    # Rest of readme variants with mixed case ...
     readMemd: object(expression: "HEAD:readMe.md") {
       ... on Blob {
         text

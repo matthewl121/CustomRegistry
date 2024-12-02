@@ -1,4 +1,8 @@
 "use strict";
+/**
+* urlHandler.ts
+* Functions for parsing and extracting information from URLs
+*/
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -47,8 +51,10 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
 exports.__esModule = true;
 exports.getRepoDetails = exports.extractGithubOwnerAndRepo = exports.extractNpmPackageName = exports.extractDomainFromUrl = void 0;
 var npmApi_1 = require("../api/npmApi");
+/**
+* Extracts domain from URL, adding https:// if needed
+*/
 var extractDomainFromUrl = function (url) {
-    // unsure if we would receive a url without this
     if (url == null) {
         console.error('URL is null');
         return null;
@@ -66,6 +72,9 @@ var extractDomainFromUrl = function (url) {
     }
 };
 exports.extractDomainFromUrl = extractDomainFromUrl;
+/**
+* Extracts package name from NPM URL
+*/
 var extractNpmPackageName = function (npmUrl) {
     if (!npmUrl) {
         console.error('npmUrl is undefined or empty');
@@ -80,6 +89,9 @@ var extractNpmPackageName = function (npmUrl) {
     return packageName;
 };
 exports.extractNpmPackageName = extractNpmPackageName;
+/**
+* Extracts owner and repository name from GitHub URL
+*/
 var extractGithubOwnerAndRepo = function (repoURL) {
     var parts = repoURL.split('/').slice(3);
     if (parts.length < 2) {
@@ -90,9 +102,13 @@ var extractGithubOwnerAndRepo = function (repoURL) {
     return [owner, repo];
 };
 exports.extractGithubOwnerAndRepo = extractGithubOwnerAndRepo;
+/**
+* Processes input URL to get repository details
+* Handles both NPM and GitHub URLs
+*/
 function getRepoDetails(token, inputURL) {
     return __awaiter(this, void 0, void 0, function () {
-        var hostname, repoURL, npmPackageName, npmResponse, repoDetails, extendedDetails;
+        var hostname, repoURL, npmPackageName, npmResponse, repoDetails;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -115,7 +131,6 @@ function getRepoDetails(token, inputURL) {
                     repoURL = npmResponse.data;
                     return [3 /*break*/, 3];
                 case 2:
-                    // URL must be github, so use it directly
                     repoURL = inputURL;
                     _a.label = 3;
                 case 3:
@@ -123,8 +138,7 @@ function getRepoDetails(token, inputURL) {
                     if (!repoDetails) {
                         process.exit(1);
                     }
-                    extendedDetails = __spreadArray(__spreadArray([], repoDetails, true), [repoURL], false);
-                    return [2 /*return*/, extendedDetails];
+                    return [2 /*return*/, __spreadArray(__spreadArray([], repoDetails, true), [repoURL], false)];
             }
         });
     });
