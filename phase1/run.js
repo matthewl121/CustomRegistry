@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-const fs = require('fs');
-const {exec, execSync} = require('child_process');
+import fs from 'fs';
+import { exec, execSync } from 'child_process';
+import { Command } from 'commander';
 
 try {
     execSync('npm -v', { stdio: 'ignore' });
@@ -16,9 +17,6 @@ try {
     // console.error('Error: Failed to install commander. Please try installing it manually.');
     process.exit(1);
 }
-
-
-const {Command} = require('commander');
 
 const program = new Command();
 

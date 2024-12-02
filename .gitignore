@@ -1,6 +1,4 @@
 phase1/node_modules
 .env
 !run.js
-*.json
-*.txt
 phase1/repos/*
