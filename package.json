@@ -1,0 +1,36 @@
+{
+    "dependencies": {
+      "@aws-sdk/client-s3": "^3.701.0",
+      "adm-zip": "^0.5.10",
+      "cors": "^2.8.5",
+      "express": "^4.21.1",
+      "fs": "^0.0.1-security",
+      "http": "^0.0.1-security",
+      "https": "^1.0.0",
+      "commander": "^11.0.0"
+    },
+    "devDependencies": {
+      "jest": "^29.7.0",
+      "@jest/globals": "^29.7.0",
+      "typescript": "^5.0.0",
+      "@types/node": "^20.0.0"
+    },
+    "scripts": {
+      "start": "node server.js",
+      "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+      "test:rate": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/ratePackage_test/index.test.mjs",
+      "compile": "tsc",
+      "install-deps": "npm install --save-dev && tsc --init"
+    },
+    "jest": {
+      "transform": {},
+      "testEnvironment": "node",
+      "moduleFileExtensions": ["js", "mjs", "cjs", "json", "ts"],
+      "testMatch": ["**/*.test.mjs", "**/*.test.ts"],
+      "testTimeout": 30000,
+      "moduleNameMapper": {
+        "^(\\.{1,2}/.*)\\.js$": "$1"
+      }
+    },
+    "type": "module"
+  }

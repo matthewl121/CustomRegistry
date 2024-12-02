@@ -1,13 +1,28 @@
-import { S3Client, GetObjectCommand, HeadObjectCommand} from "@aws-sdk/client-s3";
+import { S3Client, GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
 
 const s3 = new S3Client({ region: "us-east-1" });
 
-export const downloadPackageHandler = async (event) => {
-  // console.log("Received event:", JSON.stringify(event, null, 2)); // Log event for debugging
+const capitalizeFirstLetter = (str) => {
+  if (str === 'id') {
+    return 'ID'; // Special case for 'id' key to become 'ID'
+  }
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+};
 
+const capitalizeKeys = (obj) => {
+  const result = {};
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      const capitalizedKey = capitalizeFirstLetter(key);
+      result[capitalizedKey] = obj[key];
+    }
+  }
+  return result;
+};
+
+export const downloadPackageHandler = async (packageId) => {
+  // console.log("Received event:", JSON.stringify(event, null, 2)); // Log event
   const bucketName = "acmeregistrys3";
-  const packageId = event.pathParameters.id; // Access id from pathParameters
-
   const params = {
     Bucket: bucketName,
     Key: packageId,
@@ -44,12 +59,11 @@ export const downloadPackageHandler = async (event) => {
       chunks.push(chunk);
     }
     const fileData = Buffer.concat(chunks);
-
     console.log(`File downloaded successfully. File size: ${fileData.length} bytes`);
 
     // craft response body
     const responseBody = JSON.stringify({
-      metadata: packageMetadata,
+      metadata: capitalizeKeys(packageMetadata),
       data: {
         'Content': fileData.toString('base64'), // Convert Buffer to Base64 string
       }
