@@ -89,7 +89,7 @@ function calculateMetric(params) {
                 case 10:
                     result = _b.sent();
                     return [3 /*break*/, 16];
-                case 11: return [4 /*yield*/, (0, dependencyPinning_1.calcDependencyPinning)(repoData)];
+                case 11: return [4 /*yield*/, (0, dependencyPinning_1.calcDependencyPinning)(owner, repo, token)];
                 case 12:
                     result = _b.sent();
                     return [3 /*break*/, 16];

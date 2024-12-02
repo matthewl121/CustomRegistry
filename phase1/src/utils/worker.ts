@@ -142,7 +142,7 @@ export async function calculateMetric(params: MetricParams): Promise<MetricRespo
                 result = await calcLicense(owner, repo, repoURL);
                 break;
             case "dependencyPinning":
-                result = await calcDependencyPinning(repoData);
+                result = await calcDependencyPinning(owner, repo, token);
                 break;
             case "codeReview":
                 result = await calcCodeReview(owner, repo, token);
