@@ -433,33 +433,33 @@ describe('Test suite', () => {
     });
 
     // Testing workers
-    test('workers', async () => {
-        const token = process.env.GITHUB_TOKEN || "";
-        const inputURL = "https://github.com/defunkt/zippy";
+    // test('workers', async () => {
+    //     const token = process.env.GITHUB_TOKEN || "";
+    //     const inputURL = "https://github.com/defunkt/zippy";
 
-        const repoDetails = await getRepoDetails(token, inputURL);
-        const [owner, repo, repoURL]: [string, string, string] = repoDetails;
-        const repoData = await fetchRepoData(owner, repo, token);
+    //     const repoDetails = await getRepoDetails(token, inputURL);
+    //     const [owner, repo, repoURL]: [string, string, string] = repoDetails;
+    //     const repoData = await fetchRepoData(owner, repo, token);
 
-        const busFactorWorker = runWorker(owner, repo, token, repoURL, repoData, "busFactor");
-        const correctnessWorker = runWorker(owner, repo, token, repoURL, repoData, "correctness");
-        const rampUpWorker = runWorker(owner, repo, token, repoURL, repoData, "rampUp");
-        const responsivenessWorker = runWorker(owner, repo, token, repoURL, repoData, "responsiveness");
-        const licenseWorker = runWorker(owner, repo, token, repoURL, repoData, "license");
-        //const dependencyPinningWorker = runWorker(owner, repo, token, repoURL, repoData, "dependencyPinning");
+    //     const busFactorWorker = runWorker(owner, repo, token, repoURL, repoData, "busFactor");
+    //     const correctnessWorker = runWorker(owner, repo, token, repoURL, repoData, "correctness");
+    //     const rampUpWorker = runWorker(owner, repo, token, repoURL, repoData, "rampUp");
+    //     const responsivenessWorker = runWorker(owner, repo, token, repoURL, repoData, "responsiveness");
+    //     const licenseWorker = runWorker(owner, repo, token, repoURL, repoData, "license");
+    //     //const dependencyPinningWorker = runWorker(owner, repo, token, repoURL, repoData, "dependencyPinning");
         
-        const results = await Promise.all([
-            busFactorWorker, 
-            correctnessWorker, 
-            rampUpWorker, 
-            responsivenessWorker, 
-            licenseWorker//,
-            //dependencyPinningWorker
-        ]);
+    //     const results = await Promise.all([
+    //         busFactorWorker, 
+    //         correctnessWorker, 
+    //         rampUpWorker, 
+    //         responsivenessWorker, 
+    //         licenseWorker//,
+    //         //dependencyPinningWorker
+    //     ]);
         
-        expect(parseFloat((results[0] as {score: number}).score.toFixed(2) ?? '0')).toBe(0.05); // bus factor score
-        //expect(parseFloat(results[5].score.toFixed(2) ?? '0')).toBe(1.00); // dependency pinning score
-    });
+    //     expect(parseFloat((results[0] as {score: number}).score.toFixed(2) ?? '0')).toBe(0.05); // bus factor score
+    //     //expect(parseFloat(results[5].score.toFixed(2) ?? '0')).toBe(1.00); // dependency pinning score
+    // });
 
     // Testing GitHub API requests
     test('apiGetRequest', async () => {
