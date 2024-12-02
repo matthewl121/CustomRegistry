@@ -2,6 +2,8 @@
 import fs from 'fs';
 import { exec, execSync } from 'child_process';
 import { Command } from 'commander';
+import { main } from './src/index.js';
+
 
 try {
     execSync('npm -v', { stdio: 'ignore' });
@@ -51,7 +53,6 @@ program
             // console.log('TSC file compiled successfully');
         }
         
-        const {main} =  require('./src/index');
         fs.readFile(file, 'utf8', (err, data) => {
             if (err) {
                 console.error(`%cError reading file: ${err}`, `color: red`);
