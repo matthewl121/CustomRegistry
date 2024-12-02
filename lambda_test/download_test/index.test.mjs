@@ -1,9 +1,16 @@
+import { jest } from '@jest/globals';
 import { S3Client, GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
 import { downloadPackageHandler } from '../../lambda/download/index.mjs';
 import { Readable } from 'stream';
 
 // Mock the AWS SDK
-jest.mock("@aws-sdk/client-s3");
+jest.mock("@aws-sdk/client-s3", () => ({
+  S3Client: jest.fn(() => ({
+    send: jest.fn()
+  })),
+  GetObjectCommand: jest.fn(),
+  HeadObjectCommand: jest.fn()
+}));
 
 describe('downloadPackageHandler', () => {
   let mockS3Send;
@@ -65,14 +72,12 @@ describe('downloadPackageHandler', () => {
     const expectedContent = Buffer.from(mockFileContent).toString('base64');
     expect(parsedBody.data.Content).toBe(expectedContent);
 
-    // Verify S3 calls
     expect(mockS3Send).toHaveBeenCalledTimes(2);
     
     const [headCall, getCall] = mockS3Send.mock.calls;
     expect(headCall[0]).toBeInstanceOf(HeadObjectCommand);
     expect(getCall[0]).toBeInstanceOf(GetObjectCommand);
     
-    // Verify command parameters
     [headCall[0].input, getCall[0].input].forEach(params => {
       expect(params).toEqual({
         Bucket: 'acmeregistrys3',
@@ -121,12 +126,10 @@ describe('downloadPackageHandler', () => {
       const result = await downloadPackageHandler('test-package');
       const parsedBody = JSON.parse(result.body);
 
-      // Verify each key is properly capitalized
       Object.keys(parsedBody.metadata).forEach(key => {
         expect(key).toMatch(/^[A-Z][a-z]+$|^ID$/);
       });
 
-      // Verify expected keys are present
       expect(Object.keys(parsedBody.metadata)).toEqual(
         expect.arrayContaining(['Author', 'Version', 'Description', 'ID'])
       );
