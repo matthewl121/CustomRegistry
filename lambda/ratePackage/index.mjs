@@ -88,22 +88,40 @@ const getUrlFromZip = async (s3Response) => {
 // Helper function to run the Custom Registry program
 const runCustomRegistryProgram = async (url) => {
     try {
+        // Get absolute paths
+        const customRegistryRoot = path.resolve(__dirname, '../../');
+        const phase1Path = path.join(customRegistryRoot, 'phase1');
+        const urlFilePath = path.join(phase1Path, 'data', 'url.txt');
+        const runScript = path.join(phase1Path, 'run.js');  // Note: added .js extension
+
         // Ensure the data directory exists
-        await fs.mkdir(path.dirname(URL_FILE_PATH), { recursive: true });
+        await fs.mkdir(path.dirname(urlFilePath), { recursive: true });
 
         // Delete the file if it exists
         try {
-            await fs.unlink(URL_FILE_PATH);
+            await fs.unlink(urlFilePath);
         } catch (err) {
             // Ignore error if file doesn't exist
             if (err.code !== 'ENOENT') throw err;
         }
 
         // Write the URL to the file
-        await fs.writeFile(URL_FILE_PATH, url);
+        await fs.writeFile(urlFilePath, url);
 
-        // Execute the program
-        const { stdout, stderr } = await execAsync(`cd ../../phase1 && ./run data/url.txt`);
+        // Set required environment variables
+        const env = {
+            ...process.env,
+            LOG_FILE: path.join(phase1Path, 'run.log'),
+            LOG_LEVEL: 'info',
+            GITHUB_TOKEN: process.env.GITHUB_TOKEN || 'your-github-token'  // Make sure to set this appropriately
+        };
+
+        // Execute the program using node
+        const { stdout, stderr } = await execAsync(`node ${runScript} data/url.txt`, {
+            cwd: phase1Path,
+            env
+        });
+        
         console.log('Program output:', stdout);
         if (stderr) {
             console.error('Program stderr:', stderr);
@@ -113,11 +131,11 @@ const runCustomRegistryProgram = async (url) => {
         console.error('Error running Custom Registry program:', error);
         return `Error: ${error.message}`;
     } finally {
-        // Clean up: try to delete the file after execution
+        // Clean up
         try {
-            await fs.unlink(URL_FILE_PATH);
+            const urlFilePath = path.join(path.resolve(__dirname, '../../phase1'), 'data', 'url.txt');
+            await fs.unlink(urlFilePath);
         } catch (err) {
-            // Ignore cleanup errors
             console.log('Cleanup warning:', err.message);
         }
     }

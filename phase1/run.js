@@ -19,7 +19,8 @@ try {
 
 try {
     execSync('npm install commander', { stdio: 'ignore' });
-} catch {
+} catch (error) {
+    console.error('Error installing commander:', error);
     process.exit(1);
 }
 
@@ -36,8 +37,8 @@ program
                 process.exit(1);
             }
             const addedPackages = stdout.match(/added (\d+) packages?/);
-            console.log(addedPackages?.[1] ? 
-                `${addedPackages[1]} dependencies were installed` : 
+            console.log(addedPackages?.[1] ?
+                `${addedPackages[1]} dependencies were installed` :
                 'All dependencies are installed and up to date'
             );
         });
@@ -49,26 +50,30 @@ program
     .action((file) => {
         try {
             execSync('tsc src/index.ts', { stdio: 'ignore' });
-        } catch {}
-        
+        } catch (error) {
+            console.error('Error compiling TypeScript:', error);
+        }
+
         fs.readFile(file, 'utf8', (err, data) => {
             if (err) {
                 console.error(`Error reading file: ${err}`);
                 process.exit(1);
             }
-            if (!process.env.LOG_FILE) {
-                console.log('LOG_FILE environment variable is not set');
-                process.exit(1);
+
+            // Check environment variables
+            const requiredEnvVars = {
+                LOG_FILE: process.env.LOG_FILE,
+                GITHUB_TOKEN: process.env.GITHUB_TOKEN,
+                LOG_LEVEL: process.env.LOG_LEVEL
+            };
+
+            for (const [name, value] of Object.entries(requiredEnvVars)) {
+                if (!value) {
+                    console.error(`${name} environment variable is not set`);
+                    process.exit(1);
+                }
             }
-            if (!process.env.GITHUB_TOKEN) {
-                console.log('GITHUB_TOKEN environment variable is not set'); 
-                process.exit(1);
-            }
-            if (!process.env.LOG_LEVEL) {
-                console.log('LOG_LEVEL environment variable is not set');
-                process.exit(1);
-            }
-            
+
             const urls = data.split('\n').filter(line => line.trim());
             urls.forEach(url => main(url));
         });
@@ -80,15 +85,21 @@ program
     .action(() => {
         try {
             execSync('npx jest --silent > test/jest-output.txt 2>&1', { stdio: 'ignore' });
-        } catch {}
+        } catch (error) {
+            console.error('Error running jest:', error);
+        }
 
         try {
             execSync('npx tsc test/test_output.ts', { stdio: 'ignore' });
-        } catch {}
+        } catch (error) {
+            console.error('Error compiling test output:', error);
+        }
 
         try {
             execSync('node test/test_output.js', { stdio: 'inherit' });
-        } catch {}
+        } catch (error) {
+            console.error('Error running test output:', error);
+        }
     });
 
 program.parse(process.argv);
