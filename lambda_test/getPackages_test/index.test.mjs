@@ -2,6 +2,16 @@ import { jest } from '@jest/globals';
 import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { getPackagesHandler } from '../../lambda/getPackages/index.mjs';
 
+// Mock console.error to prevent error output in tests
+const originalConsoleError = console.error;
+beforeAll(() => {
+  console.error = jest.fn();
+});
+
+afterAll(() => {
+  console.error = originalConsoleError;
+});
+
 // Mock the AWS SDK
 jest.mock("@aws-sdk/client-s3", () => ({
   S3Client: jest.fn(() => ({
@@ -17,10 +27,10 @@ describe('getPackagesHandler', () => {
     jest.clearAllMocks();
     mockS3Send = jest.fn();
     S3Client.prototype.send = mockS3Send;
+    console.error.mockClear();
   });
 
   test('successfully retrieves matching packages', async () => {
-    // Mock S3 response
     const mockContents = [
       { Key: 'package1--1.2.3' },
       { Key: 'package2--2.0.0' },
@@ -47,6 +57,7 @@ describe('getPackagesHandler', () => {
       { Name: 'Package1', Version: '1.2.3', ID: 'package1--1.2.3' },
       { Name: 'Package2', Version: '2.0.0', ID: 'package2--2.0.0' }
     ]));
+    expect(console.error).not.toHaveBeenCalled();
   });
 
   test('handles invalid queries', async () => {
@@ -63,6 +74,7 @@ describe('getPackagesHandler', () => {
     expect(JSON.parse(result.body)).toEqual({
       error: 'Missing or invalid field(s) in the PackageQuery.'
     });
+    expect(console.error).not.toHaveBeenCalled();
   });
 
   test('handles no matching packages', async () => {
@@ -82,10 +94,12 @@ describe('getPackagesHandler', () => {
     expect(JSON.parse(result.body)).toEqual({
       error: 'No matching packages found for the specified query.'
     });
+    expect(console.error).not.toHaveBeenCalled();
   });
 
   test('handles S3 errors gracefully', async () => {
-    mockS3Send.mockRejectedValueOnce(new Error('S3 Error'));
+    const testError = new Error('S3 Error');
+    mockS3Send.mockRejectedValueOnce(testError);
 
     const event = {
       queries: [
@@ -99,6 +113,7 @@ describe('getPackagesHandler', () => {
     expect(JSON.parse(result.body)).toEqual({
       error: 'Internal server error.'
     });
+    expect(console.error).toHaveBeenCalledWith('Error:', testError);
   });
 
   test('properly matches version ranges', async () => {
@@ -108,8 +123,6 @@ describe('getPackagesHandler', () => {
       { Key: 'package1--1.3.0' },
       { Key: 'package1--2.0.0' }
     ];
-
-    mockS3Send.mockResolvedValueOnce({ Contents: mockContents });
 
     const testCases = [
       {
@@ -142,6 +155,7 @@ describe('getPackagesHandler', () => {
       const packages = JSON.parse(result.body);
       const versions = packages.map(p => p.Version);
       expect(versions.sort()).toEqual(testCase.expectedVersions.sort());
+      expect(console.error).not.toHaveBeenCalled();
     }
   });
 });
