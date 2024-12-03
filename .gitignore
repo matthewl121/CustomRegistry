@@ -2,3 +2,4 @@ phase1/node_modules
 .env
 !run.js
 phase1/repos/*
+node_modules/

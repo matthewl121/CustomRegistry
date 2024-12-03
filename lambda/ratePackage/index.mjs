@@ -344,7 +344,7 @@ const runCustomRegistryProgram = async (url) => {
         await fs.writeFile(URL_FILE_PATH, url);
 
         // Execute the program
-        const { stdout, stderr } = await execAsync(`cd CustomRegistry/phase1 && ./run data/url.txt`);
+        const { stdout, stderr } = await execAsync(`cd ../../phase1 && ./run data/url.txt`);
         console.log('Program output:', stdout);
         if (stderr) {
             console.error('Program stderr:', stderr);
