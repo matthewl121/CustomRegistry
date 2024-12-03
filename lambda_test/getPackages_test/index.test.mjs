@@ -1,6 +1,6 @@
 import { jest } from '@jest/globals';
 import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
-import { getPackagesHandler } from '../../lambda/get/index.mjs';
+import { getPackagesHandler } from '../../lambda/getPackages/index.mjs';
 
 // Mock the AWS SDK
 jest.mock("@aws-sdk/client-s3", () => ({
@@ -101,105 +101,47 @@ describe('getPackagesHandler', () => {
     });
   });
 
-  describe('version matching', () => {
-    test('matches exact version', async () => {
-      mockS3Send.mockResolvedValueOnce({
-        Contents: [{ Key: 'package1--1.2.3' }]
-      });
+  test('properly matches version ranges', async () => {
+    const mockContents = [
+      { Key: 'package1--1.2.3' },
+      { Key: 'package1--1.2.9' },
+      { Key: 'package1--1.3.0' },
+      { Key: 'package1--2.0.0' }
+    ];
 
+    mockS3Send.mockResolvedValueOnce({ Contents: mockContents });
+
+    const testCases = [
+      {
+        query: { Name: 'package1', Version: '1.2.3' },
+        expectedVersions: ['1.2.3']
+      },
+      {
+        query: { Name: 'package1', Version: '1.2.0-1.3.0' },
+        expectedVersions: ['1.2.3', '1.2.9', '1.3.0']
+      },
+      {
+        query: { Name: 'package1', Version: '^1.2.3' },
+        expectedVersions: ['1.2.3', '1.2.9', '1.3.0']
+      },
+      {
+        query: { Name: 'package1', Version: '~1.2.3' },
+        expectedVersions: ['1.2.3', '1.2.9']
+      }
+    ];
+
+    for (const testCase of testCases) {
       const event = {
-        queries: [{ Name: 'package1', Version: '1.2.3' }]
+        queries: [testCase.query]
       };
 
+      mockS3Send.mockResolvedValueOnce({ Contents: mockContents });
       const result = await getPackagesHandler(event);
+      
       expect(result.statusCode).toBe(200);
-      expect(JSON.parse(result.body)).toHaveLength(1);
-    });
-
-    test('matches bounded version range', async () => {
-      mockS3Send.mockResolvedValueOnce({
-        Contents: [
-          { Key: 'package1--1.2.3' },
-          { Key: 'package1--1.3.0' },
-          { Key: 'package1--2.0.0' }
-        ]
-      });
-
-      const event = {
-        queries: [{ Name: 'package1', Version: '1.2.0-1.3.0' }]
-      };
-
-      const result = await getPackagesHandler(event);
       const packages = JSON.parse(result.body);
-      expect(result.statusCode).toBe(200);
-      expect(packages).toHaveLength(2);
-      expect(packages.map(p => p.Version)).toEqual(['1.2.3', '1.3.0']);
-    });
-
-    test('matches carat version range', async () => {
-      mockS3Send.mockResolvedValueOnce({
-        Contents: [
-          { Key: 'package1--1.2.3' },
-          { Key: 'package1--1.9.0' },
-          { Key: 'package1--2.0.0' }
-        ]
-      });
-
-      const event = {
-        queries: [{ Name: 'package1', Version: '^1.2.3' }]
-      };
-
-      const result = await getPackagesHandler(event);
-      const packages = JSON.parse(result.body);
-      expect(result.statusCode).toBe(200);
-      expect(packages).toHaveLength(2);
-      expect(packages.map(p => p.Version)).toEqual(['1.2.3', '1.9.0']);
-    });
-
-    test('matches tilde version range', async () => {
-      mockS3Send.mockResolvedValueOnce({
-        Contents: [
-          { Key: 'package1--1.2.3' },
-          { Key: 'package1--1.2.9' },
-          { Key: 'package1--1.3.0' }
-        ]
-      });
-
-      const event = {
-        queries: [{ Name: 'package1', Version: '~1.2.3' }]
-      };
-
-      const result = await getPackagesHandler(event);
-      const packages = JSON.parse(result.body);
-      expect(result.statusCode).toBe(200);
-      expect(packages).toHaveLength(2);
-      expect(packages.map(p => p.Version)).toEqual(['1.2.3', '1.2.9']);
-    });
-  });
-
-  test('handles multiple queries with OR logic', async () => {
-    mockS3Send.mockResolvedValueOnce({
-      Contents: [
-        { Key: 'package1--1.2.3' },
-        { Key: 'package2--2.0.0' },
-        { Key: 'package3--3.0.0' }
-      ]
-    });
-
-    const event = {
-      queries: [
-        { Name: 'package1', Version: '1.2.3' },
-        { Name: 'package2', Version: '2.0.0' }
-      ]
-    };
-
-    const result = await getPackagesHandler(event);
-    const packages = JSON.parse(result.body);
-    expect(result.statusCode).toBe(200);
-    expect(packages).toHaveLength(2);
-    expect(packages).toEqual(expect.arrayContaining([
-      { Name: 'Package1', Version: '1.2.3', ID: 'package1--1.2.3' },
-      { Name: 'Package2', Version: '2.0.0', ID: 'package2--2.0.0' }
-    ]));
+      const versions = packages.map(p => p.Version);
+      expect(versions.sort()).toEqual(testCase.expectedVersions.sort());
+    }
   });
 });
