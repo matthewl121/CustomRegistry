@@ -1,0 +1,67 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+      - aws_cd_branch
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Setup SSH
+        run: |
+          set -e
+          echo "Setting up SSH keys..."
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
+          if [ $? -ne 0 ]; then
+            echo "Failed to write SSH key."
+            exit 1
+          fi
+          chmod 600 ~/.ssh/id_rsa
+
+          echo "Adding EC2 host to known hosts..."
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} 2>&1 | tee ssh_keyscan_output.log || true
+          if grep -q 'Could not resolve hostname' ssh_keyscan_output.log; then
+            echo "Could not resolve EC2 host. Please check the value of EC2_HOST."
+            exit 1
+          fi
+          cat ssh_keyscan_output.log >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+          echo "SSH setup complete."
+
+      - name: Install rsync
+        run: sudo apt-get update && sudo apt-get install -y rsync
+
+      - name: Deploy to EC2
+        run: |
+          set -e
+          echo "Starting deployment..."
+          rsync -avz --exclude '.git' \
+                    --exclude 'node_modules' \
+                    -e "ssh -i ~/.ssh/id_rsa -v" \
+                    ./ "ec2-user@${{ secrets.EC2_HOST }}:~/registry/"
