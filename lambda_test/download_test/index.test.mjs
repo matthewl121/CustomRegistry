@@ -27,8 +27,7 @@ describe('downloadPackageHandler', () => {
     const defaults = {
       author: 'default-author',
       version: '1.0.0',
-      description: 'default-description',
-      id: 'default-id'
+      description: 'default-description'
     };
     return { ...defaults, ...overrides };
   };
@@ -65,8 +64,7 @@ describe('downloadPackageHandler', () => {
     expect(parsedBody.metadata).toEqual({
       'Author': 'test-author',
       'Version': '2.0.0',
-      'Description': 'default-description',
-      'ID': 'default-id'
+      'Description': 'default-description'
     });
 
     const expectedContent = Buffer.from(mockFileContent).toString('base64');
@@ -111,11 +109,11 @@ describe('downloadPackageHandler', () => {
     expect(parsedBody.message).toBe(`/package/{id} GET: Error downloading file: ${errorMessage}`);
   });
 
-  test('properly capitalizes metadata with various cases', async () => {
+  test('properly capitalizes metadata fields', async () => {
     const testCases = [
-      { input: { author: 'test', VERSION: '1.0', Description: 'test', id: 'test' } },
-      { input: { AUTHOR: 'test', version: '1.0', description: 'test', ID: 'test' } },
-      { input: { Author: 'test', Version: '1.0', DESCRIPTION: 'test', Id: 'test' } }
+      { input: { author: 'test', VERSION: '1.0', Description: 'test' } },
+      { input: { AUTHOR: 'test', version: '1.0', description: 'test' } },
+      { input: { Author: 'test', Version: '1.0', DESCRIPTION: 'test' } }
     ];
 
     for (const testCase of testCases) {
@@ -127,11 +125,11 @@ describe('downloadPackageHandler', () => {
       const parsedBody = JSON.parse(result.body);
 
       Object.keys(parsedBody.metadata).forEach(key => {
-        expect(key).toMatch(/^[A-Z][a-z]+$|^ID$/);
+        expect(key).toMatch(/^[A-Z][a-z]+$/);
       });
 
       expect(Object.keys(parsedBody.metadata)).toEqual(
-        expect.arrayContaining(['Author', 'Version', 'Description', 'ID'])
+        expect.arrayContaining(['Author', 'Version', 'Description'])
       );
     }
   });
