@@ -33,15 +33,11 @@ jobs:
         '
         
         # Copy the repository contents to EC2
-        scp -o StrictHostKeyChecking=no -i private_key.pem -r ./* ${USER}@${HOST}:~/app/
+        scp -o StrictHostKeyChecking=no -i private_key.pem -r ./* ${USER}@${HOST}:~/backendv2/
         
         # Optional: Add any post-deployment commands here
         ssh -o StrictHostKeyChecking=no -i private_key.pem ${USER}@${HOST} '
-          cd ~/app
-          # Add commands to restart your application, install dependencies, etc.
-          # For example:
-          # npm install
-          # pm2 restart app
+          cd ~/backendv2
         '
         
         rm -f private_key.pem
