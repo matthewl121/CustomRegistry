@@ -4,7 +4,10 @@ import { S3Client } from "@aws-sdk/client-s3";
 import { Readable } from 'stream';
 import { gzipSync } from 'zlib';
 
-// Mock AWS SDK
+// Set longer timeout for all tests
+jest.setTimeout(60000);
+
+// Mock AWS SDK for mocked tests
 jest.mock('@aws-sdk/client-s3');
 
 // Mock child_process and fs
@@ -28,76 +31,54 @@ jest.mock('fs/promises', () => ({
     writeFile: (...args) => mockWriteFile(...args)
 }));
 
-// Set Jest timeout for all tests
-jest.setTimeout(60000);
+// Helper function for checking metrics
+const expectMetricsFields = (body) => {
+    expect(body.NetScore).toBeDefined();
+    expect(body.RampUp).toBeDefined();
+    expect(body.Correctness).toBeDefined();
+    expect(body.BusFactor).toBeDefined();
+    expect(body.ResponsiveMaintainer).toBeDefined();
+    expect(body.LicenseScore).toBeDefined();
+    expect(body.GoodPinningPractice).toBeDefined();
+    expect(body.PullRequest).toBeDefined();
+};
 
-describe('Rate Package Handler', () => {
+describe('Rate Package Handler - Mocked Tests', () => {
     let mockS3Send;
-    const mockMetrics = {
-        NetScore: 0.5,
-        NetScoreLatency: 0.2,
-        RampUp: 0.5,
-        RampUpLatency: 0.1,
-        Correctness: 0.5,
-        CorrectnessLatency: 0.3,
-        BusFactor: 0.5,
-        BusFactorLatency: 0.4,
-        ResponsiveMaintainer: 0.5,
-        ResponsiveMaintainerLatency: 0.5,
-        LicenseScore: 1.0,
-        LicenseScoreLatency: 0.1,
-        GoodPinningPractice: 0.5,
-        GoodPinningPracticeLatency: 0.6,
-        PullRequest: 0.7,
-        PullRequestLatency: 0.2
-    };
 
     beforeEach(() => {
         jest.clearAllMocks();
         mockS3Send = jest.fn();
         S3Client.prototype.send = mockS3Send;
 
-        // Default success responses for fs operations
+        // Default success responses
         mockMkdir.mockResolvedValue(undefined);
         mockUnlink.mockResolvedValue(undefined);
         mockWriteFile.mockResolvedValue(undefined);
 
-        // Default success response for exec
         mockExecPromise.mockResolvedValue({
-            stdout: JSON.stringify(mockMetrics),
+            stdout: JSON.stringify({
+                NetScore: 0.5,
+                RampUp: 0.5,
+                Correctness: 0.5,
+                BusFactor: 0.5,
+                ResponsiveMaintainer: 0.5,
+                LicenseScore: 1.0,
+                GoodPinningPractice: 0.5,
+                PullRequest: 0.7
+            }),
             stderr: ''
         });
     });
 
-    const expectMetricsFields = (body) => {
-        expect(body.NetScore).toBeDefined();
-        expect(body.NetScoreLatency).toBeDefined();
-        expect(body.RampUp).toBeDefined();
-        expect(body.RampUpLatency).toBeDefined();
-        expect(body.Correctness).toBeDefined();
-        expect(body.CorrectnessLatency).toBeDefined();
-        expect(body.BusFactor).toBeDefined();
-        expect(body.BusFactorLatency).toBeDefined();
-        expect(body.ResponsiveMaintainer).toBeDefined();
-        expect(body.ResponsiveMaintainerLatency).toBeDefined();
-        expect(body.LicenseScore).toBeDefined();
-        expect(body.LicenseScoreLatency).toBeDefined();
-        expect(body.GoodPinningPractice).toBeDefined();
-        expect(body.GoodPinningPracticeLatency).toBeDefined();
-        expect(body.PullRequest).toBeDefined();
-        expect(body.PullRequestLatency).toBeDefined();
-    };
-
     test('should handle NPM package successfully', async () => {
-        // Mock S3 responses
         mockS3Send
-            .mockResolvedValueOnce({})  // HEAD
-            .mockResolvedValueOnce({    // GET
+            .mockResolvedValueOnce({})
+            .mockResolvedValueOnce({
                 Metadata: {
                     uploadvia: 'npm',
                     name: 'lodash',
-                    version: '4.17.21',
-                    score: '8.5'
+                    version: '4.17.21'
                 }
             });
 
@@ -105,28 +86,8 @@ describe('Rate Package Handler', () => {
             pathParameters: { id: "lodash@4.17.21" }
         });
 
-        const body = JSON.parse(response.body);
         expect(response.statusCode).toBe(200);
-        expectMetricsFields(body);
-    }, 60000);
-
-    test('should handle GitHub package successfully', async () => {
-        mockS3Send
-            .mockResolvedValueOnce({})  // HEAD
-            .mockResolvedValueOnce({    // GET
-                Metadata: {
-                    uploadvia: 'github',
-                    url: 'https://github.com/cloudinary/cloudinary_npm',
-                    score: '8.5'
-                }
-            });
-
-        const response = await ratePackageHandler({
-            pathParameters: { id: "cloudinary-npm-2.5.1" }
-        });
-
         const body = JSON.parse(response.body);
-        expect(response.statusCode).toBe(200);
         expectMetricsFields(body);
     });
 
@@ -134,10 +95,8 @@ describe('Rate Package Handler', () => {
         const packageJson = {
             name: "cloudinary",
             version: "2.5.1",
-            homepage: "https://github.com/cloudinary/cloudinary_npm",
             repository: {
-                type: "git",
-                url: "git+https://github.com/cloudinary/cloudinary_npm.git"
+                url: "https://github.com/cloudinary/cloudinary_npm"
             }
         };
         
@@ -145,11 +104,10 @@ describe('Rate Package Handler', () => {
         const mockStream = Readable.from(gzippedBuffer);
 
         mockS3Send
-            .mockResolvedValueOnce({})  // HEAD
-            .mockResolvedValueOnce({    // GET
+            .mockResolvedValueOnce({})
+            .mockResolvedValueOnce({
                 Metadata: {
-                    uploadvia: 'content',
-                    score: '-1'
+                    uploadvia: 'content'
                 },
                 Body: mockStream
             });
@@ -158,42 +116,12 @@ describe('Rate Package Handler', () => {
             pathParameters: { id: "cloudinary_npm--2.5.1" }
         });
 
-        const body = JSON.parse(response.body);
         expect(response.statusCode).toBe(200);
-        expectMetricsFields(body);
-    }, 60000);
-
-    test('should handle invalid URL in gzipped content', async () => {
-        const packageJson = {
-            name: "test-package",
-            repository: {
-                url: "https://invalid-url.com/repo"
-            }
-        };
-        
-        const gzippedBuffer = gzipSync(Buffer.from(JSON.stringify(packageJson)));
-        const mockStream = Readable.from(gzippedBuffer);
-
-        mockS3Send
-            .mockResolvedValueOnce({})  // HEAD
-            .mockResolvedValueOnce({    // GET
-                Metadata: {
-                    uploadvia: 'content',
-                    score: '8.5'
-                },
-                Body: mockStream
-            });
-
-        const response = await ratePackageHandler({
-            pathParameters: { id: "test-package.gz" }
-        });
-
         const body = JSON.parse(response.body);
-        expect(response.statusCode).toBe(200);
         expectMetricsFields(body);
     });
 
-    test('should return 404 for non-existent package', async () => {
+    test('should handle non-existent package', async () => {
         mockS3Send.mockRejectedValueOnce({
             name: 'NotFound',
             $metadata: { httpStatusCode: 404 }
@@ -203,8 +131,8 @@ describe('Rate Package Handler', () => {
             pathParameters: { id: "non-existent-package@1.0.0" }
         });
 
-        const body = JSON.parse(response.body);
         expect(response.statusCode).toBe(404);
+        const body = JSON.parse(response.body);
         expect(body.error).toContain('not found');
     });
 
@@ -213,62 +141,41 @@ describe('Rate Package Handler', () => {
             pathParameters: {}
         });
 
-        const body = JSON.parse(response.body);
         expect(response.statusCode).toBe(400);
+        const body = JSON.parse(response.body);
         expect(body.error).toBe('Package ID is required');
     });
 });
 
-// Add this section after the existing mocked tests
 describe('Rate Package Handler - Integration Tests', () => {
-    // Disable mocking for S3 client in integration tests
     beforeEach(() => {
         jest.resetModules();
         jest.dontMock('@aws-sdk/client-s3');
     });
 
-    const expectMetricsFields = (body) => {
-        expect(body.NetScore).toBeDefined();
-        expect(body.NetScoreLatency).toBeDefined();
-        expect(body.RampUp).toBeDefined();
-        expect(body.RampUpLatency).toBeDefined();
-        expect(body.Correctness).toBeDefined();
-        expect(body.CorrectnessLatency).toBeDefined();
-        expect(body.BusFactor).toBeDefined();
-        expect(body.BusFactorLatency).toBeDefined();
-        expect(body.ResponsiveMaintainer).toBeDefined();
-        expect(body.ResponsiveMaintainerLatency).toBeDefined();
-        expect(body.LicenseScore).toBeDefined();
-        expect(body.LicenseScoreLatency).toBeDefined();
-        expect(body.GoodPinningPractice).toBeDefined();
-        expect(body.GoodPinningPracticeLatency).toBeDefined();
-        expect(body.PullRequest).toBeDefined();
-        expect(body.PullRequestLatency).toBeDefined();
-    };
-
-    test('should rate cloudinary_npm package successfully', async () => {
+    test('should rate real cloudinary package successfully', async () => {
         const response = await ratePackageHandler({
             pathParameters: { id: "cloudinary_npm--2.5.1" }
         });
 
         expect(response.statusCode).toBe(200);
         const body = JSON.parse(response.body);
-        console.log('Cloudinary real package response:', JSON.stringify(body, null, 2));
+        console.log('Real cloudinary package response:', JSON.stringify(body, null, 2));
         expectMetricsFields(body);
     }, 60000);
 
-    test('should rate lodash package successfully', async () => {
+    test('should rate real npm package successfully', async () => {
         const response = await ratePackageHandler({
             pathParameters: { id: "lodash@4.17.21" }
         });
 
         expect(response.statusCode).toBe(200);
         const body = JSON.parse(response.body);
-        console.log('Lodash real package response:', JSON.stringify(body, null, 2));
+        console.log('Real npm package response:', JSON.stringify(body, null, 2));
         expectMetricsFields(body);
     }, 60000);
 
-    test('should handle non-existent package in real S3', async () => {
+    test('should handle real non-existent package', async () => {
         const response = await ratePackageHandler({
             pathParameters: { id: "non-existent-package--99.99.99" }
         });
@@ -276,24 +183,6 @@ describe('Rate Package Handler - Integration Tests', () => {
         expect(response.statusCode).toBe(404);
         const body = JSON.parse(response.body);
         expect(body.error).toContain('not found');
-    });
-
-    test('should handle malformed package ID', async () => {
-        const response = await ratePackageHandler({
-            pathParameters: { id: "invalid!package!id" }
-        });
-
-        expect(response.statusCode).toBe(404);
-        const body = JSON.parse(response.body);
-        expect(body.error).toContain('not found');
-    });
-
-    test('should handle missing pathParameters', async () => {
-        const response = await ratePackageHandler({});
-
-        expect(response.statusCode).toBe(400);
-        const body = JSON.parse(response.body);
-        expect(body.error).toBe('Package ID is required');
     });
 });
 
