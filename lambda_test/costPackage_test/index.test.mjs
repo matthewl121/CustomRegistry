@@ -1,9 +1,6 @@
 import { jest } from '@jest/globals';
 import { handler } from '../../lambda/costPackage/index.mjs';
 import { S3Client } from "@aws-sdk/client-s3";
-import { Readable } from 'stream';
-import { gzipSync } from 'zlib';
-import { pack } from 'tar';
 
 // Set longer timeout for all tests
 jest.setTimeout(30000);
