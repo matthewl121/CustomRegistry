@@ -1,6 +1,6 @@
 // ratePackageHandler.test.mjs
 import { S3Client, GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
-import { ratePackageHandler } from "../path-to-your-function-file.mjs";
+import { ratePackageHandler } from ""../../lambda/ratePackage/index.mjs";
 import { createResponse } from "../utils/createResponse.mjs";
 import { gunzipSync } from "zlib";
 import fs from "fs/promises";
