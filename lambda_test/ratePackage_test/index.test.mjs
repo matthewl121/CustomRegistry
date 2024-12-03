@@ -219,6 +219,84 @@ describe('Rate Package Handler', () => {
     });
 });
 
+// Add this section after the existing mocked tests
+describe('Rate Package Handler - Integration Tests', () => {
+    // Disable mocking for S3 client in integration tests
+    beforeEach(() => {
+        jest.resetModules();
+        jest.dontMock('@aws-sdk/client-s3');
+    });
+
+    const expectMetricsFields = (body) => {
+        expect(body.NetScore).toBeDefined();
+        expect(body.NetScoreLatency).toBeDefined();
+        expect(body.RampUp).toBeDefined();
+        expect(body.RampUpLatency).toBeDefined();
+        expect(body.Correctness).toBeDefined();
+        expect(body.CorrectnessLatency).toBeDefined();
+        expect(body.BusFactor).toBeDefined();
+        expect(body.BusFactorLatency).toBeDefined();
+        expect(body.ResponsiveMaintainer).toBeDefined();
+        expect(body.ResponsiveMaintainerLatency).toBeDefined();
+        expect(body.LicenseScore).toBeDefined();
+        expect(body.LicenseScoreLatency).toBeDefined();
+        expect(body.GoodPinningPractice).toBeDefined();
+        expect(body.GoodPinningPracticeLatency).toBeDefined();
+        expect(body.PullRequest).toBeDefined();
+        expect(body.PullRequestLatency).toBeDefined();
+    };
+
+    test('should rate cloudinary_npm package successfully', async () => {
+        const response = await ratePackageHandler({
+            pathParameters: { id: "cloudinary_npm--2.5.1" }
+        });
+
+        expect(response.statusCode).toBe(200);
+        const body = JSON.parse(response.body);
+        console.log('Cloudinary real package response:', JSON.stringify(body, null, 2));
+        expectMetricsFields(body);
+    }, 60000);
+
+    test('should rate lodash package successfully', async () => {
+        const response = await ratePackageHandler({
+            pathParameters: { id: "lodash@4.17.21" }
+        });
+
+        expect(response.statusCode).toBe(200);
+        const body = JSON.parse(response.body);
+        console.log('Lodash real package response:', JSON.stringify(body, null, 2));
+        expectMetricsFields(body);
+    }, 60000);
+
+    test('should handle non-existent package in real S3', async () => {
+        const response = await ratePackageHandler({
+            pathParameters: { id: "non-existent-package--99.99.99" }
+        });
+
+        expect(response.statusCode).toBe(404);
+        const body = JSON.parse(response.body);
+        expect(body.error).toContain('not found');
+    });
+
+    test('should handle malformed package ID', async () => {
+        const response = await ratePackageHandler({
+            pathParameters: { id: "invalid!package!id" }
+        });
+
+        expect(response.statusCode).toBe(404);
+        const body = JSON.parse(response.body);
+        expect(body.error).toContain('not found');
+    });
+
+    test('should handle missing pathParameters', async () => {
+        const response = await ratePackageHandler({});
+
+        expect(response.statusCode).toBe(400);
+        const body = JSON.parse(response.body);
+        expect(body.error).toBe('Package ID is required');
+    });
+});
+
 // import { jest } from '@jest/globals';
 // import { ratePackageHandler } from '../../lambda/ratePackage/index.mjs';
 // import { S3Client } from "@aws-sdk/client-s3";
