@@ -75,7 +75,6 @@ describe('updatePackageHandler', () => {
       'Access-Control-Allow-Headers': 'Content-Type',
     });
 
-    // Verify logs
     expect(console.log).toHaveBeenCalledWith(
       "/package/{id} POST: Package updated successfully:",
       mockPutResponse
@@ -140,9 +139,8 @@ describe('updatePackageHandler', () => {
     expect(result.statusCode).toBe(200);
     expect(mockS3Send).toHaveBeenCalledTimes(4);
 
-    // Verify debloat logs
     expect(console.log).toHaveBeenCalledWith(
-      '/package/{id} POST: Deleted 2 existing versions'
+      '/package/{id} POST: Deleted 2 existing versions of package "test-package".'
     );
     expect(console.log).toHaveBeenCalledWith(
       '/package/{id} POST: Package updated successfully:',
@@ -178,7 +176,7 @@ describe('updatePackageHandler', () => {
 
     expect(result.statusCode).toBe(200);
     expect(console.log).toHaveBeenCalledWith(
-      '/package/{id} POST: No existing versions found for package test-package'
+      '/package/{id} POST: No existing versions found for package "test-package".'
     );
   });
 
