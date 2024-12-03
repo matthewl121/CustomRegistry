@@ -1,6 +1,6 @@
 import { jest } from '@jest/globals';
 import { S3Client, GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
-import { downloadPackageHandler } from '../../lambda/download/index.mjs';
+import { handler as downloadPackageHandler } from '../../lambda/download/index.mjs';
 import { Readable } from 'stream';
 
 // Mock the AWS SDK
