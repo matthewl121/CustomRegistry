@@ -21,6 +21,7 @@
       "test:rate": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/ratePackage_test/index.test.mjs",
       "test:download": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/download_test/index.test.mjs",
       "test:get": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/getPackages_test/index.test.mjs",
+      "test:upload": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/upload_test/index.test.mjs",
       "compile": "tsc",
       "install-deps": "npm install --save-dev && tsc --init"
     },
