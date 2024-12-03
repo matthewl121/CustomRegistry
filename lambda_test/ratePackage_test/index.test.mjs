@@ -116,12 +116,12 @@ describe('Rate Package Handler - Mocked Tests', () => {
             .mockResolvedValueOnce({    // GET
                 Metadata: {
                     uploadvia: 'github',
-                    url: 'https://github.com/cloudinary/cloudinary_npm'
+                    url: 'https://github.com/lodash/lodash'
                 }
             });
 
         const response = await ratePackageHandler({
-            pathParameters: { id: "cloudinary_npm--2.5.1" }
+            pathParameters: { id: "lodash-4.17.21" }
         });
 
         expect(response.statusCode).toBe(200);
@@ -131,10 +131,10 @@ describe('Rate Package Handler - Mocked Tests', () => {
 
     test('should handle gzipped content package successfully', async () => {
         const packageJson = {
-            name: "cloudinary",
-            version: "2.5.1",
+            name: "express",
+            version: "4.18.2",
             repository: {
-                url: "https://github.com/cloudinary/cloudinary_npm"
+                url: "https://github.com/expressjs/express"
             }
         };
         
@@ -151,7 +151,7 @@ describe('Rate Package Handler - Mocked Tests', () => {
             });
 
         const response = await ratePackageHandler({
-            pathParameters: { id: "cloudinary_npm--2.5.1" }
+            pathParameters: { id: "express-4.18.2" }
         });
 
         expect(response.statusCode).toBe(200);
@@ -240,14 +240,14 @@ describe('Rate Package Handler - Integration Tests', () => {
         jest.dontMock('@aws-sdk/client-s3');
     });
 
-    test('should rate cloudinary_npm package successfully', async () => {
+    test('should rate lodash package successfully', async () => {
         const response = await ratePackageHandler({
-            pathParameters: { id: "cloudinary_npm--2.5.1" }
+            pathParameters: { id: "lodash@4.17.21" }
         });
 
         expect(response.statusCode).toBe(200);
         const body = JSON.parse(response.body);
-        console.log('Cloudinary package response:', JSON.stringify(body, null, 2));
+        console.log('Lodash package response:', JSON.stringify(body, null, 2));
         expectMetricsFields(body);
     }, 60000);
 
