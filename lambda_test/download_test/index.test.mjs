@@ -3,6 +3,7 @@ import { S3Client, GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s
 import { downloadPackageHandler } from '../../lambda/download/index.mjs';
 import { Readable } from 'stream';
 
+// Mock the AWS SDK
 jest.mock("@aws-sdk/client-s3", () => ({
   S3Client: jest.fn(() => ({
     send: jest.fn()
@@ -65,7 +66,7 @@ describe('downloadPackageHandler', () => {
       'Author': 'test-author',
       'Version': '2.0.0',
       'Description': 'default-description',
-      'ID': 'default-id'  // Now matches actual implementation
+      'ID': 'default-id'
     });
 
     const expectedContent = Buffer.from(mockFileContent).toString('base64');
@@ -125,13 +126,8 @@ describe('downloadPackageHandler', () => {
       const result = await downloadPackageHandler('test-package');
       const parsedBody = JSON.parse(result.body);
 
-      // Special case for 'ID', others should follow standard capitalization
       Object.keys(parsedBody.metadata).forEach(key => {
-        if (key === 'ID') {
-          expect(key).toBe('ID');
-        } else {
-          expect(key).toMatch(/^[A-Z][a-z]+$/);
-        }
+        expect(key).toMatch(/^[A-Z][a-z]+$|^ID$/);
       });
 
       expect(Object.keys(parsedBody.metadata)).toEqual(
