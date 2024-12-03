@@ -31,16 +31,42 @@ jest.mock('fs/promises', () => ({
     writeFile: (...args) => mockWriteFile(...args)
 }));
 
+const mockCustomRegistryOutput = `
+NetScore: 0.75
+NetScoreLatency: 0.2
+RampUp: 0.7
+RampUpLatency: 0.3
+Correctness: 0.8
+CorrectnessLatency: 0.1
+BusFactor: 0.5
+BusFactorLatency: 0.2
+ResponsiveMaintainer: 0.9
+ResponsiveMaintainerLatency: 0.1
+LicenseScore: 1.0
+LicenseScoreLatency: 0.0
+GoodPinningPractice: 0.8
+GoodPinningPracticeLatency: 0.2
+PullRequest: 0.6
+PullRequestLatency: 0.4`;
+
 // Helper function for checking metrics
 const expectMetricsFields = (body) => {
-    expect(body.NetScore).toBeDefined();
-    expect(body.RampUp).toBeDefined();
-    expect(body.Correctness).toBeDefined();
-    expect(body.BusFactor).toBeDefined();
-    expect(body.ResponsiveMaintainer).toBeDefined();
-    expect(body.LicenseScore).toBeDefined();
-    expect(body.GoodPinningPractice).toBeDefined();
-    expect(body.PullRequest).toBeDefined();
+    expect(typeof body.NetScore).toBe('number');
+    expect(typeof body.NetScoreLatency).toBe('number');
+    expect(typeof body.RampUp).toBe('number');
+    expect(typeof body.RampUpLatency).toBe('number');
+    expect(typeof body.Correctness).toBe('number');
+    expect(typeof body.CorrectnessLatency).toBe('number');
+    expect(typeof body.BusFactor).toBe('number');
+    expect(typeof body.BusFactorLatency).toBe('number');
+    expect(typeof body.ResponsiveMaintainer).toBe('number');
+    expect(typeof body.ResponsiveMaintainerLatency).toBe('number');
+    expect(typeof body.LicenseScore).toBe('number');
+    expect(typeof body.LicenseScoreLatency).toBe('number');
+    expect(typeof body.GoodPinningPractice).toBe('number');
+    expect(typeof body.GoodPinningPracticeLatency).toBe('number');
+    expect(typeof body.PullRequest).toBe('number');
+    expect(typeof body.PullRequestLatency).toBe('number');
 };
 
 describe('Rate Package Handler - Mocked Tests', () => {
@@ -56,25 +82,17 @@ describe('Rate Package Handler - Mocked Tests', () => {
         mockUnlink.mockResolvedValue(undefined);
         mockWriteFile.mockResolvedValue(undefined);
 
+        // Default Custom Registry success response
         mockExecPromise.mockResolvedValue({
-            stdout: JSON.stringify({
-                NetScore: 0.5,
-                RampUp: 0.5,
-                Correctness: 0.5,
-                BusFactor: 0.5,
-                ResponsiveMaintainer: 0.5,
-                LicenseScore: 1.0,
-                GoodPinningPractice: 0.5,
-                PullRequest: 0.7
-            }),
+            stdout: mockCustomRegistryOutput,
             stderr: ''
         });
     });
 
     test('should handle NPM package successfully', async () => {
         mockS3Send
-            .mockResolvedValueOnce({})
-            .mockResolvedValueOnce({
+            .mockResolvedValueOnce({})  // HEAD
+            .mockResolvedValueOnce({    // GET
                 Metadata: {
                     uploadvia: 'npm',
                     name: 'lodash',
@@ -84,6 +102,26 @@ describe('Rate Package Handler - Mocked Tests', () => {
 
         const response = await ratePackageHandler({
             pathParameters: { id: "lodash@4.17.21" }
+        });
+
+        expect(response.statusCode).toBe(200);
+        const body = JSON.parse(response.body);
+        expectMetricsFields(body);
+        expect(body.NetScore).toBe(0.75);
+    });
+
+    test('should handle GitHub package successfully', async () => {
+        mockS3Send
+            .mockResolvedValueOnce({})  // HEAD
+            .mockResolvedValueOnce({    // GET
+                Metadata: {
+                    uploadvia: 'github',
+                    url: 'https://github.com/cloudinary/cloudinary_npm'
+                }
+            });
+
+        const response = await ratePackageHandler({
+            pathParameters: { id: "cloudinary_npm--2.5.1" }
         });
 
         expect(response.statusCode).toBe(200);
@@ -104,8 +142,8 @@ describe('Rate Package Handler - Mocked Tests', () => {
         const mockStream = Readable.from(gzippedBuffer);
 
         mockS3Send
-            .mockResolvedValueOnce({})
-            .mockResolvedValueOnce({
+            .mockResolvedValueOnce({})  // HEAD
+            .mockResolvedValueOnce({    // GET
                 Metadata: {
                     uploadvia: 'content'
                 },
@@ -119,6 +157,55 @@ describe('Rate Package Handler - Mocked Tests', () => {
         expect(response.statusCode).toBe(200);
         const body = JSON.parse(response.body);
         expectMetricsFields(body);
+    });
+
+    test('should handle Custom Registry program errors', async () => {
+        mockS3Send
+            .mockResolvedValueOnce({})  // HEAD
+            .mockResolvedValueOnce({    // GET
+                Metadata: {
+                    uploadvia: 'npm',
+                    name: 'error-package'
+                }
+            });
+
+        mockExecPromise.mockRejectedValue(new Error('Custom Registry Error'));
+
+        const response = await ratePackageHandler({
+            pathParameters: { id: "error-package@1.0.0" }
+        });
+
+        const body = JSON.parse(response.body);
+        expect(body.NetScore).toBe(0);
+    });
+
+    test('should handle invalid URLs in content', async () => {
+        const packageJson = {
+            name: "test-package",
+            repository: {
+                url: "invalid-url"
+            }
+        };
+        
+        const gzippedBuffer = gzipSync(Buffer.from(JSON.stringify(packageJson)));
+        const mockStream = Readable.from(gzippedBuffer);
+
+        mockS3Send
+            .mockResolvedValueOnce({})  // HEAD
+            .mockResolvedValueOnce({    // GET
+                Metadata: {
+                    uploadvia: 'content'
+                },
+                Body: mockStream
+            });
+
+        const response = await ratePackageHandler({
+            pathParameters: { id: "test-package.gz" }
+        });
+
+        expect(response.statusCode).toBe(200);
+        const body = JSON.parse(response.body);
+        expect(body.NetScore).toBe(0);
     });
 
     test('should handle non-existent package', async () => {
@@ -153,29 +240,18 @@ describe('Rate Package Handler - Integration Tests', () => {
         jest.dontMock('@aws-sdk/client-s3');
     });
 
-    test('should rate real cloudinary package successfully', async () => {
+    test('should rate cloudinary_npm package successfully', async () => {
         const response = await ratePackageHandler({
             pathParameters: { id: "cloudinary_npm--2.5.1" }
         });
 
         expect(response.statusCode).toBe(200);
         const body = JSON.parse(response.body);
-        console.log('Real cloudinary package response:', JSON.stringify(body, null, 2));
+        console.log('Cloudinary package response:', JSON.stringify(body, null, 2));
         expectMetricsFields(body);
     }, 60000);
 
-    test('should rate real npm package successfully', async () => {
-        const response = await ratePackageHandler({
-            pathParameters: { id: "lodash@4.17.21" }
-        });
-
-        expect(response.statusCode).toBe(200);
-        const body = JSON.parse(response.body);
-        console.log('Real npm package response:', JSON.stringify(body, null, 2));
-        expectMetricsFields(body);
-    }, 60000);
-
-    test('should handle real non-existent package', async () => {
+    test('should handle non-existent package', async () => {
         const response = await ratePackageHandler({
             pathParameters: { id: "non-existent-package--99.99.99" }
         });
