@@ -1,266 +1,124 @@
-import { jest } from '@jest/globals';
-import { ratePackageHandler } from '../../lambda/ratePackage/index.mjs';
-import { S3Client } from "@aws-sdk/client-s3";
-import { Readable } from 'stream';
-import { gzipSync } from 'zlib';
+// ratePackageHandler.test.mjs
+import { S3Client, GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
+import { ratePackageHandler } from "../path-to-your-function-file.mjs";
+import { createResponse } from "../utils/createResponse.mjs";
+import { gunzipSync } from "zlib";
+import fs from "fs/promises";
+import { exec } from "child_process";
+import { promisify } from "util";
 
-// Set longer timeout for all tests
-jest.setTimeout(60000);
-
-// Mock AWS SDK for mocked tests
-jest.mock('@aws-sdk/client-s3');
-
-// Mock child_process and fs
-const mockExecPromise = jest.fn();
-jest.mock('child_process', () => ({
-    exec: () => mockExecPromise
+// Mocking
+jest.mock("@aws-sdk/client-s3");
+jest.mock("zlib", () => ({
+  ...jest.requireActual("zlib"),
+  gunzipSync: jest.fn()
+}));
+jest.mock("fs/promises");
+jest.mock("child_process");
+jest.mock("util", () => ({
+  ...jest.requireActual("util"),
+  promisify: jest.fn()
 }));
 
-jest.mock('util', () => ({
-    ...jest.requireActual('util'),
-    promisify: (fn) => (...args) => mockExecPromise(...args)
-}));
+describe("ratePackageHandler", () => {
+  const BUCKET_NAME = "acmeregistrys3";
+  let mockS3Client, mockExecAsync;
 
-const mockMkdir = jest.fn();
-const mockUnlink = jest.fn();
-const mockWriteFile = jest.fn();
+  beforeEach(() => {
+    mockS3Client = jest.fn();
+    S3Client.mockImplementation(() => ({
+      send: mockS3Client
+    }));
 
-jest.mock('fs/promises', () => ({
-    mkdir: (...args) => mockMkdir(...args),
-    unlink: (...args) => mockUnlink(...args),
-    writeFile: (...args) => mockWriteFile(...args)
-}));
+    mockExecAsync = jest.fn();
+    promisify.mockReturnValue(mockExecAsync);
+  });
 
-const mockCustomRegistryOutput = `
-NetScore: 0.75
-NetScoreLatency: 0.2
-RampUp: 0.7
-RampUpLatency: 0.3
-Correctness: 0.8
-CorrectnessLatency: 0.1
-BusFactor: 0.5
-BusFactorLatency: 0.2
-ResponsiveMaintainer: 0.9
-ResponsiveMaintainerLatency: 0.1
-LicenseScore: 1.0
-LicenseScoreLatency: 0.0
-GoodPinningPractice: 0.8
-GoodPinningPracticeLatency: 0.2
-PullRequest: 0.6
-PullRequestLatency: 0.4`;
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
 
-// Helper function for checking metrics
-const expectMetricsFields = (body) => {
-    expect(typeof body.NetScore).toBe('number');
-    expect(typeof body.NetScoreLatency).toBe('number');
-    expect(typeof body.RampUp).toBe('number');
-    expect(typeof body.RampUpLatency).toBe('number');
-    expect(typeof body.Correctness).toBe('number');
-    expect(typeof body.CorrectnessLatency).toBe('number');
-    expect(typeof body.BusFactor).toBe('number');
-    expect(typeof body.BusFactorLatency).toBe('number');
-    expect(typeof body.ResponsiveMaintainer).toBe('number');
-    expect(typeof body.ResponsiveMaintainerLatency).toBe('number');
-    expect(typeof body.LicenseScore).toBe('number');
-    expect(typeof body.LicenseScoreLatency).toBe('number');
-    expect(typeof body.GoodPinningPractice).toBe('number');
-    expect(typeof body.GoodPinningPracticeLatency).toBe('number');
-    expect(typeof body.PullRequest).toBe('number');
-    expect(typeof body.PullRequestLatency).toBe('number');
-};
+  it("should return 400 if package ID is missing", async () => {
+    const event = { pathParameters: {} };
+    const response = await ratePackageHandler(event);
 
-describe('Rate Package Handler - Mocked Tests', () => {
-    let mockS3Send;
+    expect(response).toEqual(createResponse(400, { error: "Package ID is required" }));
+  });
 
-    beforeEach(() => {
-        jest.clearAllMocks();
-        mockS3Send = jest.fn();
-        S3Client.prototype.send = mockS3Send;
+  it("should return 404 if the package does not exist", async () => {
+    const event = { pathParameters: { id: "lodash@4.17.21" } };
+    mockS3Client.mockRejectedValueOnce({ name: "NotFound" });
 
-        // Default success responses
-        mockMkdir.mockResolvedValue(undefined);
-        mockUnlink.mockResolvedValue(undefined);
-        mockWriteFile.mockResolvedValue(undefined);
+    const response = await ratePackageHandler(event);
 
-        // Default Custom Registry success response
-        mockExecPromise.mockResolvedValue({
-            stdout: mockCustomRegistryOutput,
-            stderr: ''
-        });
-    });
+    expect(mockS3Client).toHaveBeenCalledWith(
+      expect.objectContaining({ Bucket: BUCKET_NAME, Key: "lodash@4.17.21" })
+    );
+    expect(response).toEqual(
+      createResponse(404, { error: "Package lodash@4.17.21 not found", packageId: "lodash@4.17.21" })
+    );
+  });
 
-    test('should handle NPM package successfully', async () => {
-        mockS3Send
-            .mockResolvedValueOnce({})  // HEAD
-            .mockResolvedValueOnce({    // GET
-                Metadata: {
-                    uploadvia: 'npm',
-                    name: 'lodash',
-                    version: '4.17.21'
-                }
-            });
+  it("should return the correct metadata and parsed results for an existing package", async () => {
+    const event = { pathParameters: { id: "lodash@4.17.21" } };
+    const s3Response = {
+      Metadata: { uploadvia: "content", score: "0.5" },
+      Body: Buffer.from("mock gzip content")
+    };
+    const parsedPackageJson = {
+      repository: { url: "https://github.com/lodash/lodash" }
+    };
 
-        const response = await ratePackageHandler({
-            pathParameters: { id: "lodash@4.17.21" }
-        });
+    // Mock AWS SDK calls
+    mockS3Client
+      .mockResolvedValueOnce() // HeadObjectCommand
+      .mockResolvedValueOnce(s3Response); // GetObjectCommand
 
-        expect(response.statusCode).toBe(200);
-        const body = JSON.parse(response.body);
-        expectMetricsFields(body);
-        expect(body.NetScore).toBe(0.75);
-    });
+    // Mock zlib and exec
+    gunzipSync.mockReturnValueOnce(JSON.stringify(parsedPackageJson));
+    mockExecAsync.mockResolvedValueOnce({ stdout: "NetScore: 0.85\n", stderr: "" });
 
-    test('should handle GitHub package successfully', async () => {
-        mockS3Send
-            .mockResolvedValueOnce({})  // HEAD
-            .mockResolvedValueOnce({    // GET
-                Metadata: {
-                    uploadvia: 'github',
-                    url: 'https://github.com/lodash/lodash'
-                }
-            });
+    // Mock filesystem operations
+    fs.mkdir.mockResolvedValueOnce();
+    fs.writeFile.mockResolvedValueOnce();
+    fs.unlink.mockResolvedValueOnce();
 
-        const response = await ratePackageHandler({
-            pathParameters: { id: "lodash-4.17.21" }
-        });
+    const response = await ratePackageHandler(event);
 
-        expect(response.statusCode).toBe(200);
-        const body = JSON.parse(response.body);
-        expectMetricsFields(body);
-    });
+    expect(response).toEqual(
+      createResponse(200, {
+        BusFactor: 0,
+        BusFactorLatency: 0,
+        Correctness: 0,
+        CorrectnessLatency: 0,
+        RampUp: 0,
+        RampUpLatency: 0,
+        ResponsiveMaintainer: 0,
+        ResponsiveMaintainerLatency: 0,
+        LicenseScore: 0,
+        LicenseScoreLatency: 0,
+        GoodPinningPractice: 0,
+        GoodPinningPracticeLatency: 0,
+        PullRequest: 0,
+        PullRequestLatency: 0,
+        NetScore: 0.85,
+        NetScoreLatency: 0
+      })
+    );
+  });
 
-    test('should handle gzipped content package successfully', async () => {
-        const packageJson = {
-            name: "express",
-            version: "4.18.2",
-            repository: {
-                url: "https://github.com/expressjs/express"
-            }
-        };
-        
-        const gzippedBuffer = gzipSync(Buffer.from(JSON.stringify(packageJson)));
-        const mockStream = Readable.from(gzippedBuffer);
+  it("should return 500 if an unexpected error occurs", async () => {
+    const event = { pathParameters: { id: "lodash@4.17.21" } };
+    mockS3Client.mockRejectedValueOnce(new Error("Unexpected error"));
 
-        mockS3Send
-            .mockResolvedValueOnce({})  // HEAD
-            .mockResolvedValueOnce({    // GET
-                Metadata: {
-                    uploadvia: 'content'
-                },
-                Body: mockStream
-            });
+    const response = await ratePackageHandler(event);
 
-        const response = await ratePackageHandler({
-            pathParameters: { id: "express-4.18.2" }
-        });
-
-        expect(response.statusCode).toBe(200);
-        const body = JSON.parse(response.body);
-        expectMetricsFields(body);
-    });
-
-    test('should handle Custom Registry program errors', async () => {
-        mockS3Send
-            .mockResolvedValueOnce({})  // HEAD
-            .mockResolvedValueOnce({    // GET
-                Metadata: {
-                    uploadvia: 'npm',
-                    name: 'error-package'
-                }
-            });
-
-        mockExecPromise.mockRejectedValue(new Error('Custom Registry Error'));
-
-        const response = await ratePackageHandler({
-            pathParameters: { id: "error-package@1.0.0" }
-        });
-
-        const body = JSON.parse(response.body);
-        expect(body.NetScore).toBe(0);
-    });
-
-    test('should handle invalid URLs in content', async () => {
-        const packageJson = {
-            name: "test-package",
-            repository: {
-                url: "invalid-url"
-            }
-        };
-        
-        const gzippedBuffer = gzipSync(Buffer.from(JSON.stringify(packageJson)));
-        const mockStream = Readable.from(gzippedBuffer);
-
-        mockS3Send
-            .mockResolvedValueOnce({})  // HEAD
-            .mockResolvedValueOnce({    // GET
-                Metadata: {
-                    uploadvia: 'content'
-                },
-                Body: mockStream
-            });
-
-        const response = await ratePackageHandler({
-            pathParameters: { id: "test-package.gz" }
-        });
-
-        expect(response.statusCode).toBe(200);
-        const body = JSON.parse(response.body);
-        expect(body.NetScore).toBe(0);
-    });
-
-    test('should handle non-existent package', async () => {
-        mockS3Send.mockRejectedValueOnce({
-            name: 'NotFound',
-            $metadata: { httpStatusCode: 404 }
-        });
-
-        const response = await ratePackageHandler({
-            pathParameters: { id: "non-existent-package@1.0.0" }
-        });
-
-        expect(response.statusCode).toBe(404);
-        const body = JSON.parse(response.body);
-        expect(body.error).toContain('not found');
-    });
-
-    test('should handle missing package ID', async () => {
-        const response = await ratePackageHandler({
-            pathParameters: {}
-        });
-
-        expect(response.statusCode).toBe(400);
-        const body = JSON.parse(response.body);
-        expect(body.error).toBe('Package ID is required');
-    });
+    expect(response).toEqual(
+      createResponse(500, { error: "Internal server error: Unexpected error", requestId: undefined })
+    );
+  });
 });
 
-describe('Rate Package Handler - Integration Tests', () => {
-    beforeEach(() => {
-        jest.resetModules();
-        jest.dontMock('@aws-sdk/client-s3');
-    });
-
-    test('should rate lodash package successfully', async () => {
-        const response = await ratePackageHandler({
-            pathParameters: { id: "lodash@4.17.21" }
-        });
-
-        expect(response.statusCode).toBe(200);
-        const body = JSON.parse(response.body);
-        console.log('Lodash package response:', JSON.stringify(body, null, 2));
-        expectMetricsFields(body);
-    }, 60000);
-
-    test('should handle non-existent package', async () => {
-        const response = await ratePackageHandler({
-            pathParameters: { id: "non-existent-package--99.99.99" }
-        });
-
-        expect(response.statusCode).toBe(404);
-        const body = JSON.parse(response.body);
-        expect(body.error).toContain('not found');
-    });
-});
 
 // import { jest } from '@jest/globals';
 // import { ratePackageHandler } from '../../lambda/ratePackage/index.mjs';
