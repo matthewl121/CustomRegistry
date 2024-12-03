@@ -46,7 +46,6 @@ describe('updatePackageHandler', () => {
       }
     };
 
-    // Mock HEAD request for old package
     mockS3Send.mockResolvedValueOnce({
       Metadata: {
         name: 'test-package',
@@ -55,7 +54,6 @@ describe('updatePackageHandler', () => {
       }
     });
 
-    // Mock PUT request for new package
     mockS3Send.mockResolvedValueOnce({});
 
     const result = await updatePackageHandler(event);
@@ -102,7 +100,6 @@ describe('updatePackageHandler', () => {
       }
     };
 
-    // Mock HEAD request
     mockS3Send.mockResolvedValueOnce({
       Metadata: {
         name: 'test-package',
@@ -111,7 +108,6 @@ describe('updatePackageHandler', () => {
       }
     });
 
-    // Mock ListObjectsV2Command
     mockS3Send.mockResolvedValueOnce({
       Contents: [
         { Key: 'test-package--1.1.0' },
@@ -119,16 +115,13 @@ describe('updatePackageHandler', () => {
       ]
     });
 
-    // Mock DeleteObjects
     mockS3Send.mockResolvedValueOnce({});
-
-    // Mock PutObject
     mockS3Send.mockResolvedValueOnce({});
 
     const result = await updatePackageHandler(event);
 
     expect(result.statusCode).toBe(200);
-    expect(mockS3Send).toHaveBeenCalledTimes(4); // HEAD + List + Delete + Put
+    expect(mockS3Send).toHaveBeenCalledTimes(4);
   });
 
   test('rejects update with invalid version', async () => {
@@ -139,7 +132,7 @@ describe('updatePackageHandler', () => {
       },
       metadata: {
         Name: 'test-package',
-        Version: '1.1.2', // Lower patch version
+        Version: '1.1.2',
         ID: 'test-package--1.1.3'
       }
     };
@@ -156,7 +149,7 @@ describe('updatePackageHandler', () => {
 
     expect(result.statusCode).toBe(400);
     expect(console.error).toHaveBeenCalledWith(
-      '/package/{id} POST: New patch version is not greater than old version'
+      '/package/{id} POST: New patch version is not greater than or equal to the old patch version.'
     );
   });
 
@@ -177,7 +170,7 @@ describe('updatePackageHandler', () => {
       Metadata: {
         name: 'test-package',
         version: '1.1.3',
-        uploadvia: 'content'  // Original was content, but trying to update with URL
+        uploadvia: 'content'
       }
     });
 
@@ -185,7 +178,7 @@ describe('updatePackageHandler', () => {
 
     expect(result.statusCode).toBe(400);
     expect(console.error).toHaveBeenCalledWith(
-      '/package/{id} POST: Trying to update via invalid/wrong/opposite method than original upload'
+      "/package/{id} POST: 'Trying to update via invalid/wrong/opposite method'."
     );
   });
 });
