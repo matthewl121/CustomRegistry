@@ -9,10 +9,10 @@ const capitalizeFirstLetter = (str) => {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 };
 
-const capitalizeKeys = (obj) => {
+const formatMetadata = (obj) => {
   const result = {};
   for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
+    if (obj.hasOwnProperty(key) && key.toLowerCase() !== 'uploadvia') {
       const capitalizedKey = capitalizeFirstLetter(key);
       result[capitalizedKey] = obj[key];
     }
@@ -63,7 +63,7 @@ export const downloadPackageHandler = async (packageId) => {
 
     // craft response body
     const responseBody = JSON.stringify({
-      metadata: capitalizeKeys(packageMetadata),
+      metadata: formatMetadata(packageMetadata),
       data: {
         'Content': fileData.toString('base64'), // Convert Buffer to Base64 string
       }
