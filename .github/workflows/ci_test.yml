@@ -23,3 +23,9 @@ jobs:
 
       - name: Run tests
         run: npm test
+
+      - name: Upload Jest Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-report
+          path: ./test-report.html
