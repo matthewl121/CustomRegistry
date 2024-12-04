@@ -1,7 +1,6 @@
 import { S3Client, PutObjectCommand, HeadObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 const s3 = new S3Client({ region: "us-east-1" });
 
-
 // Helper functions for debloat
 // Function to list all object keys with a specific prefix
 const listAllKeys = async (s3, bucket, prefix="") => {
