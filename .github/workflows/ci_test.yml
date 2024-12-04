@@ -53,14 +53,17 @@ jobs:
       - name: Install dependencies
         run: npm install
         
+      - name: Initialize TypeScript config
+        run: npx tsc --init
+        
       - name: Compile TypeScript
-        run: npm run compile
+        run: npx tsc
       
       - name: Run tests with coverage
         run: |
           node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage
       
-      - name: Generate HTML report
+      - name: Upload Test Reports
         if: always()
         uses: actions/upload-artifact@v3
         with:
@@ -68,4 +71,5 @@ jobs:
           path: |
             coverage/
             test-report.html
+            junit.xml
           retention-days: 30
