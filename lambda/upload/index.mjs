@@ -434,7 +434,7 @@ export const uploadPackageHandler = async (event) => {
       });
     } else {
       responseBody = JSON.stringify({
-        metadata: metadata,
+        metadata: formatMetadata(metadata),
         data: {
           'Content': content.toString('base64'), // Convert Buffer to Base64 string
           'URL': event.URL
