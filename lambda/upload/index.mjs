@@ -361,9 +361,9 @@ export const uploadPackageHandler = async (event) => {
 
   const packageId = packageName + '--' + packageVersion;
   const metadata = {
-    name: packageName,
-    id: packageId,
-    version: packageVersion,
+    Name: packageName,
+    ID: packageId,
+    Version: packageVersion,
     uploadvia: uploadVia,
   }
 
