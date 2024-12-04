@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { handler } from '../../lambda/costPackage/index.mjs';
+import { packageCostHandler } from '../../lambda/costPackage/index.mjs';
 import { S3Client } from "@aws-sdk/client-s3";
 
 // Set longer timeout for all tests
@@ -7,7 +7,7 @@ jest.setTimeout(30000);
 
 describe('Cost Package Handler - Integration Tests', () => {
     test('should calculate costs with dependencies for cloudinary package', async () => {
-        const response = await handler({
+        const response = await packageCostHandler({
             id: "cloudinary_npm--2.5.1",
             dependency: "true"
         });
@@ -22,7 +22,7 @@ describe('Cost Package Handler - Integration Tests', () => {
     });
 
     test('should calculate standalone cost for cloudinary package', async () => {
-        const response = await handler({
+        const response = await packageCostHandler({
             id: "cloudinary_npm--2.5.1",
             dependency: "false"
         });
@@ -36,7 +36,7 @@ describe('Cost Package Handler - Integration Tests', () => {
     });
 
     test('should handle non-existent package', async () => {
-        const response = await handler({
+        const response = await packageCostHandler({
             id: "non-existent-package--1.0.0",
             dependency: "true"
         });
@@ -49,7 +49,7 @@ describe('Cost Package Handler - Integration Tests', () => {
 
 describe('Cost Package Handler - Common Tests', () => {
     test('should handle invalid package ID', async () => {
-        const response = await handler({
+        const response = await packageCostHandler({
             id: "../invalid/package/id",
             dependency: "true"
         });
@@ -57,14 +57,14 @@ describe('Cost Package Handler - Common Tests', () => {
     });
 
     test('should handle missing package ID', async () => {
-        const response = await handler({
+        const response = await packageCostHandler({
             dependency: "true"
         });
         expect(response.statusCode).toBe(400);
     });
 
     test('should handle missing dependency flag', async () => {
-        const response = await handler({
+        const response = await packageCostHandler({
             id: "cloudinary_npm--2.5.1"
         });
         expect(response.statusCode).toBe(200);

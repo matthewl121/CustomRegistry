@@ -71,7 +71,7 @@ const transformKeys = (keys) => {
 };
 
 
-export const handler = async (event) => {
+export const getPackageByRegexHandler = async (event) => {
   // MIGHT NEETO TO ADD 'pathParameters' OR SIMILAR TO 'event' FIELDS
   const bucketName = "acmeregistrys3";
   const regexPattern = event.RegEx;

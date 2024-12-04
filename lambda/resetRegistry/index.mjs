@@ -69,7 +69,7 @@ const deleteObjects = async (s3Client, bucket, objects) => {
 };
 
 
-export const handler = async (event) => {
+export const resetRegistryHandler = async (event) => {
   const bucketName = "acmeregistrys3";
 
   try {

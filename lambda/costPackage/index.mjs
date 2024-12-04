@@ -174,7 +174,7 @@ const processPackage = async (packageId, bucketName, processedPackages) => {
   return processedPackages[packageId].totalCost;
 };
 
-export const handler = async (event) => {
+export const packageCostHandler = async (event) => {
   const bucketName = "acmeregistrys3";
   const packageId = event.id;
   const dependencyFlag = event.dependency === "true";

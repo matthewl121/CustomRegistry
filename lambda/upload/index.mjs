@@ -212,7 +212,7 @@ const getNpmTarballContent = async (tarballUrl, options = {}) => {
 };
 
 
-export const handler = async (event) => {
+export const uploadPackageHandler = async (event) => {
   // MIGHT NEETO TO ADD 'pathParameters' OR SIMILAR TO 'event' FIELDS
   const bucketName = "acmeregistrys3";
   const debloat = event.debloat === "true";
