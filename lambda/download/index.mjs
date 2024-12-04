@@ -3,7 +3,7 @@ import { S3Client, GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s
 const s3 = new S3Client({ region: "us-east-1" });
 
 const capitalizeFirstLetter = (str) => {
-  if (str === 'id') {
+  if (str.toLowerCase() === 'id') {
     return 'ID'; // Special case for 'id' key to become 'ID'
   }
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
