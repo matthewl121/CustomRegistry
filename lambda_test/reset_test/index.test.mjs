@@ -1,7 +1,6 @@
 import { jest } from '@jest/globals';
-import { S3Client, GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, GetObjectCommand, HeadObjectCommand, DeleteObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { resetRegistryHandler } from '../../lambda/resetRegistry/index.mjs';
-import { Readable } from 'stream';
 
 // Mock the AWS SDK
 jest.mock("@aws-sdk/client-s3", () => ({
@@ -10,6 +9,8 @@ jest.mock("@aws-sdk/client-s3", () => ({
   })),
   GetObjectCommand: jest.fn(),
   HeadObjectCommand: jest.fn(),
+  DeleteObjectCommand: jest.fn(),
+  ListObjectsV2Command: jest.fn(),
 }));
 
 describe('resetRegistryHandler', () => {
@@ -21,91 +22,75 @@ describe('resetRegistryHandler', () => {
     S3Client.prototype.send = mockS3Send;
   });
 
-  const createMockStream = (data) => Readable.from([Buffer.from(data)]);
+  const mockPackages = [
+    { Key: 'package1.zip' },
+    { Key: 'package2.zip' },
+    { Key: 'package3.zip' },
+  ];
 
-  test('successfully resets the registry', async () => {
-    // Mock behavior for S3 commands
-    mockS3Send
-      .mockResolvedValueOnce({ Metadata: { resetStatus: 'success' } }) // Mock metadata response
-      .mockResolvedValueOnce({}); // Mock success for reset logic
+  const setupMockS3WithPackages = () => {
+    // Mock ListObjectsV2Command to return the packages
+    mockS3Send.mockImplementation((command) => {
+      if (command instanceof ListObjectsV2Command) {
+        return Promise.resolve({ Contents: mockPackages });
+      }
+      if (command instanceof DeleteObjectCommand) {
+        return Promise.resolve({}); // Mock successful deletion
+      }
+      throw new Error(`Unhandled command: ${command}`);
+    });
+  };
 
-    const event = { queryStringParameters: { registryId: 'test-registry-id' } };
+  test('successfully resets the registry by deleting all packages', async () => {
+    setupMockS3WithPackages();
 
-    const result = await resetRegistryHandler(event);
+    const result = await resetRegistryHandler();
 
     expect(result.statusCode).toBe(200);
-    expect(result.headers['Content-Type']).toBe('application/json');
+    expect(result.body).toBe('All objects have been successfully deleted from bucket acmeregistrys3');
 
-    const parsedBody = JSON.parse(result.body);
-    expect(parsedBody.message).toBe('Registry reset successfully');
-    expect(parsedBody.registryId).toBe('test-registry-id');
-
-    // Ensure correct S3 commands were called
-    expect(mockS3Send).toHaveBeenCalledTimes(2);
-    const [headCall, resetCall] = mockS3Send.mock.calls;
-    expect(headCall[0]).toBeInstanceOf(HeadObjectCommand);
-    expect(resetCall[0]).toBeInstanceOf(GetObjectCommand);
+    // Verify that ListObjectsV2Command was called to retrieve the list of packages
+    expect(mockS3Send).toHaveBeenCalledWith(expect.any(ListObjectsV2Command));
     
-    [headCall[0].input, resetCall[0].input].forEach((params) => {
-      expect(params).toEqual({
-        Bucket: 'acmeregistrys3',
-        Key: 'test-registry-id',
-      });
+    // Verify that DeleteObjectCommand was called for each package
+    mockPackages.forEach((pkg) => {
+      expect(mockS3Send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          input: { Bucket: 'acmeregistrys3', Key: pkg.Key },
+        })
+      );
     });
+
+    // Verify that the total number of delete calls matches the number of packages
+    const deleteCalls = mockS3Send.mock.calls.filter(
+      ([command]) => command instanceof DeleteObjectCommand
+    );
+    expect(deleteCalls).toHaveLength(mockPackages.length);
   });
 
-  test('returns 404 when registry does not exist', async () => {
-    mockS3Send.mockRejectedValueOnce(new Error('Object not found'));
+  test('successfully resets the empty registry', async () => {
 
-    const event = { queryStringParameters: { registryId: 'non-existent-registry' } };
+    const result = await resetRegistryHandler();
 
-    const result = await resetRegistryHandler(event);
+    expect(result.statusCode).toBe(200);
+    expect(result.body).toBe('Bucket is already empty.');
 
-    expect(result.statusCode).toBe(404);
-    const parsedBody = JSON.parse(result.body);
-    expect(parsedBody.message).toBe('Registry not found');
-    expect(mockS3Send).toHaveBeenCalledTimes(1);
-  });
+    // Verify that ListObjectsV2Command was called to retrieve the list of packages
+    expect(mockS3Send).toHaveBeenCalledWith(expect.any(ListObjectsV2Command));
+    
+    // Verify that DeleteObjectCommand was called for each package
+    mockPackages.forEach((pkg) => {
+      expect(mockS3Send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          input: { Bucket: 'acmeregistrys3', Key: pkg.Key },
+        })
+      );
+    });
 
-  test('returns 400 when reset fails', async () => {
-    const errorMessage = 'Reset operation failed';
-    mockS3Send
-      .mockResolvedValueOnce({ Metadata: { resetStatus: 'success' } }) // Mock metadata response
-      .mockRejectedValueOnce(new Error(errorMessage)); // Simulate failure during reset
-
-    const event = { queryStringParameters: { registryId: 'failed-registry' } };
-
-    const result = await resetRegistryHandler(event);
-
-    expect(result.statusCode).toBe(400);
-    const parsedBody = JSON.parse(result.body);
-    expect(parsedBody.message).toBe(`Error resetting registry: ${errorMessage}`);
-    expect(mockS3Send).toHaveBeenCalledTimes(2);
-  });
-
-  test('handles missing query parameters gracefully', async () => {
-    const event = { queryStringParameters: null }; // No query parameters
-
-    const result = await resetRegistryHandler(event);
-
-    expect(result.statusCode).toBe(400);
-    const parsedBody = JSON.parse(result.body);
-    expect(parsedBody.message).toBe('Missing or invalid registryId parameter');
-    expect(mockS3Send).not.toHaveBeenCalled();
-  });
-
-  test('handles invalid responses gracefully', async () => {
-    mockS3Send
-      .mockResolvedValueOnce({ Metadata: null }) // Mock invalid metadata response
-      .mockResolvedValueOnce({}); // Mock success for reset logic
-
-    const event = { queryStringParameters: { registryId: 'test-registry-id' } };
-
-    const result = await resetRegistryHandler(event);
-
-    expect(result.statusCode).toBe(200); // Should still succeed
-    const parsedBody = JSON.parse(result.body);
-    expect(parsedBody.message).toBe('Registry reset successfully');
-    expect(parsedBody.registryId).toBe('test-registry-id');
+    // Verify that the total number of delete calls matches the number of packages
+    const deleteCalls = mockS3Send.mock.calls.filter(
+      ([command]) => command instanceof DeleteObjectCommand
+    );
+    expect(deleteCalls).toHaveLength(mockPackages.length);
   });
 });

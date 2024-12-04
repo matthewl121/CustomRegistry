@@ -27,6 +27,7 @@
     "test:update": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/update_test/index.test.mjs",
     "test:cost": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/costPackage_test/index.test.mjs",
     "test:tracks": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/getTracks_test/index.test.mjs",
+    "test:reset": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/reset_test/index.test.mjs",
     "compile": "tsc",
     "install-deps": "npm install --save-dev && tsc --init"
   },
