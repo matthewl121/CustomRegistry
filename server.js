@@ -1,6 +1,5 @@
 import express from 'express';
 import http from 'http';
-import fs from 'fs';
 import cors from 'cors';
 import { downloadPackageHandler } from './lambda/download/index.mjs';
 import { ratePackageHandler } from './lambda/ratePackage/index.mjs';

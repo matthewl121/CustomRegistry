@@ -1,6 +1,6 @@
 // api.ts
-// API Gateway dev URL: "https://6t3q6qnrv5.execute-api.us-east-1.amazonaws.com/dev"
-const BASE_URL = "http://ec2-34-239-114-173.compute-1.amazonaws.com:5000";
+// PROD URL: "http://ec2-34-239-114-173.compute-1.amazonaws.com:5000"
+const BASE_URL = "http://localhost:5000"; // localhost URL
 
 type RequestOptions = {
   headers?: Record<string, string>;
