@@ -16,7 +16,7 @@
     "@types/node": "^20.0.0",
     "jest": "^29.7.0",
     "jest-html-reporter": "^3.10.2",
-    "jest-junit": "^29.7.0",
+    "jest-junit": "^16.0.0",
     "ts-jest": "^29.2.5",
     "typescript": "^5.0.0"
   },
@@ -30,7 +30,6 @@
     "test:cost": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/costPackage_test/index.test.mjs",
     "test:tracks": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/getTracks_test/index.test.mjs",
     "test:reset": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/reset_test/index.test.mjs",
-    "test:regex": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/getPackageByRegex_test/index.test.mjs",
     "compile": "tsc",
     "install-deps": "npm install --save-dev && tsc --init"
   },
