@@ -1,4 +1,4 @@
-name: CI Test Pipeline
+name: CI Test Pipeline PHASE 1 
 
 on:
   push:
@@ -8,27 +8,35 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
+      
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '22.9.0' # or your Lambda runtime version
-
+          node-version: '22.9.0'
+      
       - name: Install dependencies
         run: npm install
+      
+      - name: Create .env file
+        run: |
+          mkdir -p phase1/repos
+          echo "GITHUB_TOKEN=***" >> phase1/.env
+          echo 'LOG_FILE="phase1/log/log_file.txt"' >> phase1/.env
+          echo "LOG_LEVEL=2" >> phase1/.env
       
       - name: Run phase1 tests
         run: |
           cd phase1
           ./run install
           ./run test
-      
-      - name: Run tests
-        run: npm test
+
+      - name: Print Jest Output
+        run: |
+          echo "Contents of jest-output.txt:"
+          cat jest-output.txt || echo "jest-output.txt not found!"
       
       - name: Upload Jest Report
         uses: actions/upload-artifact@v3

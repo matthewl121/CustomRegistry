@@ -1,23 +1,6 @@
-import { S3Client, PutObjectCommand, HeadObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand, DeleteObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 const s3 = new S3Client({ region: "us-east-1" });
-
-const capitalizeFirstLetter = (str) => {
-  if (str.toLowerCase() === 'id') {
-    return 'ID'; // Special case for 'id' key to become 'ID'
-  }
-  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-};
-
-const formatMetadata = (obj) => {
-  const result = {};
-  for (const key in obj) {
-    if (obj.hasOwnProperty(key) && key.toLowerCase() !== 'uploadvia') {
-      const capitalizedKey = capitalizeFirstLetter(key);
-      result[capitalizedKey] = obj[key];
-    }
-  }
-  return result;
-};
+import { ratePackageHandler } from "../ratePackage/index.mjs";
 
 // Helper functions for debloat
 // Function to list all object keys with a specific prefix
@@ -229,7 +212,7 @@ const getNpmTarballContent = async (tarballUrl, options = {}) => {
 };
 
 
-export const uploadPackageHandler = async (event) => {
+export const handler = async (event) => {
   // MIGHT NEETO TO ADD 'pathParameters' OR SIMILAR TO 'event' FIELDS
   const bucketName = "acmeregistrys3";
   const debloat = event.debloat === "true";
@@ -361,9 +344,9 @@ export const uploadPackageHandler = async (event) => {
 
   const packageId = packageName + '--' + packageVersion;
   const metadata = {
-    Name: packageName,
-    ID: packageId,
-    Version: packageVersion,
+    name: packageName,
+    id: packageId,
+    version: packageVersion,
     uploadvia: uploadVia,
   }
 
@@ -402,6 +385,23 @@ export const uploadPackageHandler = async (event) => {
   }
 
   try {
+    //Check if package already exists in s3
+    const packageID = `${packageName}--${packageVersion}`;
+    const samePackage = await listAllKeys(s3, bucketName, packageID)
+    
+    if (samePackage.length > 0) {
+      return {
+        statusCode: 409,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Content-Type': 'application/json',
+        },
+        body: {"message": "Package exists already."}
+      };
+    }
+
     // store zip file to S3
     const command = new PutObjectCommand(params);
     const response = await s3.send(command);
@@ -427,21 +427,46 @@ export const uploadPackageHandler = async (event) => {
     let responseBody;
     if (event.Content) {
       responseBody = JSON.stringify({
-        metadata: formatMetadata(metadata),
+        metadata: metadata,
         data: {
           'Content': content.toString('base64'), // Convert Buffer to Base64 string
         }
       });
     } else {
       responseBody = JSON.stringify({
-        metadata: formatMetadata(metadata),
+        metadata: metadata,
         data: {
           'Content': content.toString('base64'), // Convert Buffer to Base64 string
           'URL': event.URL
         }
       });
     }
-    
+
+    // Rate the package
+    const ratePackageResponse = await ratePackageHandler(packageID);
+    const ratePackageBody = JSON.parse(ratePackageResponse.body);
+
+    if(ratePackageResponse.statusCode === 200 && ratePackageBody.NetScore <= 0.25) {
+      // delete the package
+      const deleteParams = {
+        Bucket: bucketName,
+        Key: packageID,
+      };
+      const deleteCommand = new DeleteObjectCommand(deleteParams);
+      const deleteResponse = await s3.send(deleteCommand);
+      console.log("/Package is not uploaded due to the disqualified rating:", deleteResponse);
+      return {
+        statusCode: 424,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Content-Type': 'application/json',
+        },
+        body: {"message": "Package is not uploaded due to the disqualified rating."}
+      };
+    }
+
     return {
       statusCode: 201,
       headers: {

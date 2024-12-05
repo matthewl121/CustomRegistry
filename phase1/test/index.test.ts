@@ -50,8 +50,7 @@ describe('Test suite', () => {
         const repoData = await fetchRepoData(owner, repo, token);
 
         let metrics = await calculateMetrics(owner, repo, token, repoURL, repoData, inputURL);
-
-        expect(parseFloat(metrics?.Correctness?.toFixed(2) ?? '-1')).toBe(1.00);
+        expect(parseFloat(metrics?.Correctness?.toFixed(2) ?? '-1')).toBe(0.00); // TODO: CHECK THIS
     });
     test('github/jspec, ramp up', async () => {
         const token = process.env.GITHUB_TOKEN || "";

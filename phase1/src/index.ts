@@ -17,12 +17,12 @@ dotenv.config();
 * Creates and manages worker thread for metric calculation
 */
 export function runWorker(
-   owner,
-   repo,
-   token,
-   repoURL,
-   repoData,
-   metric
+    owner: string,
+    repo: string,
+    token: string,
+    repoURL: string,
+    repoData: any, // Define specific type if possible
+    metric: string
 ) {
    return new Promise((resolve, reject) => {
        try {
@@ -59,7 +59,7 @@ export function runWorker(
 /**
 * Main function - fetches repo data and calculates metrics
 */
-export const main = async (url) => {
+export const main = async (url: string) => {
    const token = process.env.GITHUB_TOKEN || "";
    const inputURL = url;
    initLogFile();
