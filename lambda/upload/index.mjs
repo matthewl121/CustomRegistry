@@ -402,7 +402,7 @@ export const uploadPackageHandler = async (event) => {
 
   try {
     // check if package already exists
-    const prefix = `${packageName}--`;
+    const prefix = `${packageName}--${packageVersion}`;
     const existingKeys = await listAllKeys(s3, bucketName, prefix);
     if (existingKeys.length > 0) {
       return {
