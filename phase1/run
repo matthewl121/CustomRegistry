@@ -59,44 +59,64 @@ program
         });
     });
 
-program
+    program
     .argument('<file>', 'file to run')
     .description('process URL of the file to run and output metrics in NDJSON format')
-    .action((file) => { 
-        //compile all the TypeScript files to JavaScript
+    .action(async (file) => { 
+        // Compile all the TypeScript files to JavaScript
         try {
             execSync('tsc src/index.ts', { stdio: 'ignore' });
-        } catch(error) {
+        } catch (error) {
             continueOnError = true;
         }
         
-        //set main to the exported function from index.js
-        const {main} =  require('./src/index');
-        fs.readFile(file, 'utf8', (err, data) => {
-            //check for errors regarding env file, log file, github token and log level
+        // Import the main function from the compiled index.js
+        const { main } = require('./src/index');
+        
+        // Read the file asynchronously
+        fs.readFile(file, 'utf8', async (err, data) => {
             if (err) {
-                console.error(`%cError reading file: ${err}`, `color: red`);
-                process.exit(1);
-            } else if(process.env.LOG_FILE == null || process.env.LOG_FILE == '') {
-                console.log('LOG_FILE environment variable is not set');
-                process.exit(1);
-            } else if(process.env.GITHUB_TOKEN == null || process.env.GITHUB_TOKEN == '') {
-                console.log('GITHUB_TOKEN environment variable is not set');
-                process.exit(1);
-            } else if(process.env.LOG_LEVEL == null || process.env.LOG_LEVEL == '') {
-                console.log('LOG_LEVEL environment variable is not set');
+                console.error(`Error reading file: ${err}`);
                 process.exit(1);
             }
-            const urls = data.split('\n').map(line => line.trim()).filter(line => line !== '');
-            urls.forEach(url => {
-                const metrics = main(url);
-            });
 
-            if (fs.existsSync("repos")) {
-                fs.rmSync("repos", { recursive: true, force: true });
+            // Validate environment variables
+            if (!process.env.LOG_FILE) {
+                console.error('LOG_FILE environment variable is not set');
+                process.exit(1);
+            }
+            if (!process.env.GITHUB_TOKEN) {
+                console.error('GITHUB_TOKEN environment variable is not set');
+                process.exit(1);
+            }
+            if (!process.env.LOG_LEVEL) {
+                console.error('LOG_LEVEL environment variable is not set');
+                process.exit(1);
+            }
+
+            // Process URLs
+            const urls = data.split('\n').map(line => line.trim()).filter(line => line !== '');
+            try {
+                await Promise.all(urls.map(async (url) => {
+                    await main(url);
+                }));
+            } catch (error) {
+                console.error('Error processing URLs:', error);
+                process.exit(1);
+            }
+
+            // Delete the repos directory after processing
+            try {
+                if (fs.existsSync("repos")) {
+                    fs.rmSync("repos", { recursive: true, force: true });
+                }
+            } catch (error) {
+                console.error(`Error deleting repos directory: ${error}`);
+                process.exit(1);
             }
         });
     });
+
 
 program
     .command('test')
