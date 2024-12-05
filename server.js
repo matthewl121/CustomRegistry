@@ -61,7 +61,7 @@ app.post('/package', async (req, res) => {
         const response = await uploadPackageHandler(packageData);
 
         // Handle the response from the handler
-        console.log(response);
+        console.log(response.body);
         return res.status(response.statusCode).json(JSON.parse(response.body));
     } catch (error) {
         console.error("Error uploading package:", error);
