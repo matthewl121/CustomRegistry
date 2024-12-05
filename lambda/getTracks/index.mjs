@@ -3,9 +3,10 @@ export const getTracksHandler = async () => {
       statusCode: 200,
       body: JSON.stringify({
         plannedTracks: [
-          "None"
         ]
       })
     };
   };
+
+  // TDOD UPDATE TEST TO CHECK EMPTY OBJECT
   
