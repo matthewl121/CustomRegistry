@@ -2,6 +2,23 @@ import { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand, Delete
 const s3 = new S3Client({ region: "us-east-1" });
 import { ratePackageHandler } from "../ratePackage/index.mjs";
 
+const capitalizeFirstLetter = (str) => {
+  if (str.toLowerCase() === 'id') {
+    return 'ID'; // Special case for 'id' key to become 'ID'
+  }
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+};
+
+const formatMetadata = (obj) => {
+  const result = {};
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key) && key.toLowerCase() !== 'uploadvia') {
+      const capitalizedKey = capitalizeFirstLetter(key);
+      result[capitalizedKey] = obj[key];
+    }
+  }
+  return result;
+};
 // Helper functions for debloat
 // Function to list all object keys with a specific prefix
 const listAllKeys = async (s3, bucket, prefix) => {
@@ -212,7 +229,7 @@ const getNpmTarballContent = async (tarballUrl, options = {}) => {
 };
 
 
-export const handler = async (event) => {
+export const uploadPackageHandler = async (event) => {
   // MIGHT NEETO TO ADD 'pathParameters' OR SIMILAR TO 'event' FIELDS
   const bucketName = "acmeregistrys3";
   const debloat = event.debloat === "true";
@@ -427,14 +444,14 @@ export const handler = async (event) => {
     let responseBody;
     if (event.Content) {
       responseBody = JSON.stringify({
-        metadata: metadata,
+        metadata: formatMetadata(metadata),
         data: {
           'Content': content.toString('base64'), // Convert Buffer to Base64 string
         }
       });
     } else {
       responseBody = JSON.stringify({
-        metadata: metadata,
+        metadata: formatMetadata(metadata),
         data: {
           'Content': content.toString('base64'), // Convert Buffer to Base64 string
           'URL': event.URL
