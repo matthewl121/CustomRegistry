@@ -1,35 +1,3 @@
-# name: CI Test Pipeline
-
-# on:
-#   push:
-#     branches:
-#       - dev_dirs
-
-# jobs:
-#   test:
-#     runs-on: ubuntu-latest
-
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v3
-
-#       - name: Set up Node.js
-#         uses: actions/setup-node@v3
-#         with:
-#           node-version: '22.9.0' # or your Lambda runtime version
-
-#       - name: Install dependencies
-#         run: npm install
-
-#       - name: Run tests
-#         run: npm test
-
-#       - name: Upload Jest Report
-#         uses: actions/upload-artifact@v3
-#         with:
-#           name: test-report
-#           path: ./test-report.html
-
 name: CI Test Pipeline
 
 on:
@@ -40,36 +8,68 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      
+
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '22.9.0'
-      
+          node-version: '22.9.0' # or your Lambda runtime version
+
       - name: Install dependencies
         run: npm install
-        
-      - name: Initialize TypeScript config
-        run: npx tsc --init
-        
-      - name: Compile TypeScript
-        run: npx tsc
-      
-      - name: Run tests with coverage
-        run: |
-          node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage
-      
-      - name: Upload Test Reports
-        if: always()
+
+      - name: Run tests
+        run: npm test
+
+      - name: Upload Jest Report
         uses: actions/upload-artifact@v3
         with:
-          name: test-reports
-          path: |
-            coverage/
-            test-report.html
-            junit.xml
-          retention-days: 30
+          name: test-report
+          path: ./test-report.html
+
+# name: CI Test Pipeline
+
+# on:
+#   push:
+#     branches:
+#       - dev_dirs
+
+# jobs:
+#   test:
+#     runs-on: ubuntu-latest
+    
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
+      
+#       - name: Set up Node.js
+#         uses: actions/setup-node@v3
+#         with:
+#           node-version: '22.9.0'
+      
+#       - name: Install dependencies
+#         run: npm install
+        
+#       - name: Initialize TypeScript config
+#         run: npx tsc --init
+        
+#       - name: Compile TypeScript
+#         run: npx tsc
+      
+#       - name: Run tests with coverage
+#         run: |
+#           node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage
+      
+#       - name: Upload Test Reports
+#         if: always()
+#         uses: actions/upload-artifact@v3
+#         with:
+#           name: test-reports
+#           path: |
+#             coverage/
+#             test-report.html
+#             junit.xml
+#           retention-days: 30
