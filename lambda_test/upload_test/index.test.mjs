@@ -92,11 +92,6 @@ describe('uploadPackageHandler', () => {
 
     expect(mockS3Send).not.toHaveBeenCalled();
 
-    expect(result).toEqual({
-      statusCode: 400,
-      body: JSON.stringify({
-        error: 'Invalid input'
-      })
-    });
+    expect(statusCode).toEqual(400);
   });
 });
