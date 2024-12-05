@@ -304,7 +304,6 @@ export const uploadPackageHandler = async (event) => {
         } catch (error) {
           throw new Error(`/package: ${error.message}`);
         }
-
       } else if (parsedURL.hostname === "www.npmjs.com" || parsedURL.hostname === "npmjs.com") {
         uploadVia = "npm";
 
@@ -402,6 +401,22 @@ export const uploadPackageHandler = async (event) => {
   }
 
   try {
+    // check if package already exists
+    const prefix = `${packageName}--`;
+    const existingKeys = await listAllKeys(s3, bucketName, prefix);
+    if (existingKeys.length > 0) {
+      return {
+        statusCode: 409,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ "message": "Package exists already." })
+      }
+    }
+
     // store zip file to S3
     const command = new PutObjectCommand(params);
     const response = await s3.send(command);
