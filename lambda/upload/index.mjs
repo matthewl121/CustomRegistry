@@ -402,8 +402,7 @@ export const uploadPackageHandler = async (event) => {
 
   try {
     // check if package already exists
-    const packageID = `${packageName}--${packageVersion}`;
-    const existingKeys = await listAllKeys(s3, bucketName, packageID);
+    const existingKeys = await listAllKeys(s3, bucketName, packageId);
     if (existingKeys.length > 0) {
       return {
         statusCode: 409,
