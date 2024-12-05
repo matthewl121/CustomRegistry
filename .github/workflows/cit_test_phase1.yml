@@ -32,6 +32,11 @@ jobs:
           cd phase1
           ./run install
           ./run test
+
+      - name: Print Jest Output
+        run: |
+          echo "Contents of jest-output.txt:"
+          cat jest-output.txt || echo "jest-output.txt not found!"
       
       - name: Upload Jest Report
         uses: actions/upload-artifact@v3
