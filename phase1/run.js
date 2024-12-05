@@ -19,7 +19,7 @@ try {
 
 try {
     // Execute the bash command and capture the output
-    const output = execSync('cd .. && bash -c "set -a; source .env; set +a; env"', { encoding: 'utf-8' });
+    const output = execSync('bash -c "set -a; source .env; set +a; env"', { encoding: 'utf-8' });
     
     // Split the output by lines and assign each line to process.env
     output.split('\n').forEach(line => {
