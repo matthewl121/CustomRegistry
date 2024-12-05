@@ -10,21 +10,23 @@ const DownloadPackageRegex = () => {
 
     const handleDownload = async () => {
         if (!regex) {
-            console.error("Regular Expression is required.");
+            // If the regex is empty, set an error message
+            setError("Regular Expression is required.");
             return;
         }
 
         setLoading(true);
+        setError(""); // Clear previous errors
 
         try {
             const response = await apiPost('/package/byRegEx', {
                 body: { RegEx: regex },
             });
 
-            console.log("data:", response)
+            console.log("data:", response);
 
             setPackages(response);
-            setError("");
+            setError(""); // Clear error on success
         } catch (err) {
             setError('Error fetching packages: ' + err.message);
             setPackages([]);
@@ -34,8 +36,7 @@ const DownloadPackageRegex = () => {
     };
 
     const handleDownloadPackage = (packageId) => {
-        // Function to handle the actual package download
-        // You can implement download logic based on how the backend serves the files.
+        // Handle package download
         console.log(`Downloading package with ID: ${packageId}`);
     };
 
@@ -55,12 +56,14 @@ const DownloadPackageRegex = () => {
                 {loading ? 'Loading...' : 'Search Packages'}
             </button>
 
+            {/* Error message display */}
             {error && (
                 <div style={{ color: 'red', marginTop: '10px' }}>
                     <strong>{error}</strong>
                 </div>
             )}
 
+            {/* Display packages if available */}
             {packages && packages.length > 0 && (
                 <div style={{ marginTop: '20px' }}>
                     <h3>Matching Packages:</h3>
