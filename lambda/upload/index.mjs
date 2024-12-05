@@ -1,6 +1,6 @@
-import { S3Client, PutObjectCommand, HeadObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand, DeleteObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 const s3 = new S3Client({ region: "us-east-1" });
-
+import { ratePackageHandler } from "../ratePackage/index.mjs";
 
 // Helper functions for debloat
 // Function to list all object keys with a specific prefix
@@ -385,6 +385,23 @@ export const handler = async (event) => {
   }
 
   try {
+    //Check if package already exists in s3
+    const packageID = `${packageName}--${packageVersion}`;
+    const samePackage = await listAllKeys(s3, bucketName, packageID)
+    
+    if (samePackage.length > 0) {
+      return {
+        statusCode: 409,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Content-Type': 'application/json',
+        },
+        body: {"message": "Package exists already."}
+      };
+    }
+
     // store zip file to S3
     const command = new PutObjectCommand(params);
     const response = await s3.send(command);
@@ -425,20 +442,31 @@ export const handler = async (event) => {
       });
     }
 
-    const packageID = `${packageName}--${packageVersion}`;
-    const samePackage = await listAllKeys(s3, bucketName, packageID)
-    
-    if (samePackage.length > 0) {
+    // Rate the package
+    const ratePackageResponse = await ratePackageHandler(packageID);
+    const ratePackageBody = JSON.parse(ratePackageResponse.body);
+
+    if(ratePackageResponse.statusCode === 200 && ratePackageBody.NetScore <= 0.25) {
+      // delete the package
+      const deleteParams = {
+        Bucket: bucketName,
+        Key: packageID,
+      };
+      const deleteCommand = new DeleteObjectCommand(deleteParams);
+      const deleteResponse = await s3.send(deleteCommand);
+      console.log("/Package is not uploaded due to the disqualified rating:", deleteResponse);
       return {
-        statusCode: 409,
+        statusCode: 424,
         headers: {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type',
           'Content-Type': 'application/json',
-        }
+        },
+        body: {"message": "Package is not uploaded due to the disqualified rating."}
       };
     }
+
 
     return {
       statusCode: 201,
