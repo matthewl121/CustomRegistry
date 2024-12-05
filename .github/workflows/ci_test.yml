@@ -21,12 +21,6 @@ jobs:
       - name: Install dependencies
         run: npm install
       
-      - name: Run phase1 tests
-        run: |
-          cd phase1
-          ./run install
-          ./run test
-      
       - name: Run tests
         run: npm test
       

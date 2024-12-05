@@ -1,0 +1,94 @@
+"use strict";
+/*
+ * NOTE this script is meant to be run very rarely,
+ * to help patch missing compilerOptions into the tsconfig schema.
+ * The TS team updates it manually and sometimes forget to
+ * add new options to the schema.
+ * For example, here is the first PR I sent after running this script:
+ * https://github.com/SchemaStore/schemastore/pull/1168
+ *
+ * This script adds some options that should *not* be in the schema,
+ * so the output requires manual review.
+ * There is no good, programmatic way to query the TypeScript API
+ * for a list of all tsconfig options.
+ *
+ * TypeScript-Website has a database of rules; maybe we can use them in the future:
+ * https://github.com/microsoft/TypeScript-Website/blob/v2/packages/tsconfig-reference/scripts/tsconfigRules.ts
+ *
+ * Dependencies of this script have deliberately not
+ * been added to package.json.  You can install them locally
+ * only when needed to run this script.
+ *
+ * This script is not strictly related to ts-node, so
+ * theoretically it should be extracted to somewhere else
+ * in the TypeStrong org.
+ */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+const ts = __importStar(require("typescript"));
+const create_merged_schema_1 = require("./create-merged-schema");
+// Sometimes schemastore becomes out of date with the latest tsconfig options.
+// This script
+async function main() {
+    const schemastoreSchema = await (0, create_merged_schema_1.getSchemastoreSchema)();
+    const compilerOptions = schemastoreSchema.definitions.compilerOptionsDefinition.properties.compilerOptions.properties;
+    // These options are only available via CLI flags, not in a tsconfig file.
+    const excludedOptions = [
+        'help',
+        'all',
+        'version',
+        'init',
+        'project',
+        'build',
+        'showConfig',
+        'generateCpuProfile', // <- technically gets parsed, but doesn't seem to do anything?
+        'locale',
+        'out', // <-- deprecated
+    ];
+    ts.optionDeclarations.forEach((v) => {
+        if (excludedOptions.includes(v.name))
+            return;
+        if (!compilerOptions[v.name]) {
+            compilerOptions[v.name] = {
+                description: v.description?.message,
+                type: v.type,
+            };
+        }
+    });
+    // Don't write to a file; this is not part of our build process
+    console.log(JSON.stringify(schemastoreSchema, null, 2));
+}
+main();
+//# sourceMappingURL=update-schemastore-schema-with-compiler-options.js.map

@@ -1,0 +1,1 @@
+{"version":3,"file":"createResponse.mjs","sourceRoot":"","sources":["../../../../lambda/ratePackage/utils/createResponse.mjs"],"names":[],"mappings":"AAAA;;;;;;GAMG;AACH,MAAM,CAAC,MAAM,cAAc,GAAG,CAAC,UAAU,EAAE,IAAI,EAAE,EAAE;IAC/C,OAAO;QACV,UAAU;QACH,OAAO,EAAE;YACL,cAAc,EAAE,kBAAkB;SACrC;QACR,IAAI,EAAE,IAAI,CAAC,SAAS,CAAC,IAAI,CAAC;KACtB,CAAC;AACN,CAAC,CAAC"}
