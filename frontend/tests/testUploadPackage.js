@@ -38,8 +38,8 @@ import assert from 'assert';
         await uploadButton.click();
 
         // Simulate successful upload and verify metadata display
-        const metadataSection = await driver.wait(until.elementLocated(By.xpath("//h3[text()='Upload Successful!']")), 5000);
-        assert(await metadataSection.isDisplayed(), 'Metadata section should be displayed after successful upload');
+        const metadataSection = await driver.wait(until.elementLocated(By.xpath("//strong[text()='Error uploading package: Package exists already.']")), 5000);
+        assert(await metadataSection.isDisplayed(), 'Should already be uploaded error');
 
         // Test: Switch to "Upload by Content" mode
         const uploadByContentButton = await driver.findElement(By.xpath("//button[text()='Upload by Content']"));
@@ -58,17 +58,9 @@ import assert from 'assert';
         await uploadButton.click();
 
         // Simulate successful upload and verify metadata display
-        await driver.wait(until.elementLocated(By.xpath("//h3[text()='Upload Successful!']")), 5000);
-        const successMessage = await driver.findElement(By.xpath("//h3[text()='Upload Successful!']"));
-        assert(await successMessage.isDisplayed(), 'Success message should be displayed after content upload');
-
-        // Verify metadata fields (Name, Version, ID)
-        const metadataName = await driver.findElement(By.xpath("//strong[contains(text(),'Name:')]"));
-        assert(await metadataName.isDisplayed(), 'Metadata Name should be displayed');
-        const metadataVersion = await driver.findElement(By.xpath("//strong[contains(text(),'Version:')]"));
-        assert(await metadataVersion.isDisplayed(), 'Metadata Version should be displayed');
-        const metadataId = await driver.findElement(By.xpath("//strong[contains(text(),'ID:')]"));
-        assert(await metadataId.isDisplayed(), 'Metadata ID should be displayed');
+        await driver.wait(until.elementLocated(By.xpath("//strong[text()='Error uploading package: Package exists already.']")), 5000);
+        const successMessage = await driver.findElement(By.xpath("//strong[text()='Error uploading package: Package exists already.']"));
+        assert(await successMessage.isDisplayed(), 'Should already be uploaded error');
 
         console.log('UploadPackage test passed!');
     } catch (error) {

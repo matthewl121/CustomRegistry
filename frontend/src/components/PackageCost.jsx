@@ -66,7 +66,7 @@ const PackageCost = () => {
             {cost !== null && (
                 <div style={{ marginTop: '20px' }}>
                     <h3>Package Cost:</h3>
-                    <p>Total Cost: ${cost}</p>
+                    <p>Total Cost: {cost}</p>
                 </div>
             )}
         </div>
