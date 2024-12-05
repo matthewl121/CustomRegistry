@@ -1,0 +1,28 @@
+Processing: wycats, jspec, https://github.com/wycats/jspec, busFactor
+Processing: wycats, jspec, https://github.com/wycats/jspec, correctness
+Processing: wycats, jspec, https://github.com/wycats/jspec, rampUp
+Processing: wycats, jspec, https://github.com/wycats/jspec, responsiveness
+Processing: wycats, jspec, https://github.com/wycats/jspec, license
+Processing: wycats, jspec, https://github.com/wycats/jspec, dependencyPinning
+Error details: [object Object]
+No package.json found in repository
+Processing: wycats, jspec, https://github.com/wycats/jspec, codeReview
+{
+  "URL": "https://github.com/wycats/jspec",
+  "NetScore": 0.3210714975155247,
+  "NetScore_Latency": 0,
+  "RampUp": 0.9,
+  "RampUp_Latency": 0,
+  "Correctness": 0,
+  "Correctness_Latency": 0,
+  "BusFactor": 0.05404053109323459,
+  "BusFactor_Latency": 0.141,
+  "ResponsiveMaintainer": 0,
+  "ResponsiveMaintainer_Latency": 0,
+  "License": 1,
+  "License_Latency": 0.222,
+  "DependencyPinning": 1,
+  "DependencyPinning_Latency": 0.157,
+  "CodeReview": 0.2526339129687776,
+  "CodeReview_Latency": 0.552
+}
