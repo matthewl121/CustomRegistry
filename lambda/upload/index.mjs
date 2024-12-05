@@ -415,7 +415,7 @@ export const uploadPackageHandler = async (event) => {
           'Access-Control-Allow-Headers': 'Content-Type',
           'Content-Type': 'application/json',
         },
-        body: {"message": "Package exists already."}
+        body: JSON.stringify({"message": "Package exists already."})
       };
     }
 
@@ -480,7 +480,7 @@ export const uploadPackageHandler = async (event) => {
           'Access-Control-Allow-Headers': 'Content-Type',
           'Content-Type': 'application/json',
         },
-        body: {"message": "Package is not uploaded due to the disqualified rating."}
+        body: JSON.stringify({"message": "Package is not uploaded due to the disqualified rating."})
       };
     }
 
