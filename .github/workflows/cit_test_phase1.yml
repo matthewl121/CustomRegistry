@@ -1,0 +1,84 @@
+name: CI Test Pipeline PHASE 1 
+
+on:
+  push:
+    branches:
+      - dev_dirs
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22.9.0'
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Create .env file
+        run: |
+          mkdir -p phase1/repos
+          echo "GITHUB_TOKEN=${{ secrets.TOKEN }}" >> phase1/.env
+          echo "LOG_FILE="phase1/log/log_file.txt" >> phase1/.env
+          echo "LOG_LEVEL=2" >> phase1/.env
+      
+      - name: Run phase1 tests
+        run: |
+          cd phase1
+          ./run install
+          ./run test
+      
+      - name: Upload Jest Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-report
+          path: ./test-report.html
+
+# name: CI Test Pipeline
+
+# on:
+#   push:
+#     branches:
+#       - dev_dirs
+
+# jobs:
+#   test:
+#     runs-on: ubuntu-latest
+    
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
+      
+#       - name: Set up Node.js
+#         uses: actions/setup-node@v3
+#         with:
+#           node-version: '22.9.0'
+      
+#       - name: Install dependencies
+#         run: npm install
+        
+#       - name: Initialize TypeScript config
+#         run: npx tsc --init
+        
+#       - name: Compile TypeScript
+#         run: npx tsc
+      
+#       - name: Run tests with coverage
+#         run: |
+#           node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage
+      
+#       - name: Upload Test Reports
+#         if: always()
+#         uses: actions/upload-artifact@v3
+#         with:
+#           name: test-reports
+#           path: |
+#             coverage/
+#             test-report.html
+#             junit.xml
+#           retention-days: 30
