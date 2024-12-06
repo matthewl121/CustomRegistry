@@ -167,7 +167,7 @@ export const updatePackageHandler = async (event) => {
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
       },
-      // body: JSON.stringify("/package/{id} POST: Object does not exist.")
+      body: JSON.stringify({ message: "Package does not exist."})
     };
   }
 
@@ -185,7 +185,7 @@ export const updatePackageHandler = async (event) => {
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
       },
-      // body: JSON.stringify("/package/{id} POST: 'Trying to update via invalid/wrong/opposite method'.")
+      body: JSON.stringify({ message: "There is missing field(s) in the PackageID or it is formed improperly, or is invalid."})
     };
   }
 
@@ -205,7 +205,7 @@ export const updatePackageHandler = async (event) => {
             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type',
           },
-          // body: JSON.stringify("/package/{id} POST: New patch version is not greater than or equal to the old patch version.")
+          body: JSON.stringify({ message: "There is missing field(s) in the PackageID or it is formed improperly, or is invalid."})
         };
       }
 
@@ -222,7 +222,7 @@ export const updatePackageHandler = async (event) => {
           'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type',
         },
-        // body: JSON.stringify(`/package/{id} POST: Error comparing versions: ${error.message}`)
+        body: JSON.stringify({ message: "There is missing field(s) in the PackageID or it is formed improperly, or is invalid."})
       };
     }
   } else if (event.data.URL) {
@@ -289,7 +289,7 @@ export const updatePackageHandler = async (event) => {
           'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type',
         },
-        // body: JSON.stringify(`/package/{id} POST: Error processing URL: ${error.message}`),
+        body: JSON.stringify({ message: "There is missing field(s) in the PackageID or it is formed improperly, or is invalid."})
       };
     }
   } else {
@@ -302,7 +302,7 @@ export const updatePackageHandler = async (event) => {
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
       },
-      // body: JSON.stringify("/package/{id} POST: Either Content or URL must be provided."),
+      body: JSON.stringify({ message: "There is missing field(s) in the PackageID or it is formed improperly, or is invalid."})
     };
   }
 
@@ -344,7 +344,7 @@ export const updatePackageHandler = async (event) => {
           'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type',
         },
-        // body: JSON.stringify(`/package/{id} POST: Error during debloat: ${error.message}`),
+        body: JSON.stringify({ message: "There is missing field(s) in the PackageID or it is formed improperly, or is invalid."})
       };
     }
   }
@@ -373,7 +373,7 @@ export const updatePackageHandler = async (event) => {
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
       },
-      // body: JSON.stringify(`//package/{id} POST: Error updating package: ${error.message}`),
+      body: JSON.stringify({ message: "There is missing field(s) in the PackageID or it is formed improperly, or is invalid."})
     };
   }
 };
