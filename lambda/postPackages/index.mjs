@@ -16,7 +16,14 @@ export const postPackagesHandler = async (event) => {
     const queries = Array.isArray(event) ? event : [event];
     const invalidQuery = queries.find(query => !query.Version || !query.Name);
 
-    console.log("queries names:", queries.map(q => console.log(q.Name)))
+    console.log("event", event)
+    console.log("queries:", queries);
+    queries.forEach((query, index) => {
+      console.log(`Query ${index + 1}:`, query);
+      console.log(`Query ${index + 1} - Name:`, query.Name);
+      console.log(`Query ${index + 1} - Version:`, query.Version);
+    });
+
 
     // Check for wildcard case
     if (queries.some(query => query.Name === "*")) {
