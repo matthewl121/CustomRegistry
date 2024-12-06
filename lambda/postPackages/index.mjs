@@ -15,21 +15,6 @@ export const postPackagesHandler = async (event) => {
     // Parse and validate the request body
     const queries = Array.isArray(event) ? event : [event];
     const invalidQuery = queries.find(query => !query.Version || !query.Name);
-    
-    if (invalidQuery) {
-      return {
-        statusCode: 400,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: "There is missing field(s) in the PackageQuery or it is formed improperly, or is invalid.",
-        }),
-      };
-    }
 
     // Check for wildcard case
     if (queries.some(query => query.Name === "*")) {
@@ -47,6 +32,21 @@ export const postPackagesHandler = async (event) => {
       };
     }
 
+    if (invalidQuery) {
+      return {
+        statusCode: 400,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: "There is missing field(s) in the PackageQuery or it is formed improperly, or is invalid.",
+        }),
+      };
+    }
+
     // Search for matching packages in the S3 bucket with "OR" relationship
     const matchingPackages = await searchPackagesInS3(queries);
 
@@ -60,7 +60,7 @@ export const postPackagesHandler = async (event) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          message: "No matching packages found for the specified query.",
+          message: "There is missing field(s) in the PackageQuery or it is formed improperly, or is invalid.",
         }),
       };
     }
