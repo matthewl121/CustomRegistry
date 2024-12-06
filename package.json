@@ -11,7 +11,8 @@
     "fs": "^0.0.1-security",
     "http": "^0.0.1-security",
     "https": "^1.0.0",
-    "tar": "^6.2.1"
+    "tar": "^6.2.1",
+    "unzipper": "^0.12.3"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
