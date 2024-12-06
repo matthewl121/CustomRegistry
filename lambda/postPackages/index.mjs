@@ -10,7 +10,7 @@ const VALID_VERSIONS = {
   TILDE: /^~\d+\.\d+\.\d+$/,        // e.g., "~1.2.3"
 };
 
-export const handler = async (event) => {
+export const postPackagesHandler = async (event) => {
   try {
     // Parse and validate the request body
     const queries = Array.isArray(event) ? event : [event];

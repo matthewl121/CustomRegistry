@@ -29,7 +29,7 @@
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:rate": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/ratePackage_test/index.test.mjs",
     "test:download": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/download_test/index.test.mjs",
-    "test:get": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/getPackages_test/index.test.mjs",
+    "test:post": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/postPackages_test/index.test.mjs",
     "test:update": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/update_test/index.test.mjs",
     "test:cost": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/costPackage_test/index.test.mjs",
     "test:tracks": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/getTracks_test/index.test.mjs",
