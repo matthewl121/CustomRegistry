@@ -85,8 +85,9 @@ export const getPackageByRegexHandler = async (event) => {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
+        'Content-Type': 'application/json',
       },
-      // body: JSON.stringify("/package/byReGex: Missing regex pattern."),
+      body: JSON.stringify({ message: "Missing regex pattern." }),
     };
   }
 
@@ -103,7 +104,7 @@ export const getPackageByRegexHandler = async (event) => {
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
       },
-      // body: JSON.stringify("/package/byReGex: Invalid regex pattern."),
+      body: JSON.stringify({ message: "Invalid regex pattern." }),
     };
   }
 
@@ -124,8 +125,9 @@ export const getPackageByRegexHandler = async (event) => {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type',
+          'Content-Type': 'application/json',
         },
-        // body: JSON.stringify("/package/byReGex: No packages found.""),
+        body: JSON.stringify({ message: "/package/byReGex: No packages found." }),
       };
     }
 
@@ -153,8 +155,9 @@ export const getPackageByRegexHandler = async (event) => {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
+        'Content-Type': 'application/json',
       },
-      // body: JSON.stringify(`/package/byReGex: Error processing request: ${error}`),
+      body: JSON.stringify({ message: "/package/byReGex: Error processing request." }),
     };
   }
 };
