@@ -173,17 +173,14 @@ export const ratePackageHandler = async (event) => {
         // Input validation
         const packageId = event.pathParameters?.id;
         if (!packageId) {
-            return createResponse(400, { error: 'Package ID is required' });
+            return createResponse(400, { message: 'There is missing field(s) in the PackageID' });
         }
 
         // Check if package exists
         const exists = await checkPackageExists(packageId);
         if (!exists) {
             console.log(`Package ${packageId} not found`);
-            return createResponse(404, {
-                error: `Package ${packageId} not found`,
-                packageId
-            });
+            return createResponse(404, { message: "Package does not exist." });
         }
 
         // Fetch package data from S3
@@ -243,10 +240,7 @@ export const ratePackageHandler = async (event) => {
         });
     } catch (error) {
         console.error('Error:', error);
-        return createResponse(500, {
-            error: `Internal server error: ${error.message}`,
-            requestId: event.requestContext?.requestId
-        });
+        return createResponse(500, { message: "The package rating system choked on at least one of the metrics."});
     }
 };
 
