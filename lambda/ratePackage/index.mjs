@@ -4,10 +4,12 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs/promises';
 import path from 'path';
+import AdmZip from 'adm-zip';
+import { gunzipSync } from 'zlib';
 import { Readable } from 'stream';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import { getRepoUrlFromPackage } from './readPackage.Json.mjs';
+
 
 // Set up __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -19,35 +21,50 @@ const execAsync = promisify(exec);
 // Constants
 const BUCKET_NAME = "acmeregistrys3";
 const DEFAULT_SCORE = "-1";
+const ALLOWED_UPLOAD_SOURCES = ['github', 'npm', 'content'];
 const URL_FILE_PATH = path.join(__dirname, '..', '..', 'phase1', 'data', 'url.txt');
 const CUSTOM_REGISTRY_DIR = path.join(__dirname, '..', '..', 'phase1');
 
 // Initialize AWS SDK and S3 client
 const s3Client = new S3Client({ region: "us-east-1" });
 
-// Helper function to run the Custom Registry program
+// Helper function to validate URL
+const isValidUrl = (url) => {
+    const lowerUrl = url.toLowerCase();
+    return lowerUrl.includes('github.com') || lowerUrl.includes('npmjs.com');
+};
+
+
+// Updated Helper function to run the Custom Registry program
 const runCustomRegistryProgram = async (url) => {
     try {
         // Ensure the data directory exists
         const dataDir = path.join(CUSTOM_REGISTRY_DIR, 'data');
         await fs.mkdir(dataDir, { recursive: true });
 
+        // Validate and sanitize URL format
+        const urlObj = new URL(url);
+        const sanitizedUrl = `${urlObj.protocol}//${urlObj.hostname}${urlObj.pathname.split('/').slice(0, 3).join('/')}`;
+
+        if (!isValidUrl(sanitizedUrl)) {
+            throw new Error(`Invalid URL format: ${sanitizedUrl}`);
+        }
+
         // Delete the file if it exists
         try {
             await fs.unlink(URL_FILE_PATH);
         } catch (err) {
-            // Ignore error if file doesn't exist
-            if (err.code !== 'ENOENT') throw err;
+            if (err.code !== 'ENOENT') throw err; // Ignore file not found errors
         }
 
-        // Write the URL to the file
-        await fs.writeFile(URL_FILE_PATH, url);
+        // Write the sanitized URL to the file
+        await fs.writeFile(URL_FILE_PATH, sanitizedUrl);
 
         // Execute the program from the correct directory
         const { stdout, stderr } = await execAsync('./run data/url.txt', {
             cwd: CUSTOM_REGISTRY_DIR
         });
-        
+
         console.log('Program output:', stdout);
         if (stderr) {
             console.error('Program stderr:', stderr);
@@ -61,54 +78,169 @@ const runCustomRegistryProgram = async (url) => {
         try {
             await fs.unlink(URL_FILE_PATH);
         } catch (err) {
-            // Ignore cleanup errors
             console.log('Cleanup warning:', err.message);
         }
     }
 };
 
-// Helper function to construct package URL
+// Updated Helper function to extract URL from package.json in gzipped file
+const getUrlFromGzip = async (s3Response) => {
+    try {
+        // Convert S3 response body stream to buffer
+        const streamToBuffer = async (stream) => {
+            try {
+                const chunks = [];
+                for await (const chunk of stream) {
+                    chunks.push(chunk);
+                }
+                return Buffer.concat(chunks);
+            } catch (error) {
+                console.error('Error converting stream to buffer:', error);
+                throw new Error('Failed to read package data stream');
+            }
+        };
+
+        // Handle case where Body might be a buffer or stream
+        let base64EncodedBuffer;
+        try {
+            base64EncodedBuffer = s3Response.Body instanceof Readable
+                ? await streamToBuffer(s3Response.Body)
+                : s3Response.Body;
+
+            console.log('Base64 Encoded Buffer (first 100 chars):', base64EncodedBuffer.toString('utf8').slice(0, 100));
+        } catch (error) {
+            console.error('Error processing S3 response body:', error);
+            throw new Error('Failed to process package data');
+        }
+
+        // Decode base64-encoded data
+        let binaryBuffer;
+        try {
+            binaryBuffer = Buffer.from(base64EncodedBuffer.toString('utf8'), 'base64');
+            console.log('Binary Buffer Length:', binaryBuffer.length);
+            console.log('Binary Buffer (first 100 bytes):', binaryBuffer.toString('hex').slice(0, 200));
+        } catch (error) {
+            console.error('Error decoding base64 data:', error);
+            throw new Error('Failed to decode base64 data');
+        }
+
+        // Check if the data is a ZIP archive (signature starts with PK)
+        if (base64EncodedBuffer.toString('utf8', 0, 2) === 'PK') {
+            console.log('Detected ZIP file format');
+            const zip = new AdmZip(binaryBuffer);
+
+            // Find and extract package.json
+            const entry = zip.getEntries().find((e) => e.entryName.endsWith('package.json'));
+            if (!entry) {
+                throw new Error('package.json not found in ZIP file');
+            }
+
+            const packageJsonContent = entry.getData().toString('utf8');
+            const packageJson = JSON.parse(packageJsonContent);
+
+            console.log('Extracted package.json:', packageJson);
+
+            // Extract URL
+            const url = packageJson.repository?.url ||
+                packageJson.homepage ||
+                (typeof packageJson.repository === 'string' ? packageJson.repository : null);
+
+            if (!url) {
+                throw new Error('No URL found in package.json fields');
+            }
+
+            return sanitizeUrl(url);
+        }
+
+        // If not a ZIP file, assume gzip
+        console.log('Assuming gzip format');
+        let unzippedBuffer;
+        try {
+            unzippedBuffer = gunzipSync(binaryBuffer);
+            console.log('Unzipped Buffer Length:', unzippedBuffer.length);
+            console.log('Unzipped Buffer (first 100 chars):', unzippedBuffer.toString('utf8').slice(0, 100));
+        } catch (error) {
+            console.error('Error decompressing gzip data:', error);
+            throw new Error('Failed to decompress package data - invalid gzip format');
+        }
+
+        // Parse the unzipped content as JSON
+        let packageJson;
+        try {
+            packageJson = JSON.parse(unzippedBuffer.toString('utf8'));
+            console.log('Parsed package.json:', packageJson);
+        } catch (error) {
+            console.error('Error parsing package.json:', error);
+            throw new Error('Invalid package.json format - failed to parse JSON');
+        }
+
+        // Extract URL from package.json fields
+        const url = packageJson.repository?.url ||
+            packageJson.homepage ||
+            (typeof packageJson.repository === 'string' ? packageJson.repository : null);
+
+        if (!url) {
+            throw new Error('No URL found in package.json fields');
+        }
+
+        return sanitizeUrl(url);
+    } catch (error) {
+        console.error('Error extracting URL:', error.message);
+        return null;
+    }
+};
+
+// Helper function to sanitize URL
+const sanitizeUrl = (url) => {
+    const cleanUrl = url.replace(/^git\+/, '')
+        .replace(/\.git$/, '')
+        .replace(/^ssh:\/\//, 'https://')
+        .replace(/^git:\/\//, 'https://');
+
+    let urlObj;
+    try {
+        urlObj = new URL(cleanUrl);
+    } catch (error) {
+        throw new Error(`Invalid URL format: ${cleanUrl}`);
+    }
+
+    const sanitizedUrl = `${urlObj.protocol}//${urlObj.hostname}${urlObj.pathname.split('/').slice(0, 3).join('/')}`;
+    if (!isValidUrl(sanitizedUrl)) {
+        throw new Error('Invalid repository URL - must contain github.com or npmjs.com');
+    }
+
+    return sanitizedUrl;
+};
+
+
+/////////////////////////
+
+
+// Updated constructPackageUrl function
 const constructPackageUrl = async (uploadVia, metadata, s3Response) => {
     switch (uploadVia?.toLowerCase()) {
         case 'github':
-            return metadata.url || 'Invalid GitHub URL';
-            
+            const githubUrl = metadata.url || 'Invalid GitHub URL';
+            return isValidUrl(githubUrl) ? githubUrl : 'Invalid GitHub URL';
         case 'npm':
-            return metadata.name ? 
-                `https://www.npmjs.com/package/${metadata.name}` : 
-                'Invalid NPM package name';
-            
+            const npmUrl = metadata.name ? `https://www.npmjs.com/package/${metadata.name}` : 'Invalid NPM package name';
+            return isValidUrl(npmUrl) ? npmUrl : 'Invalid NPM package name';
         case 'content':
             try {
-                // Convert S3 response body stream to base64
-                const streamToBuffer = async (stream) => {
-                    const chunks = [];
-                    for await (const chunk of stream) {
-                        chunks.push(chunk);
-                    }
-                    return Buffer.concat(chunks);
-                };
-
-                // Handle case where Body might be a Buffer or Readable
-                const contentBuffer = s3Response.Body instanceof Readable ?
-                    await streamToBuffer(s3Response.Body) :
-                    s3Response.Body;
-                
-                // Convert buffer to base64
-                const base64Content = contentBuffer.toString('base64');
-                
-                // Use the new function to get the repository URL
-                const url = await getRepoUrlFromPackage(base64Content);
-                return url || 'Content URL not available';
+                const url = await getUrlFromGzip(s3Response);
+                if (!url || !isValidUrl(url)) {
+                    return 'Content URL not available';
+                }
+                return url;
             } catch (error) {
                 console.error('Error getting URL from content:', error);
                 return 'Content URL not available';
             }
-            
         default:
             return 'Unknown source';
     }
 };
+
 
 // Helper function to check if package exists
 const checkPackageExists = async (packageId) => {
@@ -239,55 +371,55 @@ export const ratePackageHandler = async (event) => {
 //     return lowerUrl.includes('github.com') || lowerUrl.includes('npmjs.com');
 // };
 
-// // Helper function to extract URL from package.json in gzipped file
-// const getUrlFromGzip = async (s3Response) => {
-//     try {
-//         // Convert S3 response body stream to buffer
-//         const streamToBuffer = async (stream) => {
-//             const chunks = [];
-//             for await (const chunk of stream) {
-//                 chunks.push(chunk);
-//             }
-//             return Buffer.concat(chunks);
-//         };
+// // // Helper function to extract URL from package.json in gzipped file
+// // const getUrlFromGzip = async (s3Response) => {
+// //     try {
+// //         // Convert S3 response body stream to buffer
+// //         const streamToBuffer = async (stream) => {
+// //             const chunks = [];
+// //             for await (const chunk of stream) {
+// //                 chunks.push(chunk);
+// //             }
+// //             return Buffer.concat(chunks);
+// //         };
 
-//         // Handle case where Body might be a Buffer
-//         const gzippedBuffer = s3Response.Body instanceof Readable ?
-//             await streamToBuffer(s3Response.Body) :
-//             s3Response.Body;
+// //         // Handle case where Body might be a Buffer
+// //         const gzippedBuffer = s3Response.Body instanceof Readable ?
+// //             await streamToBuffer(s3Response.Body) :
+// //             s3Response.Body;
 
-//         // Decompress the gzipped content
-//         const unzippedBuffer = gunzipSync(gzippedBuffer);
+// //         // Decompress the gzipped content
+// //         const unzippedBuffer = gunzipSync(gzippedBuffer);
         
-//         // Parse the unzipped content as JSON (assuming it's package.json)
-//         const packageJson = JSON.parse(unzippedBuffer.toString('utf8'));
+// //         // Parse the unzipped content as JSON (assuming it's package.json)
+// //         const packageJson = JSON.parse(unzippedBuffer.toString('utf8'));
 
-//         // Get URL from package.json - could be in repository.url, homepage, or other fields
-//         const url = packageJson.repository?.url ||
-//             packageJson.homepage ||
-//             (typeof packageJson.repository === 'string' ? packageJson.repository : null);
+// //         // Get URL from package.json - could be in repository.url, homepage, or other fields
+// //         const url = packageJson.repository?.url ||
+// //             packageJson.homepage ||
+// //             (typeof packageJson.repository === 'string' ? packageJson.repository : null);
 
-//         if (!url) {
-//             throw new Error('No URL found in package.json');
-//         }
+// //         if (!url) {
+// //             throw new Error('No URL found in package.json');
+// //         }
 
-//         // Clean the URL
-//         const cleanUrl = url.replace(/^git\+/, '')
-//             .replace(/\.git$/, '')
-//             .replace(/^ssh:\/\//, 'https://')
-//             .replace(/^git:\/\//, 'https://');
+// //         // Clean the URL
+// //         const cleanUrl = url.replace(/^git\+/, '')
+// //             .replace(/\.git$/, '')
+// //             .replace(/^ssh:\/\//, 'https://')
+// //             .replace(/^git:\/\//, 'https://');
 
-//         // Validate URL contains github or npm
-//         if (!isValidUrl(cleanUrl)) {
-//             throw new Error('URL must contain either github.com or npmjs.com');
-//         }
+// //         // Validate URL contains github or npm
+// //         if (!isValidUrl(cleanUrl)) {
+// //             throw new Error('URL must contain either github.com or npmjs.com');
+// //         }
 
-//         return cleanUrl;
-//     } catch (error) {
-//         console.error('Error extracting URL from gzip:', error);
-//         return null;
-//     }
-// };
+// //         return cleanUrl;
+// //     } catch (error) {
+// //         console.error('Error extracting URL from gzip:', error);
+// //         return null;
+// //     }
+// // };
 
 // // Helper function to run the Custom Registry program
 // const runCustomRegistryProgram = async (url) => {
@@ -331,7 +463,82 @@ export const ratePackageHandler = async (event) => {
 //     }
 // };
 
-// // Helper function to construct package URL
+// // // Helper function to construct package URL
+// // const constructPackageUrl = async (uploadVia, metadata, s3Response) => {
+// //     switch (uploadVia?.toLowerCase()) {
+// //         case 'github':
+// //             const githubUrl = metadata.url || 'Invalid GitHub URL';
+// //             return isValidUrl(githubUrl) ? githubUrl : 'Invalid GitHub URL';
+// //         case 'npm':
+// //             const npmUrl = metadata.name ? `https://www.npmjs.com/package/${metadata.name}` : 'Invalid NPM package name';
+// //             return isValidUrl(npmUrl) ? npmUrl : 'Invalid NPM package name';
+// //         case 'content':
+// //             try {
+// //                 const url = await getUrlFromGzip(s3Response);
+// //                 if (!url || !isValidUrl(url)) {
+// //                     return 'Content URL not available';
+// //                 }
+// //                 return url;
+// //             } catch (error) {
+// //                 console.error('Error getting URL from content:', error);
+// //                 return 'Content URL not available';
+// //             }
+// //         default:
+// //             return 'Unknown source';
+// //     }
+// // };
+
+// // Helper function to extract URL from package.json in gzipped file
+// const getUrlFromGzip = async (s3Response) => {
+//     try {
+//         // Convert S3 response body stream to buffer
+//         const streamToBuffer = async (stream) => {
+//             const chunks = [];
+//             for await (const chunk of stream) {
+//                 chunks.push(chunk);
+//             }
+//             return Buffer.concat(chunks);
+//         };
+
+//         // Handle case where Body might be a buffer or stream
+//         const gzippedBuffer = s3Response.Body instanceof Readable
+//             ? await streamToBuffer(s3Response.Body)
+//             : s3Response.Body;
+
+//         // Decompress the gzipped content
+//         const unzippedBuffer = gunzipSync(gzippedBuffer);
+
+//         // Parse the unzipped content as JSON (assuming it's package.json)
+//         const packageJson = JSON.parse(unzippedBuffer.toString('utf8'));
+
+//         // Extract URL from package.json fields
+//         const url = packageJson.repository?.url ||
+//             packageJson.homepage ||
+//             (typeof packageJson.repository === 'string' ? packageJson.repository : null);
+
+//         if (!url) {
+//             throw new Error('No URL found in package.json');
+//         }
+
+//         // Clean the URL
+//         const cleanUrl = url.replace(/^git\+/, '')
+//             .replace(/\.git$/, '')
+//             .replace(/^ssh:\/\//, 'https://')
+//             .replace(/^git:\/\//, 'https://');
+
+//         // Validate the URL
+//         if (!isValidUrl(cleanUrl)) {
+//             throw new Error('Invalid URL: must contain github.com or npmjs.com');
+//         }
+
+//         return cleanUrl;
+//     } catch (error) {
+//         console.error('Error extracting URL from gzip:', error);
+//         return null;
+//     }
+// };
+
+// // Updated constructPackageUrl function
 // const constructPackageUrl = async (uploadVia, metadata, s3Response) => {
 //     switch (uploadVia?.toLowerCase()) {
 //         case 'github':
@@ -355,6 +562,7 @@ export const ratePackageHandler = async (event) => {
 //             return 'Unknown source';
 //     }
 // };
+
 
 // // Helper function to check if package exists
 // const checkPackageExists = async (packageId) => {

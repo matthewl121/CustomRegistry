@@ -46,13 +46,6 @@ export const postPackagesHandler = async (event) => {
     // Parse and validate the request body
     const queries = Array.isArray(event.queries) ? event.queries : [event.queries];
 
-    const updatedQueries = queries.map(query => ({
-      ...query,
-      Name: query.Name ? query.Name.toLowerCase() : query.Name
-    }));
-
-    const invalidQuery = queries.find(query => !query.Name);
-
     console.log("event", event);
     console.log("queries:", queries);
     queries.forEach((query, index) => {
@@ -63,7 +56,7 @@ export const postPackagesHandler = async (event) => {
 
 
     // Check for wildcard case
-    if (updatedQueries.some(query => query.Name === "*")) {
+    if (queries.some(query => query.Name === "*")) {
       const keys = await listAllKeys(s3, BUCKET_NAME);
 
       if (keys.length > 30) {
@@ -100,7 +93,7 @@ export const postPackagesHandler = async (event) => {
       const formattedBody = JSON.stringify(
         matchingPackages.map(item => ({
           ...item,
-          Name: item.Name.charAt(0).toUpperCase() + item.Name.slice(1),
+          Name: item.Name
         }))
       );
       
@@ -137,7 +130,7 @@ export const postPackagesHandler = async (event) => {
     const formattedBody = JSON.stringify(
       matchingPackages.map(item => ({
         ...item,
-        Name: item.Name.charAt(0).toUpperCase() + item.Name.slice(1),
+        Name: item.Name
       }))
     );
       
