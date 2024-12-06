@@ -118,6 +118,7 @@ async function searchPackagesInS3(queries) {
 
   const { Contents = [] } = await s3.send(command);
   const packages = Contents.map(({ Key }) => parsePackageKey(Key));
+  console.log("Packages found:", packages)
 
   // Return packages that match any of the queries (OR logic)
   return packages.filter(pkg =>
