@@ -262,7 +262,7 @@ export const uploadPackageHandler = async (event) => {
         } catch (error) {
           throw new Error(`/package: ${error.message}`);
         }
-        packageName = repo;
+        packageName = event.Name || repo;
 
         // Fetch repository info to get the default branch
         let defaultBranch;
@@ -361,7 +361,7 @@ export const uploadPackageHandler = async (event) => {
 
   const packageId = packageName + '--' + packageVersion;
   const metadata = {
-    name: packageName === "InversifyJS" ? "inversify" : packageName,
+    name: packageName,
     id: packageId,
     version: packageVersion,
     uploadvia: uploadVia,
