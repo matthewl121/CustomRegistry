@@ -28,6 +28,20 @@ export const downloadPackageHandler = async (packageId) => {
     Key: packageId,
   };
 
+  if (!packageId) {
+    console.error(`/package/{id} GET: Invalid ID`);
+    return {
+      statusCode: 400, // supposed to be statusCode 500 but it's not in spec
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ message: "There is missing field(s) in the PackageID or it is formed improperly, or is invalid." }),
+    };
+  }
+
   // Check if old package exists in S3
   let response0;
   try {
@@ -41,6 +55,7 @@ export const downloadPackageHandler = async (packageId) => {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({ message: "Package does not exist." })
     };
@@ -87,8 +102,9 @@ export const downloadPackageHandler = async (packageId) => {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ message: `/package/{id} GET: Error downloading file: ${error.message}` }),
+      body: JSON.stringify({ message: "There is missing field(s) in the PackageID or it is formed improperly, or is invalid." }),
     };
   }
 };

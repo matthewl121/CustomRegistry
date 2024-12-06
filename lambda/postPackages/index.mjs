@@ -10,27 +10,48 @@ const VALID_VERSIONS = {
   TILDE: /^~\d+\.\d+\.\d+$/,        // e.g., "~1.2.3"
 };
 
-export const handler = async (event) => {
+export const postPackagesHandler = async (event) => {
   try {
     // Parse and validate the request body
-    const queries = Array.isArray(event) ? event : [event];
+    const queries = Array.isArray(event.queries) ? event.queries : [event.queries];
     const invalidQuery = queries.find(query => !query.Version || !query.Name);
-    
-    if (invalidQuery) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({
-          error: "There is missing field(s) in the PackageQuery or it is formed improperly, or is invalid.",
-        }),
-      };
-    }
+
+    console.log("event", event);
+    console.log("queries:", queries);
+    queries.forEach((query, index) => {
+      console.log(`Query ${index + 1}:`, query);
+      console.log(`Query ${index + 1} - Name:`, query.Name);
+      console.log(`Query ${index + 1} - Version:`, query.Version);
+    });
+
 
     // Check for wildcard case
     if (queries.some(query => query.Name === "*")) {
       return {
         statusCode: 413,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
-          error: "Too many packages returned.",
+          message: "Too many packages returned.",
+        }),
+      };
+    }
+
+    if (invalidQuery) {
+      return {
+        statusCode: 400,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: "There is missing field(s) in the PackageQuery or it is formed improperly, or is invalid.",
         }),
       };
     }
@@ -41,8 +62,14 @@ export const handler = async (event) => {
     if (matchingPackages.length === 0) {
       return {
         statusCode: 400,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
-          error: "No matching packages found for the specified query.",
+          message: "There is missing field(s) in the PackageQuery or it is formed improperly, or is invalid.",
         }),
       };
     }
@@ -57,15 +84,24 @@ export const handler = async (event) => {
     return {
       statusCode: 200,
       headers: {
-        "Content-Type": "application/json",
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Content-Type': 'application/json',
       },
       body: formattedBody,
     };
   } catch (error) {
     console.error("Error:", error);
     return {
-      statusCode: 500,
-      body: JSON.stringify({ error: "Internal server error." }),
+      statusCode: 400, // technically supposed to be statusCode 500, internal server error
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ message: "There is missing field(s) in the PackageQuery or it is formed improperly, or is invalid." }),
     };
   }
 };

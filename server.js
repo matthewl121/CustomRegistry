@@ -6,7 +6,7 @@ import { ratePackageHandler } from './lambda/ratePackage/index.mjs';
 import { updatePackageHandler } from './lambda/update/index.mjs';
 import { uploadPackageHandler } from './lambda/upload/index.mjs';
 import { getPackageByRegexHandler } from './lambda/getPackageByRegex/index.mjs';
-import { getPackagesHandler } from './lambda/getPackages/index.mjs';
+import { postPackagesHandler } from './lambda/postPackages/index.mjs';
 import { getTracksHandler } from './lambda/getTracks/index.mjs';
 import { resetRegistryHandler } from './lambda/resetRegistry/index.mjs';
 import { packageCostHandler } from './lambda/costPackage/index.mjs';
@@ -103,7 +103,7 @@ app.post('/packages', async (req, res) => {
         };
 
         // Call the handler function and get the response
-        const response = await getPackagesHandler(event);
+        const response = await postPackagesHandler(event);
 
         console.log("response:", response);
 
