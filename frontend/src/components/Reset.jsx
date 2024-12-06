@@ -11,10 +11,7 @@ const Reset = () => {
 
         try {
             const response = await apiPost('/resetRegistry');
-
-            if (response.status === 200) {
-                console.log("Registry successfully reset.");
-            } else {
+            if (response.message !== "Registry is reset.") {
                 throw new Error('Failed to reset registry');
             }
         } catch (err) {
