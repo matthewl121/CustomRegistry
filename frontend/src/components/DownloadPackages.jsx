@@ -9,9 +9,9 @@ const DownloadPackages = () => {
     const [error, setError] = useState(""); // State to handle error message
 
     const handleSearch = async () => {
-        if (!pkgQuery || !version) {
-            console.error("Package query and version are required.");
-            setError("Package query and version are required."); // Show error
+        if (!pkgQuery) {
+            console.error("Package query is required.");
+            setError("Package query is required."); // Show error
             return;
         }
 
