@@ -1,9 +1,12 @@
 {
   "dependencies": {
     "@aws-sdk/client-s3": "^3.701.0",
+    "@microsoft/eslint-formatter-sarif": "^3.1.0",
     "adm-zip": "^0.5.10",
+    "aws-sdk-client-mock": "^4.1.0",
     "commander": "^11.1.0",
     "cors": "^2.8.5",
+    "eslint-config-standard": "^17.1.0",
     "express": "^4.21.1",
     "fs": "^0.0.1-security",
     "http": "^0.0.1-security",
@@ -32,6 +35,7 @@
     "test:tracks": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/getTracks_test/index.test.mjs",
     "test:reset": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/reset_test/index.test.mjs",
     "test:upload": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/upload_test/index.test.mjs",
+    "test:regex": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/getPackageByRegex_test/index.test.mjs",
     "compile": "tsc",
     "install-deps": "npm install --save-dev && tsc --init"
   },

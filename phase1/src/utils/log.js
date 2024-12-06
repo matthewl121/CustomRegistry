@@ -3,10 +3,8 @@
 * log.ts
 * Logging utilities for file and stdout output with configurable levels
 */
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.initLogFile = initLogFile;
-exports.logToFile = logToFile;
-exports.metricsLogToStdout = metricsLogToStdout;
+exports.__esModule = true;
+exports.metricsLogToStdout = exports.logToFile = exports.initLogFile = void 0;
 var fs = require('fs');
 var path = require('path');
 /**
@@ -19,6 +17,7 @@ function initLogFile() {
     }
     fs.writeFileSync(process.env.LOG_FILE, '');
 }
+exports.initLogFile = initLogFile;
 /**
 * Writes message to log file if message level <= configured log level
 * @param message - Message to log (string or object)
@@ -36,6 +35,7 @@ function logToFile(message, message_level) {
         fs.appendFileSync(process.env.LOG_FILE, formattedMessage + '\n');
     }
 }
+exports.logToFile = logToFile;
 /**
 * Writes metrics to stdout if message level <= configured log level
 * @param message - Metrics to log (string or object)
@@ -53,3 +53,4 @@ function metricsLogToStdout(message, message_level) {
         console.log(formattedMessage);
     }
 }
+exports.metricsLogToStdout = metricsLogToStdout;
