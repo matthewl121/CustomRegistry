@@ -342,7 +342,7 @@ export const uploadPackageHandler = async (event) => {
           'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type',
         },
-        // body: JSON.stringify(`/package: Error processing URL: ${error.message}`),
+        body: JSON.stringify({ message: "There is missing field(s) in the PackageData or it is formed improperly (e.g. Content and URL ar both set)" }),
       };
     }
   } else {
@@ -355,7 +355,7 @@ export const uploadPackageHandler = async (event) => {
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
       },
-      // body: JSON.stringify("/package: Either Content or URL must be provided."),
+      body: JSON.stringify({ message: "There is missing field(s) in the PackageData or it is formed improperly (e.g. Content and URL ar both set)" }),
     };
   }
 
@@ -396,7 +396,7 @@ export const uploadPackageHandler = async (event) => {
           'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type',
         },
-        // body: JSON.stringify(`/package: Error during debloat: ${error.message}`),
+        body: JSON.stringify(`/package: Error during debloat: ${error.message}`),
       };
     }
   }
@@ -415,7 +415,7 @@ export const uploadPackageHandler = async (event) => {
           'Access-Control-Allow-Headers': 'Content-Type',
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({"message": "Package exists already."})
+        body: JSON.stringify({ message: "Package exists already."})
       };
     }
 
@@ -480,7 +480,7 @@ export const uploadPackageHandler = async (event) => {
           'Access-Control-Allow-Headers': 'Content-Type',
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({"message": "Package is not uploaded due to the disqualified rating."})
+        body: JSON.stringify({message: "Package is not uploaded due to the disqualified rating."})
       };
     }
 
@@ -503,7 +503,7 @@ export const uploadPackageHandler = async (event) => {
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
       },
-      // body: JSON.stringify(`/package: Error uploading package: ${error.message}`),
+      body: JSON.stringify(`/package: Error uploading package: ${error.message}`),
     };
   }
 };
