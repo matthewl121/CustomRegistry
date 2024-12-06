@@ -30,7 +30,7 @@ app.get('/package/:id', async (req, res) => {
     console.log(`Request ID: ${id}`);
     try {
         const response = await downloadPackageHandler(id);
-        console.log("Response:", JSON.stringify(response));
+        // console.log("Response:", JSON.stringify(response));
         return res.status(response.statusCode).json(JSON.parse(response.body));
     } catch (error) {
         console.error("Error retrieving package:", error);
