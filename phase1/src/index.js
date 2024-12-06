@@ -51,8 +51,7 @@ dotenv.config();
 /**
 * Creates and manages worker thread for metric calculation
 */
-function runWorker(owner, repo, token, repoURL, repoData, // Define specific type if possible
-metric) {
+function runWorker(owner, repo, token, repoURL, repoData, metric) {
     return new Promise(function (resolve, reject) {
         try {
             var worker_1 = new worker_threads_1.Worker('./src/utils/worker.ts', {
