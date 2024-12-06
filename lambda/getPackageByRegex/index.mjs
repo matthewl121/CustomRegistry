@@ -28,6 +28,23 @@ const listAllKeys = async (s3, bucket, prefix="") => {
 
 // Helper function for regex
 const isValidRegex = (pattern) => {
+  // Check for quantifiers that exceed a certain allowed size
+  // This simple check looks for any {min,max} quantifier pair
+  const quantifierPattern = /\{(\d+),(\d+)\}/g;
+  let match;
+  
+  while ((match = quantifierPattern.exec(pattern)) !== null) {
+    const [ , min, max ] = match;
+    const minVal = parseInt(min, 10);
+    const maxVal = parseInt(max, 10);
+    
+    // Customize these thresholds as desired
+    if (maxVal > 1000) {
+      throw new Error(`Invalid regex pattern: quantifier {${min},${max}} is too large.`);
+    }
+  }
+
+  // Now try to construct the regex
   let regex;
   try {
     regex = new RegExp(pattern);
