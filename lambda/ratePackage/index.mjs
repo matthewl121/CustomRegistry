@@ -103,6 +103,7 @@ const getUrlFromArchive = async (s3Response) => {
             // Find and extract package.json
             const entry = zip.getEntries().find((e) => e.entryName.endsWith('package.json') && !e.entryName.includes('node_modules/'));
             if (!entry) {
+                console.error('Error: package.json not found in ZIP file');
                 throw new Error('package.json not found in ZIP file');
             }
 
@@ -117,6 +118,7 @@ const getUrlFromArchive = async (s3Response) => {
                 (typeof packageJson.repository === 'string' ? packageJson.repository : null);
 
             if (!url) {
+                console.error('Error: No URL found in package.json fields');
                 throw new Error('No URL found in package.json fields');
             }
 
@@ -151,6 +153,7 @@ const getUrlFromArchive = async (s3Response) => {
             (typeof packageJson.repository === 'string' ? packageJson.repository : null);
 
         if (!url) {
+            console.error('Error: No URL found in package.json fields');
             throw new Error('No URL found in package.json fields');
         }
 
@@ -160,6 +163,7 @@ const getUrlFromArchive = async (s3Response) => {
         return null;
     }
 };
+
 
 // Helper function to sanitize URL
 const sanitizeUrl = (url) => {
