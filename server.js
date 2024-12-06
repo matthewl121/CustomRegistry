@@ -229,7 +229,7 @@ app.get('/package/:id/cost', async (req, res) => {
 });
 
 // Reset registry endpoint
-app.post('/reset', async (req, res) => {
+app.delete('/reset', async (req, res) => {
     try {
         console.log("Reset registry endpoint")
         const response = await resetRegistryHandler();
