@@ -25,11 +25,12 @@ app.get('/', (req, res) => {
 
 // Package download endpoint
 app.get('/package/:id', async (req, res) => {
+    console.log("Package download endpoint.")
     const { id } = req.params;
-    console.log(`Got the id: ${id}`);
+    console.log(`Request ID: ${id}`);
     try {
         const response = await downloadPackageHandler(id);
-        console.log("server download response", response);
+        console.log("Response:", response);
         return res.status(response.statusCode).json(JSON.parse(response.body));
     } catch (error) {
         console.error("Error retrieving package:", error);
@@ -39,9 +40,10 @@ app.get('/package/:id', async (req, res) => {
 
 // Package upload endpoint
 app.post('/package', async (req, res) => {
-    console.log(`req: ${req.body}`);
+    console.log("Package upload endpoint.")
+    console.log(`Request: ${req.body}`);
     let packageData = {
-        JSProgram: req.body.JSProgram, // Always present
+        JSProgram: req.body?.JSProgram, // Always present
     };
 
     // Check if uploading via Content
@@ -61,7 +63,7 @@ app.post('/package', async (req, res) => {
         const response = await uploadPackageHandler(packageData);
 
         // Handle the response from the handler
-        console.log(response.body);
+        console.log("Response:", response);
         return res.status(response.statusCode).json(JSON.parse(response.body));
     } catch (error) {
         console.error("Error uploading package:", error);
@@ -72,16 +74,19 @@ app.post('/package', async (req, res) => {
 // Package by regex endpoint
 app.post('/package/byRegEx', async (req, res) => {
     try {
+        console.log("Package by regex endpoint.")
         // Create the event object from the request body
         const event = {
             RegEx: req.body.RegEx,
         };
 
+        console.log(`Request regex: ${event.RegEx}`)
+
         // Call the handler function and get the response
         const response = await getPackageByRegexHandler(event);
 
         // Return the response from the handler to the frontend
-        console.log(response);
+        console.log("Response:", response);
         return res.status(response.statusCode).json(JSON.parse(response.body));
     } catch (error) {
         console.error('Internal Server Error:', error);
@@ -94,9 +99,10 @@ app.post('/package/byRegEx', async (req, res) => {
 // Packages query endpoint
 app.post('/packages', async (req, res) => {
     try {
+        console.log("Packages query endpoint (postPackages).")
         const queries = req.body; // Extract the PackageQuery from the request body
-        console.log("queries:", queries);
-
+        
+        console.log("Request queries:", queries);
         // Create the event object to pass to the handler
         const event = {
             queries,
@@ -105,7 +111,7 @@ app.post('/packages', async (req, res) => {
         // Call the handler function and get the response
         const response = await postPackagesHandler(event);
 
-        console.log("response:", response);
+        console.log("Response:", response);
 
         // Return the response from the handler to the frontend
         return res.status(response.statusCode).json(JSON.parse(response.body));
@@ -120,11 +126,10 @@ app.post('/packages', async (req, res) => {
 // Package update endpoint
 app.post('/package/:id', async (req, res) => {
     try {
-        const packageId = req.params.id;
+        console.log("Package update endpoint.")
         const { metadata, data } = req.body;
-        console.log("req.body: ", req.body);    
-        console.log("data: ", data);
-        console.log("metadata: ", metadata);
+        console.log("Request data: ", data);
+        console.log("Request metadata: ", metadata);
 
         const event = {
             metadata: {
@@ -141,10 +146,10 @@ app.post('/package/:id', async (req, res) => {
             }
         };
 
-        console.log("Event:", event);
+        console.log("Request event:", event);
 
         const response = await updatePackageHandler(event);
-        console.log("server response from handler:", response);
+        console.log("Response:", response);
         return res.status(response.statusCode).json(response.body);
     } catch (error) {
         console.error('Error updating package:', error);
@@ -155,8 +160,10 @@ app.post('/package/:id', async (req, res) => {
 // Tracks endpoint
 app.get('/tracks', async (req, res) => {
     try {
+        console.log("Tracks endpoint.")
         // Call the handler function to get the tracks
         const response = await getTracksHandler();
+        console.log("Response:", response)
 
         // Return the response from the handler to the frontend
         return res.status(response.statusCode).json(JSON.parse(response.body));
@@ -170,8 +177,9 @@ app.get('/tracks', async (req, res) => {
 
 // Package rate endpoint
 app.get('/package/:id/rate', async (req, res) => {
+    console.log("Package rate endpoint.")
     const { id } = req.params;
-    console.log(`Rating package with id: ${id}`);
+    console.log(`Request ID: ${id}`);
     try {
         const event = {
             pathParameters: { id },
@@ -179,8 +187,12 @@ app.get('/package/:id/rate', async (req, res) => {
                 requestId: req.headers['x-request-id'] || 'test-request'
             }
         };
+
+        console.log(`Request event: ${event}`);
+
         const response = await ratePackageHandler(event);
-        console.log(response);
+        console.log("Response:", response);
+
         return res.status(response.statusCode)
             .set(response.headers)
             .send(response.body);
@@ -192,6 +204,7 @@ app.get('/package/:id/rate', async (req, res) => {
 
 // Package cost endpoint
 app.get('/package/:id/cost', async (req, res) => {
+    console.log("Package cost endpoint")
     try {
         const id = req.params.id;
         const dependency = req.query.dependency === 'true';
@@ -201,7 +214,10 @@ app.get('/package/:id/cost', async (req, res) => {
             dependency
         };
 
+        console.log(`Request event: ${event}`);
+
         const response = await packageCostHandler(event);
+        console.log(`Response: ${response}`);
 
         return res.status(response.statusCode).json(JSON.parse(response.body));
     } catch (error) {
@@ -215,8 +231,10 @@ app.get('/package/:id/cost', async (req, res) => {
 // Reset registry endpoint
 app.post('/reset', async (req, res) => {
     try {
+        console.log("Reset registry endpoint")
         const response = await resetRegistryHandler();
 
+        console.log("Response", response)
         return res.status(response.statusCode).json(JSON.parse(response.body));
     } catch (error) {
         console.error('Internal Server Error:', error);
