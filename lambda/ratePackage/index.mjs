@@ -99,14 +99,23 @@ const getUrlFromGzip = async (s3Response) => {
         };
 
         // Handle case where Body might be a buffer or stream
-        let gzippedBuffer;
+        let base64EncodedBuffer;
         try {
-            gzippedBuffer = s3Response.Body instanceof Readable
+            base64EncodedBuffer = s3Response.Body instanceof Readable
                 ? await streamToBuffer(s3Response.Body)
                 : s3Response.Body;
         } catch (error) {
             console.error('Error processing S3 response body:', error);
             throw new Error('Failed to process package data');
+        }
+
+        // Decode base64-encoded data
+        let gzippedBuffer;
+        try {
+            gzippedBuffer = Buffer.from(base64EncodedBuffer.toString('utf8'), 'base64');
+        } catch (error) {
+            console.error('Error decoding base64 data:', error);
+            throw new Error('Failed to decode base64 data');
         }
 
         // Decompress the gzipped content
