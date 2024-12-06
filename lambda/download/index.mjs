@@ -42,7 +42,7 @@ export const downloadPackageHandler = async (packageId) => {
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
       },
-      // body: JSON.stringify(`/package/{id} GET: ${error}`)
+      body: JSON.stringify({ message: "Package does not exist." })
     };
   }
 
