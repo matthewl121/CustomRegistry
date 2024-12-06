@@ -84,6 +84,7 @@ app.get('/package/:id', async (req, res) => {
     }
 });
 
+// Upload
 app.post('/package', async (req, res) => {
     console.log("\n\nPackage upload endpoint.");
     let packageData = {
@@ -96,14 +97,17 @@ app.post('/package', async (req, res) => {
         packageData.debloat = req.body.debloat || null;
     }
 
-    console.log(`Response body: ${JSON.stringify(packageData.Content)}`);
-
+    
     if (req.body.URL) {
         packageData.URL = req.body.URL;
     }
 
+    console.log(`Request body: ${JSON.stringify(packageData)}`);
+    
     try {
         const response = await uploadPackageHandler(packageData);
+        console.log(`Response body: ${JSON.stringify(response.body)}`);
+
         return res.status(response.statusCode).json(JSON.parse(response.body));
     } catch (error) {
         console.error("Error uploading package:", error);
