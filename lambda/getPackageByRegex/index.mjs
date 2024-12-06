@@ -131,7 +131,6 @@ export const getPackageByRegexHandler = async (event) => {
 
     // get all matching keys
     const matchingKeys = filterKeysByRegex(allKeys, regexObject);
-
     console.log(`matchingKeys: ${JSON.stringify(matchingKeys)}`);
     
     if (matchingKeys.length === 0) {
@@ -144,8 +143,7 @@ export const getPackageByRegexHandler = async (event) => {
           'Access-Control-Allow-Headers': 'Content-Type',
           'Content-Type': 'application/json',
         },
-        // body: JSON.stringify({ message: "No package found under this regex." }),
-        body: JSON.stringify([]),
+        body: JSON.stringify({ message: "No package found under this regex." }),
       };
     }
 
