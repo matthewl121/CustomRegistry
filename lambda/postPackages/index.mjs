@@ -10,6 +10,36 @@ const VALID_VERSIONS = {
   TILDE: /^~\d+\.\d+\.\d+$/,        // e.g., "~1.2.3"
 };
 
+const listAllKeys = async (s3Client, bucket) => {
+  let isTruncated = true;
+  let continuationToken = null;
+  const keys = [];
+
+  while (isTruncated) {
+    const params = {
+      Bucket: bucket,
+      MaxKeys: 1000, // Maximum allowed by S3
+      ContinuationToken: continuationToken,
+    };
+
+    try {
+      const response = await s3Client.send(new ListObjectsV2Command(params));
+      if (response.Contents) {
+        response.Contents.forEach((item) => {
+          keys.push({ Key: item.Key });
+        });
+      }
+      isTruncated = response.IsTruncated;
+      continuationToken = response.NextContinuationToken;
+    } catch (error) {
+      console.error("Error listing objects:", error);
+      throw new Error(`Failed to list objects: ${error.message}`);
+    }
+  }
+
+  return keys;
+};
+
 export const postPackagesHandler = async (event) => {
   try {
     // Parse and validate the request body
@@ -27,32 +57,42 @@ export const postPackagesHandler = async (event) => {
 
     // Check for wildcard case
     if (queries.some(query => query.Name === "*")) {
-      return {
-        statusCode: 413,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: "Too many packages returned.",
-        }),
-      };
-    }
+      const keys = await listAllKeys(s3, BUCKET_NAME);
 
-    if (invalidQuery) {
+      if (keys.length > 30) {
+        return {
+          statusCode: 413,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: "Too many packages returned.",
+          }),
+        };
+      }
+
+      // If keys are fewer than or equal to 30, return all packages
+      const matchingPackages = keys.map(({ Key }) => parsePackageKey(Key));
+      const formattedBody = matchingPackages
+        .map(item => {
+          // Capitalize the first letter of the Name field
+          item.Name = item.Name.charAt(0).toUpperCase() + item.Name.slice(1);
+          return JSON.stringify(item, null, 2);
+        })
+        .join('\n');
+
       return {
-        statusCode: 400,
+        statusCode: 200,
         headers: {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type',
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          message: "There is missing field(s) in the PackageQuery or it is formed improperly, or is invalid.",
-        }),
+        body: formattedBody,
       };
     }
 
