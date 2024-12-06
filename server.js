@@ -41,7 +41,7 @@ app.get('/package/:id', async (req, res) => {
 // Package upload endpoint
 app.post('/package', async (req, res) => {
     console.log("Package upload endpoint.")
-    console.log(`Request: ${req.body}`);
+    console.log(`Request: ${JSON.stringify(req.body)}`);
     let packageData = {
         JSProgram: req.body?.JSProgram, // Always present
     };
@@ -75,12 +75,11 @@ app.post('/package', async (req, res) => {
 app.post('/package/byRegEx', async (req, res) => {
     try {
         console.log("Package by regex endpoint.")
+        console.log(`Request body: ${JSON.stringify(req.body)}`)
         // Create the event object from the request body
         const event = {
             RegEx: req.body.RegEx,
         };
-
-        console.log(`Request regex: ${event.RegEx}`)
 
         // Call the handler function and get the response
         const response = await getPackageByRegexHandler(event);
