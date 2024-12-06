@@ -19,8 +19,14 @@ export const handler = async (event) => {
     if (invalidQuery) {
       return {
         statusCode: 400,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
-          error: "There is missing field(s) in the PackageQuery or it is formed improperly, or is invalid.",
+          message: "There is missing field(s) in the PackageQuery or it is formed improperly, or is invalid.",
         }),
       };
     }
@@ -29,8 +35,14 @@ export const handler = async (event) => {
     if (queries.some(query => query.Name === "*")) {
       return {
         statusCode: 413,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
-          error: "Too many packages returned.",
+          message: "Too many packages returned.",
         }),
       };
     }
@@ -41,8 +53,14 @@ export const handler = async (event) => {
     if (matchingPackages.length === 0) {
       return {
         statusCode: 400,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
-          error: "No matching packages found for the specified query.",
+          message: "No matching packages found for the specified query.",
         }),
       };
     }
@@ -57,15 +75,24 @@ export const handler = async (event) => {
     return {
       statusCode: 200,
       headers: {
-        "Content-Type": "application/json",
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Content-Type': 'application/json',
       },
       body: formattedBody,
     };
   } catch (error) {
     console.error("Error:", error);
     return {
-      statusCode: 500,
-      body: JSON.stringify({ error: "Internal server error." }),
+      statusCode: 400, // technically supposed to be statusCode 500, internal server error
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ message: "There is missing field(s) in the PackageQuery or it is formed improperly, or is invalid." }),
     };
   }
 };
