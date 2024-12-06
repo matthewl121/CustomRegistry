@@ -1,6 +1,5 @@
 import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { query } from "express";
-import { update } from "tar";
 
 const s3 = new S3Client({ region: "us-east-1" });
 const BUCKET_NAME = "acmeregistrys3";
@@ -46,12 +45,11 @@ export const postPackagesHandler = async (event) => {
   try {
     // Parse and validate the request body
     const queries = Array.isArray(event.queries) ? event.queries : [event.queries];
+
     const updatedQueries = queries.map(query => ({
       ...query,
-      Name: query.Name 
-          ? query.Name.toLowerCase().replace(/js$/i, '') // Convert to lowercase and remove "JS" (case-insensitive) at the end
-          : query.Name
-    })); 
+      Name: query.Name ? query.Name.toLowerCase() : query.Name
+    }));
 
     const invalidQuery = queries.find(query => !query.Name);
 
@@ -120,7 +118,7 @@ export const postPackagesHandler = async (event) => {
     }
 
     // Search for matching packages in the S3 bucket with "OR" relationship
-    const matchingPackages = await searchPackagesInS3(updatedQueries);
+    const matchingPackages = await searchPackagesInS3(queries);
 
     if (matchingPackages.length === 0) {
       return {
@@ -185,8 +183,7 @@ async function searchPackagesInS3(queries) {
   // Return packages that match any of the queries (OR logic)
   return packages.filter(pkg =>
     queries.some(query =>
-      pkg.Name.toLowerCase() === query.Name.toLowerCase() && 
-      (!query.Version || matchVersion(pkg.Version, query.Version)) // Match all versions if Version is not specified
+      (pkg.Name === query.Name || pkg.Name.toLowerCase().includes(query.Name.toLowerCase())) && (!query.Version || matchVersion(pkg.Version, query.Version)) // Match all versions if Version is not specified
     )
   );
 }
