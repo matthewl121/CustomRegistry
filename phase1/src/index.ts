@@ -17,12 +17,12 @@ dotenv.config();
 * Creates and manages worker thread for metric calculation
 */
 export function runWorker(
-    owner: string,
-    repo: string,
-    token: string,
-    repoURL: string,
-    repoData: any, // Define specific type if possible
-    metric: string
+    owner,
+    repo,
+    token,
+    repoURL,
+    repoData,
+    metric
 ) {
    return new Promise((resolve, reject) => {
        try {
