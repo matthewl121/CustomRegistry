@@ -4,23 +4,27 @@ import { uploadPackageHandler } from '../../lambda/upload/index.mjs';
 import { Readable } from 'stream';
 
 // Mock the AWS SDK
-jest.mock("@aws-sdk/client-s3", () => ({
-  S3Client: jest.fn(() => ({
-    send: jest.fn()
-  })),
-  PutObjectCommand: jest.fn()
-}));
+jest.mock("@aws-sdk/client-s3", () => {
+  return {
+    S3Client: jest.fn().mockImplementation(() => ({
+      send: jest.fn()
+    })),
+    PutObjectCommand: jest.fn()
+  };
+});
 
 describe('uploadPackageHandler', () => {
+  let mockS3Client;
   let mockS3Send;
 
   beforeEach(() => {
     jest.clearAllMocks();
     mockS3Send = jest.fn();
-    const mockS3Client = {
+    mockS3Client = {
       send: mockS3Send
     };
-    S3Client.mockImplementation(() => mockS3Client);
+    // Use the modern jest.mocked syntax
+    jest.mocked(S3Client).mockImplementation(() => mockS3Client);
   });
 
   const createMockStream = (data) => Readable.from([Buffer.from(data)]);
@@ -30,7 +34,7 @@ describe('uploadPackageHandler', () => {
       body: JSON.stringify({
         packageName: 'test-package',
         version: '1.0.0',
-        Content: 'Sample file content'  // Changed from fileContent to Content
+        Content: 'Sample file content'
       })
     };
     const mockContext = {};
@@ -45,10 +49,9 @@ describe('uploadPackageHandler', () => {
     expect(PutObjectCommand).toHaveBeenCalledWith({
       Bucket: 'acmeregistrys3',
       Key: 'test-package/1.0.0',
-      Body: 'Sample file content',  // Changed to match the actual implementation
+      Body: 'Sample file content',
       ContentType: 'application/octet-stream'
     });
-
     expect(result).toEqual({
       statusCode: 200,
       headers: {
@@ -66,7 +69,7 @@ describe('uploadPackageHandler', () => {
       body: JSON.stringify({
         packageName: 'test-package',
         version: '1.0.0',
-        Content: 'Sample file content'  // Changed from fileContent to Content
+        Content: 'Sample file content'
       })
     };
     const mockContext = {};
@@ -96,7 +99,7 @@ describe('uploadPackageHandler', () => {
     const result = await uploadPackageHandler(mockEvent, mockContext);
 
     expect(mockS3Send).not.toHaveBeenCalled();
-    expect(result.statusCode).toBe(400);  // Fixed: access statusCode from result
+    expect(result.statusCode).toBe(400);
     expect(JSON.parse(result.body)).toEqual({
       error: 'Either Content or URL must be provided'
     });
