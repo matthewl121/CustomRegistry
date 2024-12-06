@@ -30,7 +30,7 @@ app.get('/package/:id', async (req, res) => {
     console.log(`Request ID: ${id}`);
     try {
         const response = await downloadPackageHandler(id);
-        console.log("Response:", response);
+        console.log("Response:", JSON.stringify(response));
         return res.status(response.statusCode).json(JSON.parse(response.body));
     } catch (error) {
         console.error("Error retrieving package:", error);
@@ -63,7 +63,7 @@ app.post('/package', async (req, res) => {
         const response = await uploadPackageHandler(packageData);
 
         // Handle the response from the handler
-        console.log("Response:", response);
+        console.log("Response:", JSON.stringify(response));
         return res.status(response.statusCode).json(JSON.parse(response.body));
     } catch (error) {
         console.error("Error uploading package:", error);
@@ -86,7 +86,7 @@ app.post('/package/byRegEx', async (req, res) => {
         const response = await getPackageByRegexHandler(event);
 
         // Return the response from the handler to the frontend
-        console.log("Response:", response);
+        console.log("Response:", JSON.stringify(response));
         return res.status(response.statusCode).json(JSON.parse(response.body));
     } catch (error) {
         console.error('Internal Server Error:', error);
@@ -111,7 +111,7 @@ app.post('/packages', async (req, res) => {
         // Call the handler function and get the response
         const response = await postPackagesHandler(event);
 
-        console.log("Response:", response);
+        console.log("Response:", JSON.stringify(response));
 
         // Return the response from the handler to the frontend
         return res.status(response.statusCode).json(JSON.parse(response.body));
@@ -149,7 +149,7 @@ app.post('/package/:id', async (req, res) => {
         console.log("Request event:", JSON.stringify(event));
 
         const response = await updatePackageHandler(event);
-        console.log("Response:", response);
+        console.log("Response:", JSON.stringify(response));
         return res.status(response.statusCode).json(response.body);
     } catch (error) {
         console.error('Error updating package:', error);
@@ -163,7 +163,7 @@ app.get('/tracks', async (req, res) => {
         console.log("Tracks endpoint.")
         // Call the handler function to get the tracks
         const response = await getTracksHandler();
-        console.log("Response:", response)
+        console.log("Response:", JSON.stringify(response))
 
         // Return the response from the handler to the frontend
         return res.status(response.statusCode).json(JSON.parse(response.body));
@@ -191,7 +191,7 @@ app.get('/package/:id/rate', async (req, res) => {
         console.log(`Request event: ${JSON.stringify(event)}`);
 
         const response = await ratePackageHandler(event);
-        console.log("Response:", response);
+        console.log("Response:", JSON.stringify(response));
 
         return res.status(response.statusCode)
             .set(response.headers)
@@ -217,7 +217,7 @@ app.get('/package/:id/cost', async (req, res) => {
         console.log(`Request event: ${JSON.stringify(event)}`);
 
         const response = await packageCostHandler(event);
-        console.log(`Response: ${response}`);
+        console.log(`Response: ${JSON.stringify(response)}`);
 
         return res.status(response.statusCode).json(JSON.parse(response.body));
     } catch (error) {
