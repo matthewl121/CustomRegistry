@@ -86,6 +86,7 @@ export const resetRegistryHandler = async (event) => {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type',
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({ message: "Registry is reset."}),
       };
@@ -101,6 +102,7 @@ export const resetRegistryHandler = async (event) => {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({ message: "Registry is reset."}),
     };
@@ -113,6 +115,7 @@ export const resetRegistryHandler = async (event) => {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({ message: "You do not have permission to reset the registry."}),
     };
