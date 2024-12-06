@@ -127,7 +127,8 @@ export const getPackageByRegexHandler = async (event) => {
           'Access-Control-Allow-Headers': 'Content-Type',
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message: "No package found under this regex." }),
+        // body: JSON.stringify({ message: "No package found under this regex." }),
+        body: JSON.stringify([]),
       };
     }
 
