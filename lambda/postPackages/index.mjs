@@ -127,13 +127,12 @@ export const postPackagesHandler = async (event) => {
         }),
       };
     }
-    const formattedBody = matchingPackages
-      .map(item => {
-        // Capitalize the first letter of the Name field
-        item.Name = item.Name.charAt(0).toUpperCase() + item.Name.slice(1);
-        return JSON.stringify(item, null, 2);
-      })
-      .join('\n');
+    const formattedBody = JSON.stringify(
+      matchingPackages.map(item => ({
+        ...item,
+        Name: item.Name.charAt(0).toUpperCase() + item.Name.slice(1),
+      }))
+    );
       
     return {
       statusCode: 200,
