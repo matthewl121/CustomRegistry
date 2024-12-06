@@ -74,6 +74,20 @@ export const postPackagesHandler = async (event) => {
         };
       }
 
+      if (keys.length === 0) {
+        // Return an empty array when no packages are found
+        return {
+          statusCode: 200,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify([]), // Empty array as JSON
+        };
+      }
+
       // If keys are fewer than or equal to 30, return all packages
       const matchingPackages = keys.map(({ Key }) => parsePackageKey(Key));
       const formattedBody = matchingPackages
