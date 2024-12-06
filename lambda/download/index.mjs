@@ -31,7 +31,7 @@ export const downloadPackageHandler = async (packageId) => {
   if (!packageId) {
     console.error(`/package/{id} GET: Invalid ID`);
     return {
-      statusCode: 400, // supposed to be statusCode 500 but it's not in spec
+      statusCode: 400,
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
