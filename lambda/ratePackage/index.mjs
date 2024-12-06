@@ -104,6 +104,8 @@ const getUrlFromGzip = async (s3Response) => {
             base64EncodedBuffer = s3Response.Body instanceof Readable
                 ? await streamToBuffer(s3Response.Body)
                 : s3Response.Body;
+
+            console.log('Base64 Encoded Buffer (first 100 chars):', base64EncodedBuffer.toString('utf8').slice(0, 100));
         } catch (error) {
             console.error('Error processing S3 response body:', error);
             throw new Error('Failed to process package data');
@@ -113,6 +115,8 @@ const getUrlFromGzip = async (s3Response) => {
         let gzippedBuffer;
         try {
             gzippedBuffer = Buffer.from(base64EncodedBuffer.toString('utf8'), 'base64');
+            console.log('Gzipped Buffer Length:', gzippedBuffer.length);
+            console.log('Gzipped Buffer (first 100 bytes):', gzippedBuffer.toString('hex').slice(0, 200));
         } catch (error) {
             console.error('Error decoding base64 data:', error);
             throw new Error('Failed to decode base64 data');
@@ -122,6 +126,8 @@ const getUrlFromGzip = async (s3Response) => {
         let unzippedBuffer;
         try {
             unzippedBuffer = gunzipSync(gzippedBuffer);
+            console.log('Unzipped Buffer Length:', unzippedBuffer.length);
+            console.log('Unzipped Buffer (first 100 chars):', unzippedBuffer.toString('utf8').slice(0, 100));
         } catch (error) {
             console.error('Error decompressing gzip data:', error);
             throw new Error('Failed to decompress package data - invalid gzip format');
@@ -131,6 +137,7 @@ const getUrlFromGzip = async (s3Response) => {
         let packageJson;
         try {
             packageJson = JSON.parse(unzippedBuffer.toString('utf8'));
+            console.log('Parsed package.json:', packageJson);
         } catch (error) {
             console.error('Error parsing package.json:', error);
             throw new Error('Invalid package.json format - failed to parse JSON');
