@@ -150,7 +150,7 @@ app.post('/package/:id', async (req, res) => {
 
         const response = await updatePackageHandler(event);
         console.log("Response:", JSON.stringify(response));
-        return res.status(response.statusCode).json(response.body);
+        return res.status(response.statusCode).json(response.body)
     } catch (error) {
         console.error('Error updating package:', error);
         return res.status(500).json({ error: 'Internal Server Error' });
