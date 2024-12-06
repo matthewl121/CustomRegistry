@@ -41,7 +41,7 @@ app.get('/package/:id', async (req, res) => {
 // Package upload endpoint
 app.post('/package', async (req, res) => {
     console.log("\n\nPackage upload endpoint.")
-    console.log(`Request: ${JSON.stringify(req.body)}`);
+    // console.log(`Request: ${JSON.stringify(req.body)}`);
     let packageData = {
         JSProgram: req.body?.JSProgram, // Always present
     };
