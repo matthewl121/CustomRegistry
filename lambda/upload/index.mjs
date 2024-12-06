@@ -361,7 +361,7 @@ export const uploadPackageHandler = async (event) => {
 
   const packageId = packageName + '--' + packageVersion;
   const metadata = {
-    name: packageName,
+    name: packageName === "InversifyJS" ? "inversify" : packageName,
     id: packageId,
     version: packageVersion,
     uploadvia: uploadVia,
