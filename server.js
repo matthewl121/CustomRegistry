@@ -146,7 +146,7 @@ app.post('/package/:id', async (req, res) => {
             }
         };
 
-        console.log("Request event:", event);
+        console.log("Request event:", JSON.stringify(event));
 
         const response = await updatePackageHandler(event);
         console.log("Response:", response);
@@ -188,7 +188,7 @@ app.get('/package/:id/rate', async (req, res) => {
             }
         };
 
-        console.log(`Request event: ${event}`);
+        console.log(`Request event: ${JSON.stringify(event)}`);
 
         const response = await ratePackageHandler(event);
         console.log("Response:", response);
@@ -214,7 +214,7 @@ app.get('/package/:id/cost', async (req, res) => {
             dependency
         };
 
-        console.log(`Request event: ${event}`);
+        console.log(`Request event: ${JSON.stringify(event)}`);
 
         const response = await packageCostHandler(event);
         console.log(`Response: ${response}`);
