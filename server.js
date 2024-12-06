@@ -25,7 +25,7 @@ app.get('/', (req, res) => {
 
 // Package download endpoint
 app.get('/package/:id', async (req, res) => {
-    console.log("Package download endpoint.")
+    console.log("\n\nPackage download endpoint.")
     const { id } = req.params;
     console.log(`Request ID: ${id}`);
     try {
@@ -40,8 +40,8 @@ app.get('/package/:id', async (req, res) => {
 
 // Package upload endpoint
 app.post('/package', async (req, res) => {
-    console.log("Package upload endpoint.")
-    console.log(`Request: ${req.body}`);
+    console.log("\n\nPackage upload endpoint.")
+    console.log(`Request: ${JSON.stringify(req.body)}`);
     let packageData = {
         JSProgram: req.body?.JSProgram, // Always present
     };
@@ -74,13 +74,12 @@ app.post('/package', async (req, res) => {
 // Package by regex endpoint
 app.post('/package/byRegEx', async (req, res) => {
     try {
-        console.log("Package by regex endpoint.")
+        console.log("\n\nPackage by regex endpoint.")
+        console.log(`Request body: ${JSON.stringify(req.body)}`)
         // Create the event object from the request body
         const event = {
             RegEx: req.body.RegEx,
         };
-
-        console.log(`Request regex: ${event.RegEx}`)
 
         // Call the handler function and get the response
         const response = await getPackageByRegexHandler(event);
@@ -99,7 +98,7 @@ app.post('/package/byRegEx', async (req, res) => {
 // Packages query endpoint
 app.post('/packages', async (req, res) => {
     try {
-        console.log("Packages query endpoint (postPackages).")
+        console.log("\n\nPackages query endpoint (postPackages).")
         const queries = req.body; // Extract the PackageQuery from the request body
         
         console.log("Request queries:", queries);
@@ -126,7 +125,7 @@ app.post('/packages', async (req, res) => {
 // Package update endpoint
 app.post('/package/:id', async (req, res) => {
     try {
-        console.log("Package update endpoint.")
+        console.log("\n\nPackage update endpoint.")
         const { metadata, data } = req.body;
         console.log("Request data: ", data);
         console.log("Request metadata: ", metadata);
@@ -160,7 +159,7 @@ app.post('/package/:id', async (req, res) => {
 // Tracks endpoint
 app.get('/tracks', async (req, res) => {
     try {
-        console.log("Tracks endpoint.")
+        console.log("\n\nTracks endpoint.")
         // Call the handler function to get the tracks
         const response = await getTracksHandler();
         console.log("Response:", JSON.stringify(response))
@@ -177,7 +176,7 @@ app.get('/tracks', async (req, res) => {
 
 // Package rate endpoint
 app.get('/package/:id/rate', async (req, res) => {
-    console.log("Package rate endpoint.")
+    console.log("\n\nPackage rate endpoint.")
     const { id } = req.params;
     console.log(`Request ID: ${id}`);
     try {
@@ -204,7 +203,7 @@ app.get('/package/:id/rate', async (req, res) => {
 
 // Package cost endpoint
 app.get('/package/:id/cost', async (req, res) => {
-    console.log("Package cost endpoint")
+    console.log("\n\nPackage cost endpoint")
     try {
         const id = req.params.id;
         const dependency = req.query.dependency === 'true';
@@ -231,7 +230,7 @@ app.get('/package/:id/cost', async (req, res) => {
 // Reset registry endpoint
 app.delete('/reset', async (req, res) => {
     try {
-        console.log("Reset registry endpoint")
+        console.log("\n\nReset registry endpoint")
         const response = await resetRegistryHandler();
 
         console.log("Response", response)
