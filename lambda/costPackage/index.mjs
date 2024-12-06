@@ -187,8 +187,9 @@ export const packageCostHandler = async (event) => {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
+        'Content-Type': 'application/json',
       },
-    //   body: JSON.stringify({ message: "Missing package ID in path parameters." }),
+      body: JSON.stringify({ message: "Missing package ID in path parameters." }),
     };
   }
 
@@ -206,8 +207,9 @@ export const packageCostHandler = async (event) => {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
+        'Content-Type': 'application/json',
       },
-    //   body: JSON.stringify({ message: "Invalid package ID format." }),
+      body: JSON.stringify({ message: "Invalid package ID format." }),
     };
   }
 
@@ -266,8 +268,9 @@ export const packageCostHandler = async (event) => {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
+        'Content-Type': 'application/json',
       },
-    //   body: JSON.stringify({ message: "Internal server error." }),
+      body: JSON.stringify({ message: "Internal server error." }),
     };
   }
 };
