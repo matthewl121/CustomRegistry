@@ -16,7 +16,7 @@ export const postPackagesHandler = async (event) => {
     const queries = Array.isArray(event) ? event : [event];
     const invalidQuery = queries.find(query => !query.Version || !query.Name);
 
-    console.log("event", event)
+    console.log("event", event);
     console.log("queries:", queries);
     queries.forEach((query, index) => {
       console.log(`Query ${index + 1}:`, query);
