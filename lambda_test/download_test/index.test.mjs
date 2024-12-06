@@ -106,7 +106,7 @@ describe('downloadPackageHandler', () => {
     verifyHeaders(result.headers);
     
     const parsedBody = JSON.parse(result.body);
-    expect(parsedBody.message).toBe(`/package/{id} GET: Error downloading file: ${errorMessage}`);
+    expect(parsedBody.message).toBe("There is missing field(s) in the PackageID or it is formed improperly, or is invalid.");
   });
 
   test('properly capitalizes metadata fields', async () => {
