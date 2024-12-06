@@ -213,6 +213,25 @@ export const packageCostHandler = async (event) => {
     };
   }
 
+  // Check that package exists in S3 using HEAD request
+  try {
+    await s3.send(new HeadObjectCommand({ Bucket: bucketName, Key: packageId }));
+  } catch (error) {
+    // If package does not exist, return a 404
+    console.error(`/package/{id}/cost: Package ${packageId} does not exist in S3.`);
+    return {
+      statusCode: 404,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ message: "Package does not exist." }),
+    };
+  }
+
+  // If the package exists, proceed
   const processedPackages = {};
 
   try {
@@ -235,10 +254,8 @@ export const packageCostHandler = async (event) => {
       };
     }
 
-    // Prepare the response body
+    // Prepare the response body for all processed packages
     const responseBody = {};
-
-    // Iterate over processedPackages to structure the response
     for (const [pkgId, costs] of Object.entries(processedPackages)) {
       responseBody[pkgId] = {
         "standaloneCost": costs.standaloneCost,
