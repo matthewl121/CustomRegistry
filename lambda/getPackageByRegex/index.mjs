@@ -87,7 +87,7 @@ export const getPackageByRegexHandler = async (event) => {
         'Access-Control-Allow-Headers': 'Content-Type',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ message: "Missing regex pattern." }),
+      body: JSON.stringify({ message: "There is missing field(s) in the PackageRegEx or it is formed improperly, or is invalid" }),
     };
   }
 
@@ -104,7 +104,7 @@ export const getPackageByRegexHandler = async (event) => {
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
       },
-      body: JSON.stringify({ message: "Invalid regex pattern." }),
+      body: JSON.stringify({ message: "There is missing field(s) in the PackageRegEx or it is formed improperly, or is invalid" }),
     };
   }
 
@@ -127,7 +127,7 @@ export const getPackageByRegexHandler = async (event) => {
           'Access-Control-Allow-Headers': 'Content-Type',
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message: "/package/byReGex: No packages found." }),
+        body: JSON.stringify({ message: "No package found under this regex." }),
       };
     }
 
@@ -157,7 +157,7 @@ export const getPackageByRegexHandler = async (event) => {
         'Access-Control-Allow-Headers': 'Content-Type',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ message: "/package/byReGex: Error processing request." }),
+      body: JSON.stringify({ message: "There is missing field(s) in the PackageRegEx or it is formed improperly, or is invalid" }),
     };
   }
 };
