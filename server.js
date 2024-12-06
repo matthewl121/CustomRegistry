@@ -4,6 +4,7 @@ import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 
+import { fileURLToPath } from 'url';
 import { downloadPackageHandler } from './lambda/download/index.mjs';
 import { ratePackageHandler } from './lambda/ratePackage/index.mjs';
 import { updatePackageHandler } from './lambda/update/index.mjs';
@@ -16,6 +17,10 @@ import { packageCostHandler } from './lambda/costPackage/index.mjs';
 
 const app = express();
 const PORT = 5000;
+
+// Get the current directory equivalent to __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Log file setup
 const LOG_FILE = path.join(__dirname, 'server.log');
