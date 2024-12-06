@@ -55,14 +55,14 @@ const isValidRegex = (pattern) => {
 };
 const filterKeysByRegex = (keys, regex) => {
   return keys.filter(({ Key }) => {
-    // Split the key by '--' delimiter
     const parts = Key.split('--');
-    // Extract the package name (first part)
     const packageName = parts[0];
-    // Apply the regex to the package name only
-    return regex.test(packageName);
+    const match = packageName.match(regex);
+    // Check if we got a match and if the matched string equals the full packageName
+    return match && match[0] === packageName;
   });
 };
+
 
 // Helper function to transform keys to desired structure for response
 const transformKeys = (keys) => {
