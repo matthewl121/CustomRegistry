@@ -4,10 +4,10 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs/promises';
 import path from 'path';
-import tar from 'tar';
 import { Readable } from 'stream';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { getRepoUrlFromPackage } from './readPackageJson.mjs';
 
 // Set up __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -24,90 +24,6 @@ const CUSTOM_REGISTRY_DIR = path.join(__dirname, '..', '..', 'phase1');
 
 // Initialize AWS SDK and S3 client
 const s3Client = new S3Client({ region: "us-east-1" });
-
-// Helper function to extract URL from package.json in tarball
-const getUrlFromGzip = async (s3Response) => {
-    try {
-        // Convert S3 response body stream to buffer
-        const streamToBuffer = async (stream) => {
-            const chunks = [];
-            for await (const chunk of stream) {
-                chunks.push(chunk);
-            }
-            return Buffer.concat(chunks);
-        };
-
-        // Handle case where Body might be a Buffer
-        const tarballBuffer = s3Response.Body instanceof Readable ?
-            await streamToBuffer(s3Response.Body) :
-            s3Response.Body;
-
-        let packageJson = null;
-        
-        // Create a readable stream from the buffer
-        const stream = new Readable();
-        stream.push(tarballBuffer);
-        stream.push(null);
-
-        // Extract and process package.json from tarball
-        await new Promise((resolve, reject) => {
-            const extract = tar.extract();
-            
-            extract.on('entry', (header, stream, next) => {
-                // Look for package.json in the root or first level directory
-                if (header.name.match(/(^|\/)package\.json$/)) {
-                    let data = '';
-                    
-                    stream.on('data', (chunk) => {
-                        data += chunk;
-                    });
-                    
-                    stream.on('end', () => {
-                        try {
-                            packageJson = JSON.parse(data);
-                        } catch (e) {
-                            console.warn('Failed to parse package.json:', e);
-                        }
-                        next();
-                    });
-                    
-                    stream.resume();
-                } else {
-                    stream.resume();
-                    next();
-                }
-            });
-
-            extract.on('finish', resolve);
-            extract.on('error', reject);
-            
-            stream.pipe(extract);
-        });
-
-        if (!packageJson) {
-            throw new Error('No valid package.json found in tarball');
-        }
-
-        // Get URL from package.json
-        const url = packageJson.repository?.url ||
-            packageJson.homepage ||
-            (typeof packageJson.repository === 'string' ? packageJson.repository : null);
-
-        if (!url) {
-            throw new Error('No URL found in package.json');
-        }
-
-        // Clean the URL
-        return url.replace(/^git\+/, '')
-            .replace(/\.git$/, '')
-            .replace(/^ssh:\/\//, 'https://')
-            .replace(/^git:\/\//, 'https://');
-
-    } catch (error) {
-        console.error('Error extracting URL from tarball:', error);
-        return null;
-    }
-};
 
 // Helper function to run the Custom Registry program
 const runCustomRegistryProgram = async (url) => {
@@ -155,19 +71,34 @@ const runCustomRegistryProgram = async (url) => {
 const constructPackageUrl = async (uploadVia, metadata, s3Response) => {
     switch (uploadVia?.toLowerCase()) {
         case 'github':
-            // For GitHub, just use the URL from metadata directly
             return metadata.url || 'Invalid GitHub URL';
             
         case 'npm':
-            // For NPM, construct the URL from the package name
             return metadata.name ? 
                 `https://www.npmjs.com/package/${metadata.name}` : 
                 'Invalid NPM package name';
             
         case 'content':
-            // Only attempt package.json extraction for content uploads
             try {
-                const url = await getUrlFromGzip(s3Response);
+                // Convert S3 response body stream to base64
+                const streamToBuffer = async (stream) => {
+                    const chunks = [];
+                    for await (const chunk of stream) {
+                        chunks.push(chunk);
+                    }
+                    return Buffer.concat(chunks);
+                };
+
+                // Handle case where Body might be a Buffer or Readable
+                const contentBuffer = s3Response.Body instanceof Readable ?
+                    await streamToBuffer(s3Response.Body) :
+                    s3Response.Body;
+                
+                // Convert buffer to base64
+                const base64Content = contentBuffer.toString('base64');
+                
+                // Use the new function to get the repository URL
+                const url = await getRepoUrlFromPackage(base64Content);
                 return url || 'Content URL not available';
             } catch (error) {
                 console.error('Error getting URL from content:', error);
