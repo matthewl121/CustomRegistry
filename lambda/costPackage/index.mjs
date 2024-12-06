@@ -189,7 +189,7 @@ export const packageCostHandler = async (event) => {
         'Access-Control-Allow-Headers': 'Content-Type',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ message: "Missing package ID in path parameters." }),
+      body: JSON.stringify({ message: "There is missing field(s) in the PackageID" }),
     };
   }
 
@@ -209,7 +209,7 @@ export const packageCostHandler = async (event) => {
         'Access-Control-Allow-Headers': 'Content-Type',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ message: "Invalid package ID format." }),
+      body: JSON.stringify({ message: "There is missing field(s) in the PackageID" }),
     };
   }
 
@@ -270,7 +270,7 @@ export const packageCostHandler = async (event) => {
         'Access-Control-Allow-Headers': 'Content-Type',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ message: "Internal server error." }),
+      body: JSON.stringify({ message: "The package rating system choked on at least one of the metrics." }),
     };
   }
 };
