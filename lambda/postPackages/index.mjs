@@ -93,7 +93,7 @@ export const postPackagesHandler = async (event) => {
       const formattedBody = JSON.stringify(
         matchingPackages.map(item => ({
           ...item,
-          Name: item.Name.charAt(0).toUpperCase() + item.Name.slice(1),
+          Name: item.Name
         }))
       );
       
