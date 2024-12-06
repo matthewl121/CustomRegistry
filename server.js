@@ -96,6 +96,8 @@ app.post('/package', async (req, res) => {
         packageData.debloat = req.body.debloat || null;
     }
 
+    console.log(`Response body: ${JSON.stringify(packageData.Content)}`);
+
     if (req.body.URL) {
         packageData.URL = req.body.URL;
     }
