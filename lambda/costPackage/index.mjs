@@ -227,7 +227,7 @@ const processPackage = async (packageId, bucketName, processedPackages) => {
     const headResponse = await s3.send(new HeadObjectCommand(headParams));
     const sizeBytes = headResponse.ContentLength;
     const sizeMB = Math.round((sizeBytes / (1024 * 1024)) * 100) / 100;
-    standaloneCost = Math.round(sizeMB * 10) / 10; // Rounded to 1 decimal
+    standaloneCost = Math.round(sizeMB * 100) / 100; // Rounded to 2 decimals
     totalCost = standaloneCost;
 
     // Determine upload method from metadata
@@ -246,7 +246,7 @@ const processPackage = async (packageId, bucketName, processedPackages) => {
     // If package not found in S3, use estimated size
     console.warn(`Package ${packageId} not found in S3. Using estimated size.`);
     const estimatedSizeMB = Math.round((500 * 1024 / (1024 * 1024)) * 100) / 100; // 0.5 MB
-    standaloneCost = Math.round(estimatedSizeMB * 10) / 10; // 0.5 rounded to 1 decimal
+    standaloneCost = Math.round(estimatedSizeMB * 100) / 100; // rounded to 2 decimals
     totalCost = standaloneCost;
     dependencies = []; // Assume no dependencies if not found
   }
@@ -266,7 +266,7 @@ const processPackage = async (packageId, bucketName, processedPackages) => {
   }
 
   // Update the totalCost after processing dependencies
-  processedPackages[packageId].totalCost = Math.round(totalCost * 10) / 10; // Rounded to 1 decimal
+  processedPackages[packageId].totalCost = Math.round(totalCost * 100) / 100; // Rounded to 2 decimals
 
   return processedPackages[packageId].totalCost;
 };
