@@ -7,7 +7,7 @@ import path from 'path';
 import { Readable } from 'stream';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import { getRepoUrlFromPackage } from './readPackageJson.mjs';
+import { getRepoUrlFromPackage } from './readPackage.Json.mjs';
 
 // Set up __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);

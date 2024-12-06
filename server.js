@@ -1,6 +1,10 @@
 import express from 'express';
 import http from 'http';
 import cors from 'cors';
+import fs from 'fs';
+import path from 'path';
+
+import { fileURLToPath } from 'url';
 import { downloadPackageHandler } from './lambda/download/index.mjs';
 import { ratePackageHandler } from './lambda/ratePackage/index.mjs';
 import { updatePackageHandler } from './lambda/update/index.mjs';
@@ -13,6 +17,30 @@ import { packageCostHandler } from './lambda/costPackage/index.mjs';
 
 const app = express();
 const PORT = 5000;
+
+// Get the current directory equivalent to __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Log file setup
+const LOG_FILE = path.join(__dirname, 'server.log');
+
+// Function to write logs to a file
+const writeLog = (message) => {
+    const timestamp = new Date().toISOString();
+    fs.appendFileSync(LOG_FILE, `[${timestamp}] ${message}\n`, { encoding: 'utf8' });
+};
+
+// Clear the log file
+const clearLogFile = () => {
+    fs.writeFileSync(LOG_FILE, '', { encoding: 'utf8' });
+};
+
+// Redirect console.log and console.error to the log file
+console.log = (...args) => writeLog(args.map(arg => (typeof arg === 'string' ? arg : JSON.stringify(arg))).join(' '));
+console.error = (...args) => writeLog(`ERROR: ${args.map(arg => (typeof arg === 'string' ? arg : JSON.stringify(arg))).join(' ')}`);
+
+// Middleware setup
 app.use(cors());
 app.use(express.json());
 
@@ -23,14 +51,32 @@ app.get('/', (req, res) => {
     return res.json(response);
 });
 
-// Package download endpoint
+// Clear the log file when the /tracks endpoint is hit
+app.get('/tracks', async (req, res) => {
+    try {
+        console.log("\n\nTracks endpoint.");
+        clearLogFile();
+        console.log("Log file cleared.");
+
+        const response = await getTracksHandler();
+        console.log("Response:", JSON.stringify(response));
+
+        return res.status(response.statusCode).json(JSON.parse(response.body));
+    } catch (error) {
+        console.error('Internal Server Error:', error);
+        return res.status(500).json({
+            error: 'Internal Server Error',
+        });
+    }
+});
+
+// Other endpoints (unchanged except for logs redirected to the file)
 app.get('/package/:id', async (req, res) => {
-    console.log("\n\nPackage download endpoint.")
+    console.log("\n\nPackage download endpoint.");
     const { id } = req.params;
     console.log(`Request ID: ${id}`);
     try {
         const response = await downloadPackageHandler(id);
-        // console.log("Response:", JSON.stringify(response));
         return res.status(response.statusCode).json(JSON.parse(response.body));
     } catch (error) {
         console.error("Error retrieving package:", error);
@@ -38,32 +84,24 @@ app.get('/package/:id', async (req, res) => {
     }
 });
 
-// Package upload endpoint
 app.post('/package', async (req, res) => {
-    console.log("\n\nPackage upload endpoint.")
-    // console.log(`Request: ${JSON.stringify(req.body)}`);
+    console.log("\n\nPackage upload endpoint.");
     let packageData = {
-        JSProgram: req.body?.JSProgram, // Always present
+        JSProgram: req.body?.JSProgram,
     };
 
-    // Check if uploading via Content
     if (req.body.Content) {
         packageData.Content = req.body.Content;
-        packageData.Name = req.body.Name || null; // Optional field
-        packageData.debloat = req.body.debloat || null; // Optional field
+        packageData.Name = req.body.Name || null;
+        packageData.debloat = req.body.debloat || null;
     }
 
-    // Check if uploading via URL
     if (req.body.URL) {
         packageData.URL = req.body.URL;
     }
 
     try {
-        // Call the handler function (assuming uploadPackageHandler is async)
         const response = await uploadPackageHandler(packageData);
-
-        // Handle the response from the handler
-        // console.log("Response:", JSON.stringify(response));
         return res.status(response.statusCode).json(JSON.parse(response.body));
     } catch (error) {
         console.error("Error uploading package:", error);
@@ -71,54 +109,32 @@ app.post('/package', async (req, res) => {
     }
 });
 
-// Package by regex endpoint
 app.post('/package/byRegEx', async (req, res) => {
     try {
-        console.log("\n\nPackage by regex endpoint.")
-        console.log(`Request body: ${JSON.stringify(req.body)}`)
-        // Create the event object from the request body
-        const event = {
-            RegEx: req.body.RegEx,
-        };
-
-        // Call the handler function and get the response
+        console.log("\n\nPackage by regex endpoint.");
+        console.log(`Request body: ${JSON.stringify(req.body)}`);
+        const event = { RegEx: req.body.RegEx };
         const response = await getPackageByRegexHandler(event);
-
-        // Return the response from the handler to the frontend
         console.log("Response:", JSON.stringify(response));
         return res.status(response.statusCode).json(JSON.parse(response.body));
     } catch (error) {
         console.error('Internal Server Error:', error);
-        return res.status(500).json({
-            error: 'Internal Server Error',
-        });
+        return res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 
-// Packages query endpoint
 app.post('/packages', async (req, res) => {
     try {
-        console.log("\n\nPackages query endpoint (postPackages).")
-        const queries = req.body; // Extract the PackageQuery from the request body
-        
+        console.log("\n\nPackages query endpoint (postPackages).");
+        const queries = req.body;
         console.log("Request queries:", queries);
-        // Create the event object to pass to the handler
-        const event = {
-            queries,
-        };
-
-        // Call the handler function and get the response
+        const event = { queries };
         const response = await postPackagesHandler(event);
-
         console.log("Response:", JSON.stringify(response));
-
-        // Return the response from the handler to the frontend
         return res.status(response.statusCode).json(JSON.parse(response.body));
     } catch (error) {
         console.error('Internal Server Error:', error);
-        return res.status(500).json({
-            error: 'Internal Server Error',
-        });
+        return res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 
