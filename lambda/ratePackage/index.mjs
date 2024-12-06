@@ -125,7 +125,7 @@ const getUrlFromGzip = async (s3Response) => {
         }
 
         // Check if the data is a ZIP archive (signature starts with PK)
-        if (binaryBuffer.toString('utf8', 0, 2) === 'PK') {
+        if (base64EncodedBuffer.toString('utf8', 0, 2) === 'PK') {
             console.log('Detected ZIP file format');
             const zip = new AdmZip(binaryBuffer);
 
