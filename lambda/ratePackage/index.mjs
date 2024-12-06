@@ -4,10 +4,12 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs/promises';
 import path from 'path';
+import AdmZip from 'adm-zip';
 import { gunzipSync } from 'zlib';
 import { Readable } from 'stream';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+
 
 // Set up __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -112,20 +114,49 @@ const getUrlFromGzip = async (s3Response) => {
         }
 
         // Decode base64-encoded data
-        let gzippedBuffer;
+        let binaryBuffer;
         try {
-            gzippedBuffer = Buffer.from(base64EncodedBuffer.toString('utf8'), 'base64');
-            console.log('Gzipped Buffer Length:', gzippedBuffer.length);
-            console.log('Gzipped Buffer (first 100 bytes):', gzippedBuffer.toString('hex').slice(0, 200));
+            binaryBuffer = Buffer.from(base64EncodedBuffer.toString('utf8'), 'base64');
+            console.log('Binary Buffer Length:', binaryBuffer.length);
+            console.log('Binary Buffer (first 100 bytes):', binaryBuffer.toString('hex').slice(0, 200));
         } catch (error) {
             console.error('Error decoding base64 data:', error);
             throw new Error('Failed to decode base64 data');
         }
 
-        // Decompress the gzipped content
+        // Check if the data is a ZIP archive (signature starts with PK)
+        if (binaryBuffer.toString('utf8', 0, 2) === 'PK') {
+            console.log('Detected ZIP file format');
+            const zip = new AdmZip(binaryBuffer);
+
+            // Find and extract package.json
+            const entry = zip.getEntries().find((e) => e.entryName.endsWith('package.json'));
+            if (!entry) {
+                throw new Error('package.json not found in ZIP file');
+            }
+
+            const packageJsonContent = entry.getData().toString('utf8');
+            const packageJson = JSON.parse(packageJsonContent);
+
+            console.log('Extracted package.json:', packageJson);
+
+            // Extract URL
+            const url = packageJson.repository?.url ||
+                packageJson.homepage ||
+                (typeof packageJson.repository === 'string' ? packageJson.repository : null);
+
+            if (!url) {
+                throw new Error('No URL found in package.json fields');
+            }
+
+            return sanitizeUrl(url);
+        }
+
+        // If not a ZIP file, assume gzip
+        console.log('Assuming gzip format');
         let unzippedBuffer;
         try {
-            unzippedBuffer = gunzipSync(gzippedBuffer);
+            unzippedBuffer = gunzipSync(binaryBuffer);
             console.log('Unzipped Buffer Length:', unzippedBuffer.length);
             console.log('Unzipped Buffer (first 100 chars):', unzippedBuffer.toString('utf8').slice(0, 100));
         } catch (error) {
@@ -149,40 +180,38 @@ const getUrlFromGzip = async (s3Response) => {
             (typeof packageJson.repository === 'string' ? packageJson.repository : null);
 
         if (!url) {
-            console.error('No URL found in package.json fields');
-            throw new Error('Missing URL information - no repository URL, homepage, or repository string found in package.json');
+            throw new Error('No URL found in package.json fields');
         }
 
-        // Clean and sanitize the URL
-        const cleanUrl = url.replace(/^git\+/, '')
-            .replace(/\.git$/, '')
-            .replace(/^ssh:\/\//, 'https://')
-            .replace(/^git:\/\//, 'https://');
-
-        // Validate URL format
-        let urlObj;
-        try {
-            urlObj = new URL(cleanUrl);
-        } catch (error) {
-            console.error('Error parsing URL:', error);
-            throw new Error(`Invalid URL format in package.json: ${cleanUrl}`);
-        }
-
-        // Create sanitized URL
-        const sanitizedUrl = `${urlObj.protocol}//${urlObj.hostname}${urlObj.pathname.split('/').slice(0, 3).join('/')}`;
-
-        if (!isValidUrl(sanitizedUrl)) {
-            console.error('URL does not contain valid hostname:', sanitizedUrl);
-            throw new Error('Invalid repository URL - must contain github.com or npmjs.com');
-        }
-
-        return sanitizedUrl;
+        return sanitizeUrl(url);
     } catch (error) {
-        // Log the specific error that was thrown
-        console.error('Error extracting URL from gzip:', error.message);
+        console.error('Error extracting URL:', error.message);
         return null;
     }
 };
+
+// Helper function to sanitize URL
+const sanitizeUrl = (url) => {
+    const cleanUrl = url.replace(/^git\+/, '')
+        .replace(/\.git$/, '')
+        .replace(/^ssh:\/\//, 'https://')
+        .replace(/^git:\/\//, 'https://');
+
+    let urlObj;
+    try {
+        urlObj = new URL(cleanUrl);
+    } catch (error) {
+        throw new Error(`Invalid URL format: ${cleanUrl}`);
+    }
+
+    const sanitizedUrl = `${urlObj.protocol}//${urlObj.hostname}${urlObj.pathname.split('/').slice(0, 3).join('/')}`;
+    if (!isValidUrl(sanitizedUrl)) {
+        throw new Error('Invalid repository URL - must contain github.com or npmjs.com');
+    }
+
+    return sanitizedUrl;
+};
+
 
 /////////////////////////
 
