@@ -97,9 +97,9 @@ app.post('/package', async (req, res) => {
         packageData.debloat = req.body.debloat || null;
     }
 
-    
     if (req.body.URL) {
         packageData.URL = req.body.URL;
+        packageData.Name = req.body?.Name || null; 
     }
 
     console.log(`Request body: ${JSON.stringify(packageData)}`);
