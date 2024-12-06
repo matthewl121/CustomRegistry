@@ -16,6 +16,8 @@ export const postPackagesHandler = async (event) => {
     const queries = Array.isArray(event) ? event : [event];
     const invalidQuery = queries.find(query => !query.Version || !query.Name);
 
+    console.log("queries", queries)
+
     // Check for wildcard case
     if (queries.some(query => query.Name === "*")) {
       return {
