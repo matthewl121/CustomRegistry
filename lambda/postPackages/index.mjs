@@ -13,7 +13,7 @@ const VALID_VERSIONS = {
 export const postPackagesHandler = async (event) => {
   try {
     // Parse and validate the request body
-    const queries = Array.isArray(event) ? event : [event];
+    const queries = Array.isArray(event.queries) ? event.queries : [event.queries];
     const invalidQuery = queries.find(query => !query.Version || !query.Name);
 
     console.log("event", event);
