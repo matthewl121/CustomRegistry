@@ -87,7 +87,7 @@ export const resetRegistryHandler = async (event) => {
           'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type',
         },
-        // body: JSON.stringify("Bucket is already empty."),
+        body: JSON.stringify({ message: "Registry is reset."}),
       };
     }
 
@@ -102,7 +102,7 @@ export const resetRegistryHandler = async (event) => {
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
       },
-      // body: JSON.stringify(`All objects have been successfully deleted from bucket "${bucketName}".`),
+      body: JSON.stringify({ message: "Registry is reset."}),
     };
   } catch (error) {
     console.error("Reset function error:", error);
@@ -114,7 +114,7 @@ export const resetRegistryHandler = async (event) => {
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
       },
-      // body: JSON.stringify(`Error during reset: ${error.message}`),
+      body: JSON.stringify({ message: "You do not have permission to reset the registry."}),
     };
   }
 };
