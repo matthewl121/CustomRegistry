@@ -237,7 +237,7 @@ app.post('/reset', async (req, res) => {
         console.log("Response", response)
         return res.status(response.statusCode).json(JSON.parse(response.body));
     } catch (error) {
-        console.error('Internal Server Error:', error);
+        console.error('Internal Server Error:', error)
         return res.status(500).json({
             error: 'Internal Server Error',
         });
