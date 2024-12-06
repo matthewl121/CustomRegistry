@@ -59,7 +59,7 @@ export function runWorker(
 /**
 * Main function - fetches repo data and calculates metrics
 */
-export const main = async (url: string) => {
+export const main = async (url) => {
    const token = process.env.GITHUB_TOKEN || "";
    const inputURL = url;
    initLogFile();
