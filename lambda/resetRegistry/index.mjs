@@ -110,14 +110,14 @@ export const resetRegistryHandler = async (event) => {
     console.error("Reset function error:", error);
 
     return {
-      statusCode: 401,
+      statusCode: 500,
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ message: "You do not have permission to reset the registry."}),
+      body: JSON.stringify({ message: "Internal Server Error"}),
     };
   }
 };
