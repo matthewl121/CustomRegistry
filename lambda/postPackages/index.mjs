@@ -14,14 +14,14 @@ export const postPackagesHandler = async (event) => {
   try {
     // Parse and validate the request body
     const queries = Array.isArray(event.queries) ? event.queries : [event.queries];
-    const invalidQuery = queries.find(query => !query.Version || !query.Name);
+    const invalidQuery = queries.find(query => !query.Name);
 
     console.log("event", event);
     console.log("queries:", queries);
     queries.forEach((query, index) => {
       console.log(`Query ${index + 1}:`, query);
       console.log(`Query ${index + 1} - Name:`, query.Name);
-      console.log(`Query ${index + 1} - Version:`, query.Version);
+      console.log(`Query ${index + 1} - Version:`, query?.Version);
     });
 
 
@@ -118,14 +118,17 @@ async function searchPackagesInS3(queries) {
 
   const { Contents = [] } = await s3.send(command);
   const packages = Contents.map(({ Key }) => parsePackageKey(Key));
+  console.log("Packages found:", packages)
 
   // Return packages that match any of the queries (OR logic)
-  return packages.filter(pkg => 
-    queries.some(query => 
-      pkg.Name === query.Name && matchVersion(pkg.Version, query.Version)
+  return packages.filter(pkg =>
+    queries.some(query =>
+      pkg.Name === query.Name && 
+      (!query.Version || matchVersion(pkg.Version, query.Version)) // Match all versions if Version is not specified
     )
   );
 }
+
 
 // Parse package name and version from the S3 object key
 function parsePackageKey(key) {
