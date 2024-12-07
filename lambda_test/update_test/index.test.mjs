@@ -7,7 +7,7 @@ jest.mock("@aws-sdk/client-s3", () => ({
     send: jest.fn()
   })),
   PutObjectCommand: jest.fn(),
-  HeadObjectCommand: jest.fn()
+  HeadObjectCommand: jest.fn() 
 }));
 
 describe('updatePackageHandler', () => {
