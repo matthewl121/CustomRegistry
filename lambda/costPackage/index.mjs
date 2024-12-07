@@ -273,8 +273,13 @@ const processPackage = async (packageId, bucketName, processedPackages) => {
 
 export const packageCostHandler = async (event) => {
   const bucketName = "acmeregistrys3";
+
+  console.log("event.id", event.id)
+  console.log("event.dependency", event.dependency)
   const packageId = event.id;
   const dependencyFlag = event.dependency === "true";
+  console.log("packageId", packageId)
+  console.log("dependencyFlag", dependencyFlag)
 
   if (!packageId) {
     console.error("/package/{id}/cost: Missing package ID in path parameters");
