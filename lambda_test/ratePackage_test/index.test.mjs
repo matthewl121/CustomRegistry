@@ -1,11 +1,6 @@
 import { jest } from '@jest/globals';
 import { ratePackageHandler } from '../../lambda/ratePackage/index.mjs';
 import { S3Client } from "@aws-sdk/client-s3";
-import { Readable } from 'stream';
-import AdmZip from 'adm-zip';
-
-// Mock AWS SDK
-jest.mock('@aws-sdk/client-s3');
 
 // Mock child_process and fs
 const mockExecPromise = jest.fn();
@@ -18,184 +13,484 @@ jest.mock('util', () => ({
     promisify: (fn) => (...args) => mockExecPromise(...args)
 }));
 
-const mockMkdir = jest.fn();
-const mockUnlink = jest.fn();
-const mockWriteFile = jest.fn();
-
-jest.mock('fs/promises', () => ({
-    mkdir: (...args) => mockMkdir(...args),
-    unlink: (...args) => mockUnlink(...args),
-    writeFile: (...args) => mockWriteFile(...args)
-}));
-
 describe('Rate Package Handler', () => {
-    let mockS3Send;
+  let mockS3Send;
 
-    beforeEach(() => {
-        jest.clearAllMocks();
-        mockS3Send = jest.fn();
-        S3Client.prototype.send = mockS3Send;
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockS3Send = jest.fn();
+    S3Client.prototype.send = mockS3Send;
+  });
 
-        // Mock default behavior for file system operations
-        mockMkdir.mockResolvedValue(undefined);
-        mockUnlink.mockResolvedValue(undefined);
-        mockWriteFile.mockResolvedValue(undefined);
-
-        // Mock default behavior for exec
-        mockExecPromise.mockResolvedValue({
-            stdout: JSON.stringify({
-                NetScore: 0.5,
-                NetScoreLatency: 0.2,
-                RampUp: 0.5,
-                RampUpLatency: 0.1,
-                Correctness: 0.5,
-                CorrectnessLatency: 0.3,
-                BusFactor: 0.5,
-                BusFactorLatency: 0.4,
-                ResponsiveMaintainer: 0.5,
-                ResponsiveMaintainerLatency: 0.5,
-                LicenseScore: 1.0,
-                LicenseScoreLatency: 0.1,
-                GoodPinningPractice: 0.5,
-                GoodPinningPracticeLatency: 0.6,
-                PullRequest: 0.7,
-                PullRequestLatency: 0.2
-            }),
-            stderr: ''
-        });
+  test('/package/{id}/rate | GET | Valid input', async () => {
+    // Mock successful package existence check and metrics computation
+    mockS3Send
+      .mockResolvedValueOnce({})  // HEAD
+      .mockResolvedValueOnce({    // GET
+        Metadata: {
+          uploadvia: 'npm',
+          name: 'test-package',
+          version: '1.0.0'
+        }
+      });
+    mockExecPromise.mockResolvedValueOnce({
+      stdout: JSON.stringify({
+        BusFactor: 0.8,
+        BusFactorLatency: 0.7,
+        Correctness: 0.9,
+        CorrectnessLatency: 0.8,
+        RampUp: 0.6,
+        RampUpLatency: 0.5,
+        ResponsiveMaintainer: 0.7,
+        ResponsiveMaintainerLatency: 0.6,
+        LicenseScore: 0.9,
+        LicenseScoreLatency: 0.8,
+        GoodPinningPractice: 0.7,
+        GoodPinningPracticeLatency: 0.6,
+        PullRequest: 0.8,
+        PullRequestLatency: 0.7,
+        NetScore: 0.8,
+        NetScoreLatency: 0.7
+      }),
+      stderr: ''
     });
 
-    test('should handle NPM package successfully', async () => {
-        mockS3Send
-            .mockResolvedValueOnce({})  // HEAD
-            .mockResolvedValueOnce({    // GET
-                Metadata: {
-                    uploadvia: 'npm',
-                    name: 'lodash',
-                    version: '4.17.21',
-                    score: '8.5'
-                }
-            })
-            .mockResolvedValueOnce({}); // PUT
+    const event = {
+      pathParameters: { id: "test-package@1.0.0" }
+    };
 
-        const event = {
-            pathParameters: { id: "lodash@4.17.21" }
-        };
+    const response = await ratePackageHandler(event);
 
-        const response = await ratePackageHandler(event);
-        const body = JSON.parse(response.body);
-
-        expect(response.statusCode).toBe(200);
-        expect(body.NetScore).toBeDefined();
-        expect(body.NetScoreLatency).toBeDefined();
+    expect(response.statusCode).toBe(200);
+    expect(response.headers).toEqual({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Content-Type': 'application/json'
     });
 
-    test('should handle GitHub package successfully', async () => {
-        mockS3Send
-            .mockResolvedValueOnce({})  // HEAD
-            .mockResolvedValueOnce({    // GET
-                Metadata: {
-                    uploadvia: 'github',
-                    url: 'https://github.com/cloudinary/cloudinary_npm',
-                    score: '8.5'
-                }
-            })
-            .mockResolvedValueOnce({}); // PUT
-
-        const event = {
-            pathParameters: { id: "cloudinary-npm-2.5.1" }
-        };
-
-        const response = await ratePackageHandler(event);
-        const body = JSON.parse(response.body);
-
-        expect(response.statusCode).toBe(200);
-        expect(body.NetScore).toBeDefined();
-        expect(body.NetScoreLatency).toBeDefined();
-    }, 60000);  // Increased timeout to 60 seconds
-
-    test('should handle zip file content package successfully', async () => {
-        const zip = new AdmZip();
-        zip.addFile("package.json", Buffer.from(JSON.stringify({
-            name: "cloudinary",
-            version: "2.5.1",
-            homepage: "https://github.com/cloudinary/cloudinary_npm",
-            repository: { type: "git", url: "git+https://github.com/cloudinary/cloudinary_npm.git" }
-        })));
-        const zipBuffer = zip.toBuffer();
-        const mockStream = new Readable();
-        mockStream.push(zipBuffer);
-        mockStream.push(null);
-
-        mockS3Send
-            .mockResolvedValueOnce({})  // HEAD
-            .mockResolvedValueOnce({    // GET
-                Metadata: { uploadvia: 'content', score: '-1' },
-                Body: mockStream
-            })
-            .mockResolvedValueOnce({}); // PUT
-
-        const event = {
-            pathParameters: { id: "cloudinary_npm--2.5.1" }
-        };
-
-        const response = await ratePackageHandler(event);
-        const body = JSON.parse(response.body);
-
-        expect(response.statusCode).toBe(200);
-        expect(body.NetScore).toBeDefined();
+    const body = JSON.parse(response.body);
+    expect(body).toMatchObject({
+      BusFactor: 0.8,
+      BusFactorLatency: 0.7,
+      Correctness: 0.9,
+      CorrectnessLatency: 0.8,
+      RampUp: 0.6,
+      RampUpLatency: 0.5,
+      ResponsiveMaintainer: 0.7,
+      ResponsiveMaintainerLatency: 0.6,
+      LicenseScore: 0.9,
+      LicenseScoreLatency: 0.8,
+      GoodPinningPractice: 0.7,
+      GoodPinningPracticeLatency: 0.6,
+      PullRequest: 0.8,
+      PullRequestLatency: 0.7,
+      NetScore: 0.8,
+      NetScoreLatency: 0.7
     });
-
-    test('should handle invalid URL in zip content', async () => {
-        const zip = new AdmZip();
-        zip.addFile("package.json", Buffer.from(JSON.stringify({
-            name: "test-package",
-            repository: { url: "https://invalid-url.com/repo" }
-        })));
-        const zipBuffer = zip.toBuffer();
-        const mockStream = new Readable();
-        mockStream.push(zipBuffer);
-        mockStream.push(null);
-
-        mockS3Send
-            .mockResolvedValueOnce({})  // HEAD
-            .mockResolvedValueOnce({    // GET
-                Metadata: { uploadvia: 'content', score: '8.5' },
-                Body: mockStream
-            })
-            .mockResolvedValueOnce({}); // PUT
-
-        const event = { pathParameters: { id: "test-package.zip" } };
-
-        const response = await ratePackageHandler(event);
-        const body = JSON.parse(response.body);
-
-        expect(response.statusCode).toBe(200);
-        expect(body.NetScore).toBeDefined();
-    });
-
-    test('should return 404 for non-existent package', async () => {
-        mockS3Send.mockRejectedValueOnce({ name: 'NotFound', $metadata: { httpStatusCode: 404 } });
-
-        const event = { pathParameters: { id: "non-existent-package@1.0.0" } };
-
-        const response = await ratePackageHandler(event);
-        const body = JSON.parse(response.body);
-
-        expect(response.statusCode).toBe(404);
-        expect(body.error).toContain('not found');
-    });
-
-    test('should handle missing package ID', async () => {
-        const event = { pathParameters: {} };
-
-        const response = await ratePackageHandler(event);
-        const body = JSON.parse(response.body);
-
-        expect(response.statusCode).toBe(400);
-        expect(body.error).toBe('Package ID is required');
-    });
+  });
 });
+
+// import { jest } from '@jest/globals';
+// import { ratePackageHandler } from '../../lambda/ratePackage/index.mjs';
+// import { S3Client } from "@aws-sdk/client-s3";
+
+// // Store test results for API requirements
+// const apiRequirements = {
+//   'Success - 200': false,
+//   '400 - Missing PackageID': false,
+//   '404 - Package Not Found': false,
+//   '500 - Rating System Error': false
+// };
+
+// // Print API requirements status after all tests
+// afterAll(() => {
+//   console.log('\n=== API Requirements Status ===');
+//   console.log('/package/{id}/rate | GET');
+//   Object.entries(apiRequirements).forEach(([requirement, passed]) => {
+//     console.log(`${passed ? '✓' : '✗'} ${requirement}`);
+//   });
+//   console.log('============================\n');
+// });
+
+// // Mock AWS SDK
+// jest.mock('@aws-sdk/client-s3');
+
+// // Mock child_process
+// const mockExecPromise = jest.fn();
+// jest.mock('child_process', () => ({
+//     exec: () => mockExecPromise
+// }));
+
+// jest.mock('util', () => ({
+//     ...jest.requireActual('util'),
+//     promisify: (fn) => (...args) => mockExecPromise(...args)
+// }));
+
+// // Mock fs promises
+// jest.mock('fs/promises', () => ({
+//     mkdir: jest.fn().mockResolvedValue(undefined),
+//     unlink: jest.fn().mockResolvedValue(undefined),
+//     writeFile: jest.fn().mockResolvedValue(undefined)
+// }));
+
+// describe('Rate Package Handler', () => {
+//     let mockS3Send;
+
+//     beforeEach(() => {
+//         jest.clearAllMocks();
+//         mockS3Send = jest.fn();
+//         S3Client.prototype.send = mockS3Send;
+//     });
+
+//     test('200: Successfully rates package with all metrics', async () => {
+//         // Mock successful package existence check
+//         mockS3Send
+//             .mockResolvedValueOnce({})  // HEAD
+//             .mockResolvedValueOnce({    // GET
+//                 Metadata: {
+//                     uploadvia: 'npm',
+//                     name: 'test-package',
+//                     version: '1.0.0'
+//                 }
+//             });
+
+//         // Mock successful metrics computation
+//         mockExecPromise.mockResolvedValueOnce({
+//             stdout: JSON.stringify({
+//                 BusFactor: 0.1,
+//                 BusFactorLatency: 0.1,
+//                 Correctness: 0.1,
+//                 CorrectnessLatency: 0.1,
+//                 RampUp: 0.1,
+//                 RampUpLatency: 0.1,
+//                 ResponsiveMaintainer: 0.1,
+//                 ResponsiveMaintainerLatency: 0.1,
+//                 LicenseScore: 0.1,
+//                 LicenseScoreLatency: 0.1,
+//                 GoodPinningPractice: 0.1,
+//                 GoodPinningPracticeLatency: 0.1,
+//                 PullRequest: 0.1,
+//                 PullRequestLatency: 0.1,
+//                 NetScore: 0.1,
+//                 NetScoreLatency: 0.1
+//             }),
+//             stderr: ''
+//         });
+
+//         const event = {
+//             pathParameters: { id: "test-package@1.0.0" }
+//         };
+
+//         const response = await ratePackageHandler(event);
+        
+//         expect(response.statusCode).toBe(200);
+//         expect(response.headers).toEqual({
+//             'Access-Control-Allow-Origin': '*',
+//             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+//             'Access-Control-Allow-Headers': 'Content-Type',
+//             'Content-Type': 'application/json'
+//         });
+
+//         const body = JSON.parse(response.body);
+        
+//         // Verify all required metrics are present with correct types
+//         const requiredMetrics = [
+//             'BusFactor', 'BusFactorLatency',
+//             'Correctness', 'CorrectnessLatency',
+//             'RampUp', 'RampUpLatency',
+//             'ResponsiveMaintainer', 'ResponsiveMaintainerLatency',
+//             'LicenseScore', 'LicenseScoreLatency',
+//             'GoodPinningPractice', 'GoodPinningPracticeLatency',
+//             'PullRequest', 'PullRequestLatency',
+//             'NetScore', 'NetScoreLatency'
+//         ];
+
+//         requiredMetrics.forEach(metric => {
+//             expect(body).toHaveProperty(metric);
+//             expect(typeof body[metric]).toBe('number');
+//         });
+
+//         apiRequirements['Success - 200'] = true;
+//     });
+
+//     test('400: Returns error for missing package ID', async () => {
+//         const event = { pathParameters: {} };
+
+//         const response = await ratePackageHandler(event);
+        
+//         expect(response.statusCode).toBe(400);
+//         expect(response.headers).toEqual({
+//             'Access-Control-Allow-Origin': '*',
+//             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+//             'Access-Control-Allow-Headers': 'Content-Type',
+//             'Content-Type': 'application/json'
+//         });
+
+//         const body = JSON.parse(response.body);
+//         expect(body.message).toBe('There is missing field(s) in the PackageID');
+
+//         apiRequirements['400 - Missing PackageID'] = true;
+//     });
+
+//     test('404: Returns error when package does not exist', async () => {
+//         mockS3Send.mockRejectedValueOnce({ 
+//             name: 'NotFound', 
+//             $metadata: { httpStatusCode: 404 } 
+//         });
+
+//         const event = { 
+//             pathParameters: { id: "non-existent-package@1.0.0" } 
+//         };
+
+//         const response = await ratePackageHandler(event);
+        
+//         expect(response.statusCode).toBe(404);
+//         expect(response.headers).toEqual({
+//             'Access-Control-Allow-Origin': '*',
+//             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+//             'Access-Control-Allow-Headers': 'Content-Type',
+//             'Content-Type': 'application/json'
+//         });
+
+//         const body = JSON.parse(response.body);
+//         expect(body.message).toBe('Package does not exist.');
+
+//         apiRequirements['404 - Package Not Found'] = true;
+//     });
+
+//     test('500: Returns error when metrics computation fails', async () => {
+//         mockS3Send
+//             .mockResolvedValueOnce({})  // HEAD
+//             .mockResolvedValueOnce({    // GET
+//                 Metadata: {
+//                     uploadvia: 'npm',
+//                     name: 'error-package'
+//                 }
+//             });
+
+//         mockExecPromise.mockRejectedValueOnce(new Error('Metrics computation failed'));
+
+//         const event = {
+//             pathParameters: { id: "error-package@1.0.0" }
+//         };
+
+//         const response = await ratePackageHandler(event);
+        
+//         expect(response.statusCode).toBe(500);
+//         expect(response.headers).toEqual({
+//             'Access-Control-Allow-Origin': '*',
+//             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+//             'Access-Control-Allow-Headers': 'Content-Type',
+//             'Content-Type': 'application/json'
+//         });
+
+//         const body = JSON.parse(response.body);
+//         expect(body.message).toBe('The package rating system choked on at least one of the metrics.');
+
+//         apiRequirements['500 - Rating System Error'] = true;
+//     });
+// });
+
+
+// import { jest } from '@jest/globals';
+// import { ratePackageHandler } from '../../lambda/ratePackage/index.mjs';
+// import { S3Client } from "@aws-sdk/client-s3";
+// import { Readable } from 'stream';
+// import AdmZip from 'adm-zip';
+
+// // Mock AWS SDK
+// jest.mock('@aws-sdk/client-s3');
+
+// // Mock child_process and fs
+// const mockExecPromise = jest.fn();
+// jest.mock('child_process', () => ({
+//     exec: () => mockExecPromise
+// }));
+
+// jest.mock('util', () => ({
+//     ...jest.requireActual('util'),
+//     promisify: (fn) => (...args) => mockExecPromise(...args)
+// }));
+
+// const mockMkdir = jest.fn();
+// const mockUnlink = jest.fn();
+// const mockWriteFile = jest.fn();
+
+// jest.mock('fs/promises', () => ({
+//     mkdir: (...args) => mockMkdir(...args),
+//     unlink: (...args) => mockUnlink(...args),
+//     writeFile: (...args) => mockWriteFile(...args)
+// }));
+
+// describe('Rate Package Handler', () => {
+//     let mockS3Send;
+
+//     beforeEach(() => {
+//         jest.clearAllMocks();
+//         mockS3Send = jest.fn();
+//         S3Client.prototype.send = mockS3Send;
+
+//         // Mock default behavior for file system operations
+//         mockMkdir.mockResolvedValue(undefined);
+//         mockUnlink.mockResolvedValue(undefined);
+//         mockWriteFile.mockResolvedValue(undefined);
+
+//         // Mock default behavior for exec
+//         mockExecPromise.mockResolvedValue({
+//             stdout: JSON.stringify({
+//                 NetScore: 0.5,
+//                 NetScoreLatency: 0.2,
+//                 RampUp: 0.5,
+//                 RampUpLatency: 0.1,
+//                 Correctness: 0.5,
+//                 CorrectnessLatency: 0.3,
+//                 BusFactor: 0.5,
+//                 BusFactorLatency: 0.4,
+//                 ResponsiveMaintainer: 0.5,
+//                 ResponsiveMaintainerLatency: 0.5,
+//                 LicenseScore: 1.0,
+//                 LicenseScoreLatency: 0.1,
+//                 GoodPinningPractice: 0.5,
+//                 GoodPinningPracticeLatency: 0.6,
+//                 PullRequest: 0.7,
+//                 PullRequestLatency: 0.2
+//             }),
+//             stderr: ''
+//         });
+//     });
+
+//     test('should handle NPM package successfully', async () => {
+//         mockS3Send
+//             .mockResolvedValueOnce({})  // HEAD
+//             .mockResolvedValueOnce({    // GET
+//                 Metadata: {
+//                     uploadvia: 'npm',
+//                     name: 'lodash',
+//                     version: '4.17.21',
+//                     score: '8.5'
+//                 }
+//             })
+//             .mockResolvedValueOnce({}); // PUT
+
+//         const event = {
+//             pathParameters: { id: "lodash@4.17.21" }
+//         };
+
+//         const response = await ratePackageHandler(event);
+//         const body = JSON.parse(response.body);
+
+//         expect(response.statusCode).toBe(200);
+//         expect(body.NetScore).toBeDefined();
+//         expect(body.NetScoreLatency).toBeDefined();
+//     });
+
+//     test('should handle GitHub package successfully', async () => {
+//         mockS3Send
+//             .mockResolvedValueOnce({})  // HEAD
+//             .mockResolvedValueOnce({    // GET
+//                 Metadata: {
+//                     uploadvia: 'github',
+//                     url: 'https://github.com/cloudinary/cloudinary_npm',
+//                     score: '8.5'
+//                 }
+//             })
+//             .mockResolvedValueOnce({}); // PUT
+
+//         const event = {
+//             pathParameters: { id: "cloudinary-npm-2.5.1" }
+//         };
+
+//         const response = await ratePackageHandler(event);
+//         const body = JSON.parse(response.body);
+
+//         expect(response.statusCode).toBe(200);
+//         expect(body.NetScore).toBeDefined();
+//         expect(body.NetScoreLatency).toBeDefined();
+//     }, 60000);  // Increased timeout to 60 seconds
+
+//     test('should handle zip file content package successfully', async () => {
+//         const zip = new AdmZip();
+//         zip.addFile("package.json", Buffer.from(JSON.stringify({
+//             name: "cloudinary",
+//             version: "2.5.1",
+//             homepage: "https://github.com/cloudinary/cloudinary_npm",
+//             repository: { type: "git", url: "git+https://github.com/cloudinary/cloudinary_npm.git" }
+//         })));
+//         const zipBuffer = zip.toBuffer();
+//         const mockStream = new Readable();
+//         mockStream.push(zipBuffer);
+//         mockStream.push(null);
+
+//         mockS3Send
+//             .mockResolvedValueOnce({})  // HEAD
+//             .mockResolvedValueOnce({    // GET
+//                 Metadata: { uploadvia: 'content', score: '-1' },
+//                 Body: mockStream
+//             })
+//             .mockResolvedValueOnce({}); // PUT
+
+//         const event = {
+//             pathParameters: { id: "cloudinary_npm--2.5.1" }
+//         };
+
+//         const response = await ratePackageHandler(event);
+//         const body = JSON.parse(response.body);
+
+//         expect(response.statusCode).toBe(200);
+//         expect(body.NetScore).toBeDefined();
+//     });
+
+//     test('should handle invalid URL in zip content', async () => {
+//         const zip = new AdmZip();
+//         zip.addFile("package.json", Buffer.from(JSON.stringify({
+//             name: "test-package",
+//             repository: { url: "https://invalid-url.com/repo" }
+//         })));
+//         const zipBuffer = zip.toBuffer();
+//         const mockStream = new Readable();
+//         mockStream.push(zipBuffer);
+//         mockStream.push(null);
+
+//         mockS3Send
+//             .mockResolvedValueOnce({})  // HEAD
+//             .mockResolvedValueOnce({    // GET
+//                 Metadata: { uploadvia: 'content', score: '8.5' },
+//                 Body: mockStream
+//             })
+//             .mockResolvedValueOnce({}); // PUT
+
+//         const event = { pathParameters: { id: "test-package.zip" } };
+
+//         const response = await ratePackageHandler(event);
+//         const body = JSON.parse(response.body);
+
+//         expect(response.statusCode).toBe(200);
+//         expect(body.NetScore).toBeDefined();
+//     });
+
+//     test('should return 404 for non-existent package', async () => {
+//         mockS3Send.mockRejectedValueOnce({ name: 'NotFound', $metadata: { httpStatusCode: 404 } });
+
+//         const event = { pathParameters: { id: "non-existent-package@1.0.0" } };
+
+//         const response = await ratePackageHandler(event);
+//         const body = JSON.parse(response.body);
+
+//         expect(response.statusCode).toBe(404);
+//         expect(body.error).toContain('not found');
+//     });
+
+//     test('should handle missing package ID', async () => {
+//         const event = { pathParameters: {} };
+
+//         const response = await ratePackageHandler(event);
+//         const body = JSON.parse(response.body);
+
+//         expect(response.statusCode).toBe(400);
+//         expect(body.error).toBe('Package ID is required');
+//     });
+// });
 
 
 

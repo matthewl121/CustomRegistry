@@ -1,242 +1,338 @@
 import { jest } from '@jest/globals';
-import fs from 'fs';
-import { S3Client } from "@aws-sdk/client-s3";
-import { ratePackageHandler } from '../../lambda/ratePackage/index.mjs';
+import { S3Client, PutObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
+import { updatePackageHandler } from '../../lambda/update/index.mjs';
 
-// Mock the AWS SDK
 jest.mock("@aws-sdk/client-s3", () => ({
   S3Client: jest.fn(() => ({
     send: jest.fn()
   })),
-  GetObjectCommand: jest.fn(),
-  HeadObjectCommand: jest.fn(),
+  PutObjectCommand: jest.fn(),
+  HeadObjectCommand: jest.fn()
 }));
 
-// Mock the file system
-jest.mock('fs', () => ({
-  ...jest.requireActual('fs'),
-  writeFileSync: jest.fn(),
-  unlinkSync: jest.fn(),
-  mkdirSync: jest.fn(),
-  existsSync: jest.fn(),
-}));
-
-// Mock console methods
-const originalConsole = { ...console };
-beforeAll(() => {
-  // Create necessary test directories
-  fs.mkdirSync('data', { recursive: true });
-  
-  // Mock console methods
-  console.log = jest.fn();
-  console.error = jest.fn();
-  console.warn = jest.fn();
-  console.info = jest.fn();
-});
-
-afterAll(() => {
-  // Restore console methods
-  console.log = originalConsole.log;
-  console.error = originalConsole.error;
-  console.warn = originalConsole.warn;
-  console.info = originalConsole.info;
-  
-  // Clean up test directories
-  fs.rmSync('data', { recursive: true, force: true });
-});
-
-describe('Rate Package Handler', () => {
+describe('updatePackageHandler', () => {
   let mockS3Send;
-
-  // Sample test data
-  const mockValidNpmPackage = {
-    Body: Buffer.from(JSON.stringify({
-      repository: {
-        url: 'https://github.com/username/repo'
-      }
-    }))
-  };
-
-  const mockValidMetrics = {
-    URL: 'https://www.npmjs.com/package/lodash',
-    NetScore: 0.5913091753722012,
-    RampUp: 0.5,
-    Correctness: 0.9820303383897316,
-    BusFactor: 0.05404053109323459,
-    ResponsiveMaintainer: 0.1,
-    License: 1,
-    DependencyPinning: 1,
-    CodeReview: 0.9999348455612131
-  };
 
   beforeEach(() => {
     jest.clearAllMocks();
     mockS3Send = jest.fn();
     S3Client.prototype.send = mockS3Send;
-    
-    // Reset console mocks
-    console.log.mockClear();
-    console.error.mockClear();
-    console.warn.mockClear();
-    console.info.mockClear();
-    
-    // Mock fs.existsSync to return true for data directory
-    fs.existsSync.mockImplementation((path) => path === 'data');
   });
 
-  test('should handle NPM package successfully', async () => {
-    // Mock S3 responses
+  test('/package/{id} | POST | Update with new patch version', async () => {
+    // Mock the old package metadata
     mockS3Send
-      .mockResolvedValueOnce({}) // HEAD request
-      .mockResolvedValueOnce(mockValidNpmPackage) // GET request
-      .mockResolvedValueOnce(mockValidMetrics); // Custom Registry response
-
-    const event = {
-      pathParameters: {
-        id: 'lodash@4.17.21'
-      }
-    };
-
-    const result = await ratePackageHandler(event);
-    
-    expect(result.statusCode).toBe(200);
-    const body = JSON.parse(result.body);
-    expect(body.URL).toBeDefined();
-    expect(body.NetScore).toBeGreaterThan(0);
-  }, 60000); // Increased timeout
-
-  test('should handle GitHub package successfully', async () => {
-    const mockGitHubPackage = {
-      Body: Buffer.from(JSON.stringify({
-        repository: {
-          url: 'https://github.com/username/repo'
-        }
-      }))
-    };
-
-    mockS3Send
-      .mockResolvedValueOnce({})
-      .mockResolvedValueOnce(mockGitHubPackage)
-      .mockResolvedValueOnce(mockValidMetrics);
-
-    const event = {
-      pathParameters: {
-        id: 'cloudinary-npm-2.5.1'
-      }
-    };
-
-    const result = await ratePackageHandler(event);
-    expect(result.statusCode).toBe(200);
-  }, 60000);
-
-  test('should handle zip file content package successfully', async () => {
-    const mockZipContent = Buffer.from('mock zip content');
-    mockS3Send
-      .mockResolvedValueOnce({})
-      .mockResolvedValueOnce({ Body: mockZipContent })
-      .mockResolvedValueOnce(mockValidMetrics);
-
-    const event = {
-      pathParameters: {
-        id: 'test-package.zip'
-      }
-    };
-
-    const result = await ratePackageHandler(event);
-    expect(result.statusCode).toBe(200);
-  }, 60000);
-
-  test('should handle invalid URL in zip content', async () => {
-    const mockInvalidZipContent = Buffer.from('invalid zip content');
-    mockS3Send
-      .mockResolvedValueOnce({})
-      .mockResolvedValueOnce({ Body: mockInvalidZipContent });
-
-    const event = {
-      pathParameters: {
-        id: 'invalid-package.zip'
-      }
-    };
-
-    const result = await ratePackageHandler(event);
-    expect(result.statusCode).toBe(400);
-  });
-
-  test('should handle gzip extraction failure gracefully', async () => {
-    mockS3Send
-      .mockResolvedValueOnce({})
       .mockResolvedValueOnce({
-        Body: Buffer.from('invalid gzip content')
-      });
+        Metadata: {
+          name: 'test-package',
+          version: '1.0.0',
+          uploadvia: 'content'
+        }
+      }); // HEAD request
+
+    // Mock the new package content
+    const newPackageVersion = '1.0.1';
+    const newPackageContent = Buffer.from('new package content');
+
+    // Mock the update process
+    mockS3Send
+      .mockResolvedValueOnce({}); // PutObjectCommand
 
     const event = {
-      pathParameters: {
-        id: 'test-package@1.0.0'
+      metadata: {
+        Name: 'test-package',
+        Version: newPackageVersion,
+        ID: 'test-package--1.0.0'
+      },
+      data: {
+        Content: newPackageContent.toString('base64')
       }
     };
 
-    const result = await ratePackageHandler(event);
-    expect(result.statusCode).toBe(500);
-    expect(JSON.parse(result.body).error).toBeDefined();
+    const result = await updatePackageHandler(event);
+
+    expect(result.statusCode).toBe(200);
+    expect(JSON.parse(result.body)).toEqual({ message: 'Version is updated.' });
   });
 
-  test('should return 404 for non-existent package', async () => {
-    mockS3Send.mockRejectedValueOnce(new Error('NoSuchKey'));
+  test('/package/{id} | POST | Update with invalid patch version', async () => {
+    // Mock the old package metadata
+    mockS3Send
+      .mockResolvedValueOnce({
+        Metadata: {
+          name: 'test-package',
+          version: '1.0.0',
+          uploadvia: 'content'
+        }
+      }); // HEAD request
+
+    // Mock the new package content
+    const newPackageVersion = '1.0.0';
+    const newPackageContent = Buffer.from('new package content');
 
     const event = {
-      pathParameters: {
-        id: 'non-existent-package@1.0.0'
+      metadata: {
+        Name: 'test-package',
+        Version: newPackageVersion,
+        ID: 'test-package--1.0.0'
+      },
+      data: {
+        Content: newPackageContent.toString('base64')
       }
     };
 
-    const result = await ratePackageHandler(event);
+    const result = await updatePackageHandler(event);
+
+    expect(result.statusCode).toBe(400);
+    expect(JSON.parse(result.body)).toEqual({ message: 'There is missing field(s) in the PackageID or it is formed improperly, or is invalid.' });
+  });
+
+  test('/package/{id} | POST | Update with non-existent package', async () => {
+    mockS3Send.mockRejectedValueOnce({ $metadata: { httpStatusCode: 404 } }); // HeadObjectCommand
+
+    const event = {
+      metadata: {
+        Name: 'non-existent-package',
+        Version: '1.0.0',
+        ID: 'non-existent-package--1.0.0'
+      },
+      data: {
+        Content: Buffer.from('new package content').toString('base64')
+      }
+    };
+
+    const result = await updatePackageHandler(event);
+
     expect(result.statusCode).toBe(404);
-  });
-
-  test('should handle missing package ID', async () => {
-    const event = {
-      pathParameters: {}
-    };
-
-    const result = await ratePackageHandler(event);
-    expect(result.statusCode).toBe(400);
-    expect(JSON.parse(result.body).error).toBeDefined();
-  });
-
-  test('should handle Custom Registry program failure', async () => {
-    mockS3Send
-      .mockResolvedValueOnce({})
-      .mockResolvedValueOnce(mockValidNpmPackage)
-      .mockRejectedValueOnce(new Error('Custom Registry failed'));
-
-    const event = {
-      pathParameters: {
-        id: 'failing-package@1.0.0'
-      }
-    };
-
-    const result = await ratePackageHandler(event);
-    expect(result.statusCode).toBe(500);
-    expect(JSON.parse(result.body).error).toBeDefined();
-  });
-
-  test('should handle malformed package metadata', async () => {
-    const mockMalformedPackage = {
-      Body: Buffer.from('not json content')
-    };
-
-    mockS3Send
-      .mockResolvedValueOnce({})
-      .mockResolvedValueOnce(mockMalformedPackage);
-
-    const event = {
-      pathParameters: {
-        id: 'malformed-package@1.0.0'
-      }
-    };
-
-    const result = await ratePackageHandler(event);
-    expect(result.statusCode).toBe(400);
-    expect(JSON.parse(result.body).error).toBeDefined();
+    expect(JSON.parse(result.body)).toEqual({ message: 'Package does not exist.' });
   });
 });
+// import { jest } from '@jest/globals';
+// import { S3Client, PutObjectCommand, HeadObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from "@aws-sdk/client-s3";
+// import { updatePackageHandler } from '../../lambda/update/index.mjs';
+
+// jest.mock("@aws-sdk/client-s3", () => ({
+//   S3Client: jest.fn(() => ({
+//     send: jest.fn()
+//   })),
+//   PutObjectCommand: jest.fn(),
+//   HeadObjectCommand: jest.fn(),
+//   ListObjectsV2Command: jest.fn(),
+//   DeleteObjectsCommand: jest.fn()
+// }));
+
+// describe('updatePackageHandler', () => {
+//   let mockS3Send;
+
+//   beforeEach(() => {
+//     jest.clearAllMocks();
+//     mockS3Send = jest.fn();
+//     S3Client.prototype.send = mockS3Send;
+//   });
+
+//   test('/package/{id} | POST | Update with new patch version', async () => {
+//     // Mock the old package metadata
+//     mockS3Send
+//       .mockResolvedValueOnce({
+//         Metadata: {
+//           name: 'test-package',
+//           version: '1.0.0',
+//           uploadvia: 'content'
+//         }
+//       }); // HEAD request
+
+//     // Mock the new package content
+//     const newPackageVersion = '1.0.1';
+//     const newPackageContent = Buffer.from('new package content');
+
+//     // Mock the update process
+//     mockS3Send
+//       .mockResolvedValueOnce({}); // PutObjectCommand
+
+//     const event = {
+//       metadata: {
+//         Name: 'test-package',
+//         Version: newPackageVersion,
+//         ID: 'test-package--1.0.0'
+//       },
+//       data: {
+//         Content: newPackageContent.toString('base64'),
+//         debloat: 'true'
+//       }
+//     };
+
+//     const result = await updatePackageHandler(event);
+
+//     expect(result.statusCode).toBe(200);
+//     expect(mockS3Send).toHaveBeenCalledTimes(2);
+//     expect(mockS3Send).toHaveBeenCalledWith(
+//       expect.objectContaining({
+//         input: expect.objectContaining({
+//           Bucket: 'acmeregistrys3',
+//           Key: 'test-package--1.0.1',
+//           Body: newPackageContent,
+//           ContentType: 'application/zip',
+//           Metadata: expect.objectContaining({
+//             name: 'test-package',
+//             id: 'test-package--1.0.1',
+//             version: '1.0.1',
+//             uploadvia: 'content'
+//           })
+//         })
+//       })
+//     );
+//   });
+
+//   test('/package/{id} | POST | Update with invalid patch version', async () => {
+//     // Mock the old package metadata
+//     mockS3Send
+//       .mockResolvedValueOnce({
+//         Metadata: {
+//           name: 'test-package',
+//           version: '1.0.0',
+//           uploadvia: 'content'
+//         }
+//       }); // HEAD request
+
+//     // Mock the new package content
+//     const newPackageVersion = '1.0.0';
+//     const newPackageContent = Buffer.from('new package content');
+
+//     const event = {
+//       metadata: {
+//         Name: 'test-package',
+//         Version: newPackageVersion,
+//         ID: 'test-package--1.0.0'
+//       },
+//       data: {
+//         Content: newPackageContent.toString('base64'),
+//         debloat: 'true'
+//       }
+//     };
+
+//     const result = await updatePackageHandler(event);
+
+//     expect(result.statusCode).toBe(400);
+//     expect(JSON.parse(result.body).message).toBe("There is missing field(s) in the PackageID or it is formed improperly, or is invalid.");
+//   });
+
+//   test('/package/{id} | POST | Update with existing package', async () => {
+//     // Mock the old package metadata
+//     mockS3Send
+//       .mockResolvedValueOnce({
+//         Metadata: {
+//           name: 'test-package',
+//           version: '1.0.0',
+//           uploadvia: 'content'
+//         }
+//       }); // HEAD request
+
+//     // Mock the new package content
+//     const newPackageVersion = '1.0.1';
+//     const newPackageContent = Buffer.from('new package content');
+
+//     // Mock the update process
+//     mockS3Send
+//       .mockResolvedValueOnce({}); // PutObjectCommand
+
+//     const event = {
+//       metadata: {
+//         Name: 'test-package',
+//         Version: newPackageVersion,
+//         ID: 'test-package--1.0.0'
+//       },
+//       data: {
+//         Content: newPackageContent.toString('base64'),
+//         debloat: 'false'
+//       }
+//     };
+
+//     const result = await updatePackageHandler(event);
+
+//     expect(result.statusCode).toBe(200);
+//     expect(mockS3Send).toHaveBeenCalledTimes(2);
+//     expect(mockS3Send).toHaveBeenCalledWith(
+//       expect.objectContaining({
+//         input: expect.objectContaining({
+//           Bucket: 'acmeregistrys3',
+//           Key: 'test-package--1.0.1',
+//           Body: newPackageContent,
+//           ContentType: 'application/zip',
+//           Metadata: expect.objectContaining({
+//             name: 'test-package',
+//             id: 'test-package--1.0.1',
+//             version: '1.0.1',
+//             uploadvia: 'content'
+//           })
+//         })
+//       })
+//     );
+//   });
+
+//   test('/package/{id} | POST | Update with non-existent package', async () => {
+//     mockS3Send.mockRejectedValueOnce({ $metadata: { httpStatusCode: 404 } }); // HeadObjectCommand
+
+//     const event = {
+//       metadata: {
+//         Name: 'non-existent-package',
+//         Version: '1.0.0',
+//         ID: 'non-existent-package--1.0.0'
+//       },
+//       data: {
+//         Content: Buffer.from('new package content').toString('base64'),
+//         debloat: 'true'
+//       }
+//     };
+
+//     const result = await updatePackageHandler(event);
+
+//     expect(result.statusCode).toBe(404);
+//     expect(JSON.parse(result.body).message).toBe("Package does not exist.");
+//   });
+
+//   test('/package/{id} | POST | Update with invalid upload method', async () => {
+//     // Mock the old package metadata
+//     mockS3Send
+//       .mockResolvedValueOnce({
+//         Metadata: {
+//           name: 'test-package',
+//           version: '1.0.0',
+//           uploadvia: 'npm'
+//         }
+//       }); // HEAD request
+
+//     const event = {
+//       metadata: {
+//         Name: 'test-package',
+//         Version: '1.0.1',
+//         ID: 'test-package--1.0.0'
+//       },
+//       data: {
+//         Content: Buffer.from('new package content').toString('base64'),
+//         debloat: 'true'
+//       }
+//     };
+
+//     const result = await updatePackageHandler(event);
+
+//     expect(result.statusCode).toBe(400);
+//     expect(JSON.parse(result.body).message).toBe("There is missing field(s) in the PackageID or it is formed improperly, or is invalid.");
+//   });
+
+//   test('/package/{id} | POST | Update with missing fields', async () => {
+//     const event = {
+//       metadata: {
+//         Name: 'test-package',
+//         Version: '1.0.1'
+//       },
+//       data: {
+//         debloat: 'true'
+//       }
+//     };
+
+//     const result = await updatePackageHandler(event);
+
+//     expect(result.statusCode).toBe(400);
+//     expect(JSON.parse(result.body).message).toBe("There is missing field(s) in the PackageID or it is formed improperly, or is invalid.");
+//   });
+// });
