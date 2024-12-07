@@ -193,6 +193,7 @@ const constructPackageUrl = async (uploadVia, metadata, s3Response) => {
     switch (uploadVia?.toLowerCase()) {
         case 'github':
             const githubUrl = metadata.url || 'Invalid GitHub URL';
+            console.log(`metadata: ${JSON.stringify(metadata)}`);
             return isValidUrl(githubUrl) ? githubUrl : 'Invalid GitHub URL';
         case 'npm':
             const npmUrl = metadata.name ? `https://www.npmjs.com/package/${metadata.name}` : 'Invalid NPM package name';
