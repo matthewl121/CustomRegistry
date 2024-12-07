@@ -12,8 +12,10 @@
  * - Dependency Pinnning: 10% - Presence and clarity of licensing
  * - Code Review: 10% - Presence and clarity of licensing
  */
-exports.__esModule = true;
-exports.validateMetricScores = exports.calculateNetScore = exports.METRIC_WEIGHTS = void 0;
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.METRIC_WEIGHTS = void 0;
+exports.calculateNetScore = calculateNetScore;
+exports.validateMetricScores = validateMetricScores;
 var log_1 = require("../utils/log");
 // Define weights as constants for maintainability
 exports.METRIC_WEIGHTS = {
@@ -55,7 +57,6 @@ function calculateNetScore(scores) {
         };
     }
 }
-exports.calculateNetScore = calculateNetScore;
 /**
  * Validates that all required metrics are present and valid
  * @param scores Object containing individual metric scores
@@ -71,4 +72,3 @@ function validateMetricScores(scores) {
         scores.dependencyPinning !== -1 &&
         scores.codeReview !== -1;
 }
-exports.validateMetricScores = validateMetricScores;

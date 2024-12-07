@@ -4,8 +4,9 @@
  * This metric assumes that a higher ratio of closed issues indicates better code correctness
  * and more active issue management.
  */
-exports.__esModule = true;
-exports.calcCorrectnessScore = exports.calcCorrectness = void 0;
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.calcCorrectness = calcCorrectness;
+exports.calcCorrectnessScore = calcCorrectnessScore;
 /**
  * Entry point for correctness metric calculation
  * @param repoData - Repository data from GitHub API response
@@ -24,7 +25,6 @@ function calcCorrectness(repoData) {
     }
     return calcCorrectnessScore(totalOpenIssues.totalCount, totalClosedIssues.totalCount);
 }
-exports.calcCorrectness = calcCorrectness;
 /**
  * Calculates the correctness score based on issue resolution ratio
  * @param totalOpenIssuesCount - Number of currently open issues
@@ -47,4 +47,3 @@ function calcCorrectnessScore(totalOpenIssuesCount, totalClosedIssuesCount) {
     // Calculate ratio of closed issues to total issues
     return totalClosedIssuesCount / totalIssues;
 }
-exports.calcCorrectnessScore = calcCorrectnessScore;

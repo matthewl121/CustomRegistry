@@ -4,8 +4,9 @@
  * maintainers handle issues and pull requests within the last month. The score is weighted equally
  * between issue and PR management.
  */
-exports.__esModule = true;
-exports.calcResponsivenessScore = exports.calcResponsiveness = void 0;
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.calcResponsiveness = calcResponsiveness;
+exports.calcResponsivenessScore = calcResponsivenessScore;
 /**
  * Entry point for responsiveness metric calculation
  * @param repoData - Repository data from GitHub API response
@@ -29,7 +30,6 @@ function calcResponsiveness(repoData) {
     }
     return calcResponsivenessScore(totalClosedIssues.nodes, totalOpenIssues.nodes, recentPullRequests.nodes, oneMonthAgo, isArchived !== null && isArchived !== void 0 ? isArchived : false);
 }
-exports.calcResponsiveness = calcResponsiveness;
 /**
  * Calculates the responsiveness score based on issue and PR resolution rates
  * @param closedIssues - Array of closed issues
@@ -82,4 +82,3 @@ function calcResponsivenessScore(closedIssues, openIssues, pullRequests, sinceDa
     // Return weighted average of issue and PR close ratios
     return 0.5 * issueCloseRatio + 0.5 * prCloseRatio;
 }
-exports.calcResponsivenessScore = calcResponsivenessScore;

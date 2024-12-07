@@ -329,7 +329,7 @@ const checkPackageExists = async (packageId) => {
 //         console.error('Error:', error);
 //         return createResponse(500, { message: "The package rating system choked on at least one of the metrics."});
 //     }
-};
+//};
 export const ratePackageHandler = async (event) => {
     console.log('Received event:', JSON.stringify(event, null, 2));
 
