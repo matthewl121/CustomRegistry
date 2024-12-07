@@ -242,6 +242,9 @@ export const ratePackageHandler = async (event) => {
     console.log('Received event:', JSON.stringify(event, null, 2));
 
     try {
+        if (!event) {
+            return createResponse(400, { message: 'There is missing field(s) in the PackageID' });
+        }
         // Input validation
         const packageId = event.pathParameters?.id;
         if (!packageId) {
