@@ -7,9 +7,14 @@ import { Readable } from 'stream';
 // Mock S3 client
 const s3Mock = mockClient(S3Client);
 
-// Helper function to create a readable stream
-const createReadableStream = (content) => {
-  return Readable.from(Buffer.from(content));
+// Create a mock gzipped buffer with proper signature
+const createMockGzipBuffer = () => {
+  // Create buffer with GZIP magic number (1f 8b)
+  const buffer = Buffer.alloc(3);
+  buffer[0] = 0x1f;
+  buffer[1] = 0x8b;
+  buffer[2] = 0x08; // DEFLATE compression method
+  return buffer;
 };
 
 describe('Cost Package Handler - Integration Tests', () => {
@@ -18,7 +23,7 @@ describe('Cost Package Handler - Integration Tests', () => {
   });
 
   test('should calculate costs with dependencies for cloudinary package', async () => {
-    // Mock HEAD request
+    // Mock HEAD request with proper metadata
     s3Mock.on(HeadObjectCommand).resolves({
       ContentLength: 1048576, // 1MB
       Metadata: {
@@ -26,24 +31,22 @@ describe('Cost Package Handler - Integration Tests', () => {
       }
     });
 
-    // Mock GET request
-    const mockStream = createReadableStream('mock content');
-    mockStream.pipe = jest.fn().mockReturnThis();
-    
+    // Mock GET request with proper gzipped content
+    const mockBuffer = createMockGzipBuffer();
     s3Mock.on(GetObjectCommand).resolves({
-      Body: mockStream
+      Body: Readable.from(mockBuffer)
     });
 
     const response = await packageCostHandler({
       id: "cloudinary_npm--2.5.1",
-      dependency: "true"
+      dependency: true
     });
 
     expect(response.statusCode).toBe(200);
     const body = JSON.parse(response.body);
     expect(body["cloudinary_npm--2.5.1"]).toBeDefined();
-    expect(body["cloudinary_npm--2.5.1"].standaloneCost).toBeDefined();
-    expect(body["cloudinary_npm--2.5.1"].totalCost).toBeDefined();
+    expect(typeof body["cloudinary_npm--2.5.1"].standaloneCost).toBe('number');
+    expect(typeof body["cloudinary_npm--2.5.1"].totalCost).toBe('number');
   });
 
   test('should calculate standalone cost for cloudinary package', async () => {
@@ -57,21 +60,22 @@ describe('Cost Package Handler - Integration Tests', () => {
 
     const response = await packageCostHandler({
       id: "cloudinary_npm--2.5.1",
-      dependency: "false"
+      dependency: false
     });
 
     expect(response.statusCode).toBe(200);
     const body = JSON.parse(response.body);
     expect(body["cloudinary_npm--2.5.1"]).toBeDefined();
-    expect(body["cloudinary_npm--2.5.1"].totalCost).toBeDefined();
+    expect(typeof body["cloudinary_npm--2.5.1"].totalCost).toBe('number');
   });
 
   test('should handle non-existent package', async () => {
+    // Mock HEAD request to fail
     s3Mock.on(HeadObjectCommand).rejects(new Error('NoSuchKey'));
 
     const response = await packageCostHandler({
       id: "non-existent-package--1.0.0",
-      dependency: "true"
+      dependency: true
     });
 
     expect(response.statusCode).toBe(404);
@@ -81,23 +85,23 @@ describe('Cost Package Handler - Integration Tests', () => {
 });
 
 describe('Cost Package Handler - Common Tests', () => {
-  beforeEach(() => {
-    s3Mock.reset();
-  });
-
   test('should handle invalid package ID', async () => {
     const response = await packageCostHandler({
       id: "../invalid/package/id",
-      dependency: "true"
+      dependency: true
     });
     expect(response.statusCode).toBe(400);
+    const body = JSON.parse(response.body);
+    expect(body.message).toBe("There is missing field(s) in the PackageID");
   });
 
   test('should handle missing package ID', async () => {
     const response = await packageCostHandler({
-      dependency: "true"
+      dependency: true
     });
     expect(response.statusCode).toBe(400);
+    const body = JSON.parse(response.body);
+    expect(body.message).toBe("There is missing field(s) in the PackageID");
   });
 
   test('should handle missing dependency flag', async () => {
@@ -115,5 +119,6 @@ describe('Cost Package Handler - Common Tests', () => {
     expect(response.statusCode).toBe(200);
     const body = JSON.parse(response.body);
     expect(body["cloudinary_npm--2.5.1"]).toBeDefined();
+    expect(typeof body["cloudinary_npm--2.5.1"].totalCost).toBe('number');
   });
 });
