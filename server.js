@@ -154,16 +154,16 @@ app.post('/package/:id', async (req, res) => {
 
         const event = {
             metadata: {
-                Name: metadata.Name,
-                Version: metadata.Version,
-                ID: metadata.ID,
+                Name: metadata?.Name,
+                Version: metadata?.Version,
+                ID: metadata?.ID,
             },
             data: {
-                Name: data.Name,
-                Content: data.Content || null,
-                URL: data.URL || null,
-                debloat: data.debloat || false,
-                JSProgram: data.JSProgram || '',
+                Name: data?.Name,
+                Content: data?.Content || null,
+                URL: data?.URL || null,
+                debloat: data?.debloat || false,
+                JSProgram: data?.JSProgram || '',
             }
         };
 

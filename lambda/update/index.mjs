@@ -142,7 +142,7 @@ export const updatePackageHandler = async (event) => {
   // MIGHT NEETO TO ADD 'pathParameters' OR SIMILAR TO 'event' FIELDS
   const bucketName = "acmeregistrys3";
   
-  if (!event?.metadata || !event?.data) {
+  if (!event || !event.metadata || !event.data) {
     console.error("/package/{id} POST: Either metadata or data is empty");
     return {
       statusCode: 400,
