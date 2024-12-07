@@ -304,6 +304,7 @@ export const ratePackageHandler = async (event) => {
         console.log("\n\nINSIDE RATEPACKAGE");
         console.log(customRegistryResult);
         console.log(JSON.stringify(customRegistryResult));
+        console.log(`BusFactor: ${customRegistryResult.BusFactor}`);
         const parsedResult = {
             // BusFactor: parseFloat(customRegistryResult.match(/"BusFactor":(\d+(\.\d+)?)/)?.[1] || 0),
             // BusFactorLatency: parseFloat(customRegistryResult.match(/"BusFactor_Latency":(\d+(\.\d+)?)/)?.[1] || 0),
