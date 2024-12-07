@@ -301,6 +301,9 @@ export const ratePackageHandler = async (event) => {
 
         // Parse customRegistryResult and map it to the required fields
         const customRegistryResult = metadata.customregistryresult || '';
+        console.log("\n\nINSIDE RATEPACKAGE");
+        console.log(customRegistryResult);
+        console.log(JSON.stringify(customRegistryResult));
         const parsedResult = {
             // BusFactor: parseFloat(customRegistryResult.match(/"BusFactor":(\d+(\.\d+)?)/)?.[1] || 0),
             // BusFactorLatency: parseFloat(customRegistryResult.match(/"BusFactor_Latency":(\d+(\.\d+)?)/)?.[1] || 0),
@@ -335,7 +338,10 @@ export const ratePackageHandler = async (event) => {
             PullRequestLatency: parseFloat(customRegistryResult.PullRequest_Latency || 0),
             NetScore: parseFloat(customRegistryResult.NetScore || 0),
             NetScoreLatency: parseFloat(customRegistryResult.NetScore_Latency || 0),
-        };        
+        };
+        console.log(parsedResult);
+        console.log(JSON.stringify(parsedResult));
+        console.log("\n\n");
 
         // Return only parsed results in the response
         return createResponse(200, {
