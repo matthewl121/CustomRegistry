@@ -3,3 +3,4 @@ phase1/node_modules
 !run.js
 phase1/repos/*
 node_modules/
+ss.json

@@ -262,7 +262,7 @@ export const uploadPackageHandler = async (event) => {
         } catch (error) {
           throw new Error(`/package: ${error.message}`);
         }
-        packageName = repo;
+        packageName = event.Name || repo;
 
         // Fetch repository info to get the default branch
         let defaultBranch;

@@ -1,4 +1,5 @@
 import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import { query } from "express";
 
 const s3 = new S3Client({ region: "us-east-1" });
 const BUCKET_NAME = "acmeregistrys3";
@@ -10,49 +11,102 @@ const VALID_VERSIONS = {
   TILDE: /^~\d+\.\d+\.\d+$/,        // e.g., "~1.2.3"
 };
 
+const listAllKeys = async (s3Client, bucket) => {
+  let isTruncated = true;
+  let continuationToken = null;
+  const keys = [];
+
+  while (isTruncated) {
+    const params = {
+      Bucket: bucket,
+      MaxKeys: 1000, // Maximum allowed by S3
+      ContinuationToken: continuationToken,
+    };
+
+    try {
+      const response = await s3Client.send(new ListObjectsV2Command(params));
+      if (response.Contents) {
+        response.Contents.forEach((item) => {
+          keys.push({ Key: item.Key });
+        });
+      }
+      isTruncated = response.IsTruncated;
+      continuationToken = response.NextContinuationToken;
+    } catch (error) {
+      console.error("Error listing objects:", error);
+      throw new Error(`Failed to list objects: ${error.message}`);
+    }
+  }
+
+  return keys;
+};
+
 export const postPackagesHandler = async (event) => {
   try {
     // Parse and validate the request body
     const queries = Array.isArray(event.queries) ? event.queries : [event.queries];
-    const invalidQuery = queries.find(query => !query.Version || !query.Name);
 
     console.log("event", event);
     console.log("queries:", queries);
     queries.forEach((query, index) => {
       console.log(`Query ${index + 1}:`, query);
       console.log(`Query ${index + 1} - Name:`, query.Name);
-      console.log(`Query ${index + 1} - Version:`, query.Version);
+      console.log(`Query ${index + 1} - Version:`, query?.Version);
     });
 
 
     // Check for wildcard case
     if (queries.some(query => query.Name === "*")) {
-      return {
-        statusCode: 413,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: "Too many packages returned.",
-        }),
-      };
-    }
+      const keys = await listAllKeys(s3, BUCKET_NAME);
 
-    if (invalidQuery) {
+      if (keys.length > 30) {
+        return {
+          statusCode: 413,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: "Too many packages returned.",
+          }),
+        };
+      }
+
+      if (keys.length === 0) {
+        // Return an empty array when no packages are found
+        return {
+          statusCode: 200,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify([]), // Empty array as JSON
+        };
+      }
+
+      // If keys are fewer than or equal to 30, return all packages
+      const matchingPackages = keys.map(({ Key }) => parsePackageKey(Key));
+      const formattedBody = JSON.stringify(
+        matchingPackages.map(item => ({
+          ...item,
+          Name: item.Name
+        }))
+      );
+      
+
       return {
-        statusCode: 400,
+        statusCode: 200,
         headers: {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type',
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          message: "There is missing field(s) in the PackageQuery or it is formed improperly, or is invalid.",
-        }),
+        body: formattedBody,
       };
     }
 
@@ -73,13 +127,12 @@ export const postPackagesHandler = async (event) => {
         }),
       };
     }
-    const formattedBody = matchingPackages
-      .map(item => {
-        // Capitalize the first letter of the Name field
-        item.Name = item.Name.charAt(0).toUpperCase() + item.Name.slice(1);
-        return JSON.stringify(item, null, 2);
-      })
-      .join('\n');
+    const formattedBody = JSON.stringify(
+      matchingPackages.map(item => ({
+        ...item,
+        Name: item.Name
+      }))
+    );
       
     return {
       statusCode: 200,
@@ -118,14 +171,16 @@ async function searchPackagesInS3(queries) {
 
   const { Contents = [] } = await s3.send(command);
   const packages = Contents.map(({ Key }) => parsePackageKey(Key));
+  console.log("Packages found:", packages)
 
   // Return packages that match any of the queries (OR logic)
-  return packages.filter(pkg => 
-    queries.some(query => 
-      pkg.Name === query.Name && matchVersion(pkg.Version, query.Version)
+  return packages.filter(pkg =>
+    queries.some(query =>
+      (pkg.Name === query.Name || pkg.Name.toLowerCase().includes(query.Name.toLowerCase())) && (!query.Version || matchVersion(pkg.Version, query.Version)) // Match all versions if Version is not specified
     )
   );
 }
+
 
 // Parse package name and version from the S3 object key
 function parsePackageKey(key) {

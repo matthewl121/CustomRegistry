@@ -2,9 +2,9 @@ import { S3Client, GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s
 import { x } from 'tar';
 import { gunzipSync } from 'zlib';
 import { Readable } from 'stream';
+import unzipper from 'unzipper';
 
 const s3 = new S3Client({ region: "us-east-1" });
-
 
 // Helper function to clean version strings for dependency names
 const cleanVersion = (version) => {
@@ -115,6 +115,97 @@ const getDepsFromTarGz = async (s3Response) => {
   }
 };
 
+// Helper function to extract dependencies from package.json from ZIP from S3
+const getDepsFromZip = async (s3Response) => {
+  try {
+    // Convert S3 response body stream to buffer
+    const buffer = s3Response.Body instanceof Readable
+      ? await streamToBuffer(s3Response.Body)
+      : s3Response.Body;
+
+    console.log(`Buffer size: ${buffer.length} bytes`);
+
+    // Create a readable stream from the buffer
+    const bufferStream = Readable.from(buffer);
+
+    // Initialize packageJson
+    let packageJson = null;
+
+    // Create a promise to wait until packageJson is set
+    const packageJsonPromise = new Promise((resolve, reject) => {
+      bufferStream
+        .pipe(unzipper.Parse())
+        .on('entry', (entry) => {
+          const filePath = entry.path;
+          const type = entry.type; // 'Directory' or 'File'
+          console.log(`Processing entry: ${filePath}`);
+
+          // Check if the entry is package.json and not inside node_modules
+          if (filePath.endsWith('package.json') && !filePath.includes('node_modules/')) {
+            let data = '';
+            entry.on('data', (chunk) => {
+              data += chunk.toString();
+            });
+            entry.on('end', () => {
+              try {
+                packageJson = JSON.parse(data);
+                console.log('Successfully extracted package.json from ZIP');
+                resolve();
+              } catch (err) {
+                reject(new Error(`Failed to parse package.json: ${err.message}`));
+              }
+            });
+            entry.on('error', (err) => {
+              reject(new Error(`Error reading package.json: ${err.message}`));
+            });
+          } else {
+            // Ignore other files
+            entry.autodrain();
+          }
+        })
+        .on('close', () => {
+          if (!packageJson) {
+            reject(new Error('No package.json found in ZIP file'));
+          }
+        })
+        .on('error', (err) => {
+          reject(err);
+        });
+    });
+
+    // Await the promise to ensure packageJson is set
+    await packageJsonPromise;
+
+    // At this point, packageJson should be set
+    const dependencies = packageJson.dependencies || {};
+    const devDependencies = packageJson.devDependencies || {};
+
+    const allDependencies = { ...dependencies, ...devDependencies };
+
+    const depsList = Object.entries(allDependencies).map(([name, version]) => ({
+      name,
+      version: cleanVersion(version)
+    }));
+
+    console.log(`Dependencies extracted: ${JSON.stringify(depsList)}`);
+
+    return depsList;
+  } catch (error) {
+    console.error('Error extracting dependencies from ZIP:', error);
+    return [];
+  }
+};
+
+// Generic helper function to extract dependencies based on upload method
+const getDeps = async (s3Response, uploadVia) => {
+  if (uploadVia === 'content') {
+    return await getDepsFromZip(s3Response);
+  } else {
+    // Default to tar.gz processing
+    return await getDepsFromTarGz(s3Response);
+  }
+};
+
 // Recursive function to process a package and its dependencies
 const processPackage = async (packageId, bucketName, processedPackages) => {
   // If already processed, return to prevent cycles
@@ -125,8 +216,9 @@ const processPackage = async (packageId, bucketName, processedPackages) => {
   let standaloneCost = 0.0;
   let totalCost = 0.0;
   let dependencies = [];
+  let uploadVia = 'url'; // Default assumption
 
-  // Attempt to fetch package size from S3
+  // Attempt to fetch package size and metadata from S3
   try {
     const headParams = {
       Bucket: bucketName,
@@ -135,21 +227,26 @@ const processPackage = async (packageId, bucketName, processedPackages) => {
     const headResponse = await s3.send(new HeadObjectCommand(headParams));
     const sizeBytes = headResponse.ContentLength;
     const sizeMB = Math.round((sizeBytes / (1024 * 1024)) * 100) / 100;
-    standaloneCost = Math.round(sizeMB * 10) / 10; // Rounded to 1 decimal
+    standaloneCost = Math.round(sizeMB * 100) / 100; // Rounded to 2 decimals
     totalCost = standaloneCost;
 
-    // Extract dependencies if package exists in S3
+    // Determine upload method from metadata
+    if (headResponse.Metadata && headResponse.Metadata.uploadvia) {
+      uploadVia = headResponse.Metadata.uploadvia;
+    }
+
+    // Extract dependencies based on upload method
     const getObjectParams = {
       Bucket: bucketName,
       Key: packageId,
     };
     const getObjectResponse = await s3.send(new GetObjectCommand(getObjectParams));
-    dependencies = await getDepsFromTarGz(getObjectResponse);
+    dependencies = await getDeps(getObjectResponse, uploadVia);
   } catch (error) {
     // If package not found in S3, use estimated size
     console.warn(`Package ${packageId} not found in S3. Using estimated size.`);
     const estimatedSizeMB = Math.round((500 * 1024 / (1024 * 1024)) * 100) / 100; // 0.5 MB
-    standaloneCost = Math.round(estimatedSizeMB * 10) / 10; // 0.5 rounded to 1 decimal
+    standaloneCost = Math.round(estimatedSizeMB * 100) / 100; // rounded to 2 decimals
     totalCost = standaloneCost;
     dependencies = []; // Assume no dependencies if not found
   }
@@ -169,7 +266,7 @@ const processPackage = async (packageId, bucketName, processedPackages) => {
   }
 
   // Update the totalCost after processing dependencies
-  processedPackages[packageId].totalCost = Math.round(totalCost * 10) / 10; // Rounded to 1 decimal
+  processedPackages[packageId].totalCost = Math.round(totalCost * 100) / 100; // Rounded to 2 decimals
 
   return processedPackages[packageId].totalCost;
 };
@@ -193,7 +290,7 @@ export const packageCostHandler = async (event) => {
     };
   }
 
-  // validate packageId format to prevent security issues
+  // Validate packageId format to prevent security issues
   const isValidPackageId = (id) => {
     const regex = /^[a-zA-Z0-9_\-\.]+$/;
     return regex.test(id);
@@ -213,6 +310,25 @@ export const packageCostHandler = async (event) => {
     };
   }
 
+  // Check that package exists in S3 using HEAD request
+  try {
+    await s3.send(new HeadObjectCommand({ Bucket: bucketName, Key: packageId }));
+  } catch (error) {
+    // If package does not exist, return a 404
+    console.error(`/package/{id}/cost: Package ${packageId} does not exist in S3.`);
+    return {
+      statusCode: 404,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ message: "Package does not exist." }),
+    };
+  }
+
+  // If the package exists, proceed
   const processedPackages = {};
 
   try {
@@ -222,7 +338,6 @@ export const packageCostHandler = async (event) => {
     // If dependencyFlag is not set, return only the selected package's totalCost
     if (!dependencyFlag) {
       const standaloneCost = processedPackages[packageId].standaloneCost;
-      const totalCost = processedPackages[packageId].totalCost;
       return {
         statusCode: 200,
         headers: {
@@ -235,10 +350,8 @@ export const packageCostHandler = async (event) => {
       };
     }
 
-    // Prepare the response body
+    // Prepare the response body for all processed packages
     const responseBody = {};
-
-    // Iterate over processedPackages to structure the response
     for (const [pkgId, costs] of Object.entries(processedPackages)) {
       responseBody[pkgId] = {
         "standaloneCost": costs.standaloneCost,

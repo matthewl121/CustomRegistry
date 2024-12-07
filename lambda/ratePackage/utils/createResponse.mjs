@@ -5,12 +5,15 @@
  * @param {Object} body - The response body as a JSON object.
  * @returns {Object} The HTTP response object.
  */
-export const createResponse = (statusCode, body) => {
+export const createResponse = (code, body) => {
     return {
-	statusCode,
+	    statusCode: code,
         headers: {
-            "Content-Type": "application/json",
-        },
-	body: JSON.stringify(body),
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Content-Type': 'application/json',
+          },
+	    body: JSON.stringify(body),
     };
 };

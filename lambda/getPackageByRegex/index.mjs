@@ -28,6 +28,23 @@ const listAllKeys = async (s3, bucket, prefix="") => {
 
 // Helper function for regex
 const isValidRegex = (pattern) => {
+  // Check for quantifiers that exceed a certain allowed size
+  // This simple check looks for any {min,max} quantifier pair
+  const quantifierPattern = /\{(\d+),(\d+)\}/g;
+  let match;
+  
+  while ((match = quantifierPattern.exec(pattern)) !== null) {
+    const [ , min, max ] = match;
+    const minVal = parseInt(min, 10);
+    const maxVal = parseInt(max, 10);
+    
+    // Customize these thresholds as desired
+    if (maxVal > 1000) {
+      throw new Error(`Invalid regex pattern: quantifier {${min},${max}} is too large.`);
+    }
+  }
+
+  // Now try to construct the regex
   let regex;
   try {
     regex = new RegExp(pattern);
@@ -38,14 +55,14 @@ const isValidRegex = (pattern) => {
 };
 const filterKeysByRegex = (keys, regex) => {
   return keys.filter(({ Key }) => {
-    // Split the key by '--' delimiter
     const parts = Key.split('--');
-    // Extract the package name (first part)
     const packageName = parts[0];
-    // Apply the regex to the package name only
-    return regex.test(packageName);
+    const match = packageName.match(regex);
+    // Check if we got a match and if the matched string equals the full packageName
+    return match && match[0] === packageName;
   });
 };
+
 
 // Helper function to transform keys to desired structure for response
 const transformKeys = (keys) => {
@@ -114,7 +131,6 @@ export const getPackageByRegexHandler = async (event) => {
 
     // get all matching keys
     const matchingKeys = filterKeysByRegex(allKeys, regexObject);
-
     console.log(`matchingKeys: ${JSON.stringify(matchingKeys)}`);
     
     if (matchingKeys.length === 0) {
