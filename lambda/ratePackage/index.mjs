@@ -394,22 +394,22 @@ export const ratePackageHandler = async (event) => {
         // Parse customRegistryResult and map it to the required fields
         const customRegistryResult = metadata.customregistryresult || '';
         const parsedResult = {
-            BusFactor: parseFloat(customRegistryResult.match(/BusFactor:(\d+(\.\d+)?)/)?.[1] || 0),
-            BusFactorLatency: parseFloat(customRegistryResult.match(/BusFactor_Latency:(\d+(\.\d+)?)/)?.[1] || 0),
-            Correctness: parseFloat(customRegistryResult.match(/Correctness:(\d+(\.\d+)?)/)?.[1] || 0),
-            CorrectnessLatency: parseFloat(customRegistryResult.match(/Correctness_Latency:(\d+(\.\d+)?)/)?.[1] || 0),
-            RampUp: parseFloat(customRegistryResult.match(/RampUp:(\d+(\.\d+)?)/)?.[1] || 0),
-            RampUpLatency: parseFloat(customRegistryResult.match(/RampUp_Latency: (\d+(\.\d+)?)/)?.[1] || 0),
-            ResponsiveMaintainer: parseFloat(customRegistryResult.match(/ResponsiveMaintainer:(\d+(\.\d+)?)/)?.[1] || 0),
-            ResponsiveMaintainerLatency: parseFloat(customRegistryResult.match(/ResponsiveMaintainer_Latency:(\d+(\.\d+)?)/)?.[1] || 0),
-            LicenseScore: parseFloat(customRegistryResult.match(/LicenseScore:(\d+(\.\d+)?)/)?.[1] || 0),
-            LicenseScoreLatency: parseFloat(customRegistryResult.match(/LicenseScore_Latency:(\d+(\.\d+)?)/)?.[1] || 0),
-            GoodPinningPractice: parseFloat(customRegistryResult.match(/GoodPinningPractice:(\d+(\.\d+)?)/)?.[1] || 0),
-            GoodPinningPracticeLatency: parseFloat(customRegistryResult.match(/GoodPinningPractice_Latency:(\d+(\.\d+)?)/)?.[1] || 0),
-            PullRequest: parseFloat(customRegistryResult.match(/PullRequest:(\d+(\.\d+)?)/)?.[1] || 0),
-            PullRequestLatency: parseFloat(customRegistryResult.match(/PullRequest_Latency: (\d+(\.\d+)?)/)?.[1] || 0),
-            NetScore: parseFloat(customRegistryResult.match(/NetScore:(\d+(\.\d+)?)/)?.[1] || 0),
-            NetScoreLatency: parseFloat(customRegistryResult.match(/NetScore_Latency:(\d+(\.\d+)?)/)?.[1] || 0),
+            BusFactor: parseFloat(customRegistryResult.match(/"BusFactor":(\d+(\.\d+)?)/)?.[1] || 0),
+            BusFactorLatency: parseFloat(customRegistryResult.match(/"BusFactor_Latency":(\d+(\.\d+)?)/)?.[1] || 0),
+            Correctness: parseFloat(customRegistryResult.match(/"Correctness":(\d+(\.\d+)?)/)?.[1] || 0),
+            CorrectnessLatency: parseFloat(customRegistryResult.match(/"Correctness_Latency":(\d+(\.\d+)?)/)?.[1] || 0),
+            RampUp: parseFloat(customRegistryResult.match(/"RampUp":(\d+(\.\d+)?)/)?.[1] || 0),
+            RampUpLatency: parseFloat(customRegistryResult.match(/"RampUp_Latency":(\d+(\.\d+)?)/)?.[1] || 0),
+            ResponsiveMaintainer: parseFloat(customRegistryResult.match(/"ResponsiveMaintainer:(\d+(\.\d+)?)/)?.[1] || 0),
+            ResponsiveMaintainerLatency: parseFloat(customRegistryResult.match(/ResponsiveMaintainer_Latency":(\d+(\.\d+)?)/)?.[1] || 0),
+            LicenseScore: parseFloat(customRegistryResult.match(/"LicenseScore":(\d+(\.\d+)?)/)?.[1] || 0),
+            LicenseScoreLatency: parseFloat(customRegistryResult.match(/"LicenseScore_Latency":(\d+(\.\d+)?)/)?.[1] || 0),
+            GoodPinningPractice: parseFloat(customRegistryResult.match(/"GoodPinningPractice":(\d+(\.\d+)?)/)?.[1] || 0),
+            GoodPinningPracticeLatency: parseFloat(customRegistryResult.match(/"GoodPinningPractice_Latency":(\d+(\.\d+)?)/)?.[1] || 0),
+            PullRequest: parseFloat(customRegistryResult.match(/"PullRequest":(\d+(\.\d+)?)/)?.[1] || 0),
+            PullRequestLatency: parseFloat(customRegistryResult.match(/"PullRequest_Latency":(\d+(\.\d+)?)/)?.[1] || 0),
+            NetScore: parseFloat(customRegistryResult.match(/"NetScore":(\d+(\.\d+)?)/)?.[1] || 0),
+            NetScoreLatency: parseFloat(customRegistryResult.match(/"NetScore_Latency":(\d+(\.\d+)?)/)?.[1] || 0),
         };        
 
         // Return only parsed results in the response
