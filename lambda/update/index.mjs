@@ -142,6 +142,19 @@ export const updatePackageHandler = async (event) => {
   // MIGHT NEETO TO ADD 'pathParameters' OR SIMILAR TO 'event' FIELDS
   const bucketName = "acmeregistrys3";
   const debloat = event.data.debloat === "true";
+
+  if (!event.metadata || !event.data) {
+    console.error("/package/{id} POST: Either metadata or data is empty");
+    return {
+      statusCode: 400,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+      body: JSON.stringify({ message: "There is missing field(s) in the PackageID or it is formed improperly, or is invalid."})
+    };
+  }
   
   const packageName = event.metadata.Name;
   const packageVersion = event.metadata.Version;
