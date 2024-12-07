@@ -336,7 +336,10 @@ export const packageCostHandler = async (event) => {
     await processPackage(packageId, bucketName, processedPackages);
 
     // If dependencyFlag is not set, return only the selected package's totalCost
+    console.log("dependencyFlag is ", dependencyFlag)
+
     if (!dependencyFlag) {
+      console.log("dependencyFlag is ", dependencyFlag)
       const standaloneCost = processedPackages[packageId].standaloneCost;
       return {
         statusCode: 200,
