@@ -302,13 +302,17 @@ export const ratePackageHandler = async (event) => {
             }
         }
 
+        /* 
         // Parse customRegistryResult and map it to the required fields
-        const customRegistryResult = typeof metadata.customregistryresult === 'string'
-            ? JSON.parse(metadata.customregistryresult)
-            : metadata.customregistryresult;
+        let customRegistryResult;
+        if (typeof metadata.customregistryresult === 'string') {
+            customRegistryResult = JSON.parse(metadata.customregistryresult);
+        } else {
+            customRegistryResult = metadata.customregistryresult;
+        }
+
         console.log("\n\nINSIDE RATEPACKAGE");
         console.log(customRegistryResult);
-        console.log(JSON.stringify(customRegistryResult));
         console.log(`BusFactor: ${customRegistryResult.BusFactor}`);
         const parsedResult = {
             BusFactor: parseFloat(customRegistryResult.BusFactor || 0),
@@ -329,8 +333,36 @@ export const ratePackageHandler = async (event) => {
             NetScoreLatency: parseFloat(customRegistryResult.NetScore_Latency || 0),
         };
         console.log(parsedResult);
-        console.log(JSON.stringify(parsedResult));
         console.log("\n\n");
+        */
+
+       // Parse customRegistryResult and map it to the required fields
+       const customRegistryResult = metadata.customregistryresult || '';
+       console.log("\n\nINSIDE RATEPACKAGE");
+       console.log(customRegistryResult);
+       console.log(JSON.stringify(customRegistryResult));
+       console.log(`BusFactor: ${customRegistryResult.BusFactor}`);
+       const parsedResult = {
+           BusFactor: parseFloat(customRegistryResult.BusFactor || 0),
+           BusFactorLatency: parseFloat(customRegistryResult.BusFactor_Latency || 0),
+           Correctness: parseFloat(customRegistryResult.Correctness || 0),
+           CorrectnessLatency: parseFloat(customRegistryResult.Correctness_Latency || 0),
+           RampUp: parseFloat(customRegistryResult.RampUp || 0),
+           RampUpLatency: parseFloat(customRegistryResult.RampUp_Latency || 0),
+           ResponsiveMaintainer: parseFloat(customRegistryResult.ResponsiveMaintainer || 0),
+           ResponsiveMaintainerLatency: parseFloat(customRegistryResult.ResponsiveMaintainer_Latency || 0),
+           LicenseScore: parseFloat(customRegistryResult.LicenseScore || 0),
+           LicenseScoreLatency: parseFloat(customRegistryResult.LicenseScore_Latency || 0),
+           GoodPinningPractice: parseFloat(customRegistryResult.GoodPinningPractice || 0),
+           GoodPinningPracticeLatency: parseFloat(customRegistryResult.GoodPinningPractice_Latency || 0),
+           PullRequest: parseFloat(customRegistryResult.PullRequest || 0),
+           PullRequestLatency: parseFloat(customRegistryResult.PullRequest_Latency || 0),
+           NetScore: parseFloat(customRegistryResult.NetScore || 0),
+           NetScoreLatency: parseFloat(customRegistryResult.NetScore_Latency || 0),
+       };
+       console.log(parsedResult);
+       console.log(JSON.stringify(parsedResult));
+       console.log("\n\n");
 
         // Return only parsed results in the response
         return createResponse(200, {
