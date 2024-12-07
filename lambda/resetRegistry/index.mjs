@@ -84,7 +84,7 @@ export const resetRegistryHandler = async (event) => {
         statusCode: 200,
         headers: {
           'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Methods': 'DELETE',
           'Access-Control-Allow-Headers': 'Content-Type',
           'Content-Type': 'application/json',
         },
@@ -100,7 +100,7 @@ export const resetRegistryHandler = async (event) => {
       statusCode: 200,
       headers: {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Methods': 'DELETE',
         'Access-Control-Allow-Headers': 'Content-Type',
         'Content-Type': 'application/json',
       },
@@ -113,7 +113,7 @@ export const resetRegistryHandler = async (event) => {
       statusCode: 500,
       headers: {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Methods': 'DELETE',
         'Access-Control-Allow-Headers': 'Content-Type',
         'Content-Type': 'application/json',
       },
