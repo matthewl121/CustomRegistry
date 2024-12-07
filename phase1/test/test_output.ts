@@ -26,7 +26,7 @@ try {
    }
 
    // Extract line coverage using regex 
-   const lineCoverageRegex = /All files\s*\|\s*(\d+\.\d+)\s*\|\s*(\d+\.\d+)\s*\|\s*(\d+\.\d+)\s*\|\s*(\d+\.\d+)/;
+   const lineCoverageRegex = /All files\s+\|\s+(\d+(?:\.\d+)?)\s+\|\s+(\d+(?:\.\d+)?)\s+\|\s+(\d+(?:\.\d+)?)\s+\|\s+(\d+(?:\.\d+)?)\s*\|/;
    const lineCoverageMatch = data.match(lineCoverageRegex);
    let lineCoverage = -1;
    if (lineCoverageMatch) {

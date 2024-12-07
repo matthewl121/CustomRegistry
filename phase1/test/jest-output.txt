@@ -1,4 +1,4 @@
-PASS test/index.test.ts (31.218 s)
+PASS test/index.test.ts (24.817 s)
 --------------------|---------|----------|---------|---------|----------------------------------------------
 File                | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s                            
 --------------------|---------|----------|---------|---------|----------------------------------------------
@@ -14,4 +14,4 @@ All files           |   78.82 |    58.97 |     100 |   76.62 |
 Test Suites: 1 passed, 1 total
 Tests:       33 passed, 33 total
 Snapshots:   0 total
-Time:        32.074 s
+Time:        25.494 s

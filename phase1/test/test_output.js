@@ -23,7 +23,7 @@ try {
         total = parseInt(testCountMatch[2], 10);
     }
     // Extract line coverage using regex 
-    var lineCoverageRegex = /All files\s*\|\s*(\d+\.\d+)\s*\|\s*(\d+\.\d+)\s*\|\s*(\d+\.\d+)\s*\|\s*(\d+\.\d+)/;
+    var lineCoverageRegex = /All files\s+\|\s+(\d+(?:\.\d+)?)\s+\|\s+(\d+(?:\.\d+)?)\s+\|\s+(\d+(?:\.\d+)?)\s+\|\s+(\d+(?:\.\d+)?)\s*\|/;
     var lineCoverageMatch = data.match(lineCoverageRegex);
     var lineCoverage = -1;
     if (lineCoverageMatch) {
