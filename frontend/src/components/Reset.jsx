@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { apiPost } from '../api/api.ts'; // Assume apiPost is defined for making POST requests
+import { apiDelete } from '../api/api.ts';
 
 const Reset = () => {
     const [isResetting, setIsResetting] = useState(false);
@@ -10,7 +10,7 @@ const Reset = () => {
         setError(null);
 
         try {
-            const response = await apiPost('/reset');
+            const response = await apiDelete('/reset');
             if (response.message !== "Registry is reset.") {
                 throw new Error('Failed to reset registry');
             }
