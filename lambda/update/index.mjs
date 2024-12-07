@@ -142,6 +142,7 @@ export const updatePackageHandler = async (event) => {
   // MIGHT NEETO TO ADD 'pathParameters' OR SIMILAR TO 'event' FIELDS
   const bucketName = "acmeregistrys3";
   const debloat = event.data.debloat === "true";
+  console.log("passed in event:", JSON.stringify(event))
 
   if (!event.metadata || !event.data) {
     console.error("/package/{id} POST: Either metadata or data is empty");
