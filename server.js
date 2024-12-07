@@ -117,8 +117,8 @@ app.post('/package', async (req, res) => {
 app.post('/package/byRegEx', async (req, res) => {
     try {
         console.log("\n\nPackage by regex endpoint.");
-        console.log(`Request body: ${JSON.stringify(req.body)}`);
-        const event = { RegEx: req.body.RegEx };
+        console.log(`Request body: ${JSON.stringify(req?.body)}`);
+        const event = { RegEx: req?.body?.RegEx };
         const response = await getPackageByRegexHandler(event);
         console.log("Response:", JSON.stringify(response));
         return res.status(response.statusCode).json(JSON.parse(response.body));
@@ -131,7 +131,7 @@ app.post('/package/byRegEx', async (req, res) => {
 app.post('/packages', async (req, res) => {
     try {
         console.log("\n\nPackages query endpoint (postPackages).");
-        const queries = req.body;
+        const queries = req?.body;
         console.log("Request queries:", queries);
         const event = { queries };
         const response = await postPackagesHandler(event);
@@ -147,7 +147,7 @@ app.post('/packages', async (req, res) => {
 app.post('/package/:id', async (req, res) => {
     try {
         console.log("\n\nPackage update endpoint.")
-        const { metadata, data } = req.body;
+        const { metadata, data } = req?.body;
         console.log("Request data: ", data);
         console.log("Request metadata: ", metadata);
 
@@ -198,7 +198,7 @@ app.get('/tracks', async (req, res) => {
 // Package rate endpoint
 app.get('/package/:id/rate', async (req, res) => {
     console.log("\n\nPackage rate endpoint.")
-    const { id } = req.params;
+    const { id } = req?.params;
     console.log(`Request ID: ${id}`);
     try {
         const event = {
@@ -226,8 +226,8 @@ app.get('/package/:id/rate', async (req, res) => {
 app.get('/package/:id/cost', async (req, res) => {
     console.log("\n\nPackage cost endpoint")
     try {
-        const id = req.params.id;
-        const dependency = req.query.dependency === 'true';
+        const id = req?.params?.id;
+        const dependency = req?.query?.dependency === 'true';
 
         const event = {
             id,

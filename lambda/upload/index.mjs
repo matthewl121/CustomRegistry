@@ -230,7 +230,19 @@ const getNpmTarballContent = async (tarballUrl, options = {}) => {
 
 
 export const uploadPackageHandler = async (event) => {
-  // MIGHT NEETO TO ADD 'pathParameters' OR SIMILAR TO 'event' FIELDS
+  if (!event) {
+    console.error(`/package: Package data is empty`);
+    return {
+      statusCode: 400,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+      body: JSON.stringify({ message: "There is missing field(s) in the PackageData or it is formed improperly (e.g. Content and URL ar both set)" }),
+    };
+  }
+
   const bucketName = "acmeregistrys3";
   const debloat = event.debloat === "true";
 
@@ -238,6 +250,7 @@ export const uploadPackageHandler = async (event) => {
   let content;
   let packageVersion;
   let uploadVia;
+
 
   // Check if Content or URL is provided
   if (event.Content) {

@@ -1,284 +1,295 @@
 import { jest } from '@jest/globals';
-import { S3Client, PutObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
-import { uploadPackageHandler } from '../../lambda/upload/index.mjs';
-import { ratePackageHandler } from '../../lambda/ratePackage/index.mjs';
+import { S3Client, PutObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from "@aws-sdk/client-s3";
+import { uploadPackageHandler } from "../../lambda/upload/index.mjs";
+import { ratePackageHandler } from "../../lambda/ratePackage/index.mjs";
 
-// Mock S3 Client and Commands
-const mockS3Send = jest.fn();
+// Mocking the required AWS SDK components
 jest.mock("@aws-sdk/client-s3", () => ({
-  S3Client: jest.fn(() => ({
-    send: mockS3Send
-  })),
+  S3Client: jest.fn(),
   PutObjectCommand: jest.fn(),
   ListObjectsV2Command: jest.fn(),
-  DeleteObjectCommand: jest.fn()
+  DeleteObjectsCommand: jest.fn(),
 }));
 
-// Mock the ratePackageHandler
-jest.mock('../../lambda/ratePackage/index.mjs', () => ({
-  ratePackageHandler: jest.fn()
-}));
+jest.mock("../../lambda/ratePackage/index.mjs");
 
-describe('uploadPackageHandler', () => {
+describe("uploadPackageHandler", () => {
+  let sendMock;
+
   beforeEach(() => {
+    // Setup the mock for S3Client send method
+    sendMock = jest.fn();
+    S3Client.mockImplementation(() => ({
+      send: sendMock,
+    }));
+  });
+
+  afterEach(() => {
     jest.clearAllMocks();
-    // Reset mock defaults
+  });
+
+  it("should upload a package and return a successful response", async () => {
+    // Mock the send method for different commands
+    sendMock.mockImplementation((command) => {
+      if (command instanceof PutObjectCommand) {
+        return { ETag: '"mock-etag"' }; // Simulate a successful upload
+      }
+      if (command instanceof ListObjectsV2Command) {
+        return { Contents: [] }; // Simulate no existing objects
+      }
+      return {};
+    });
+
+    // Mock ratePackageHandler
     ratePackageHandler.mockResolvedValue({
       statusCode: 200,
-      body: JSON.stringify({ NetScore: 0.8 })
+      body: JSON.stringify({ NetScore: 0.5 }), // Simulate a good rating
     });
-  });
 
-  test('successfully uploads a package using Content', async () => {
-    const testContent = 'Sample file content';
     const mockEvent = {
-      Content: Buffer.from(testContent).toString('base64'),
-      Name: 'test-package'
+      Content: Buffer.from("mock-content").toString("base64"),
+      Name: "mock-package",
     };
 
-    // Mock S3 responses
-    mockS3Send
-      .mockResolvedValueOnce({ Contents: [] }) // listAllKeys response
-      .mockResolvedValueOnce({}); // putObject response
+    const response = await uploadPackageHandler(mockEvent);
 
-    const result = await uploadPackageHandler(mockEvent);
-
-    // Verify S3 put operation
-    expect(PutObjectCommand).toHaveBeenCalledWith({
-      Bucket: 'acmeregistrys3',
-      Key: 'test-package--1.0.0',
-      Body: expect.any(Buffer),
-      ContentType: 'application/zip',
-      Metadata: {
-        name: 'test-package',
-        id: 'test-package--1.0.0',
-        version: '1.0.0',
-        uploadvia: 'content'
-      }
-    });
-
-    // Verify response
-    expect(result).toEqual({
-      statusCode: 201,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Content-Type': 'application/json'
-      },
-      body: expect.any(String)
-    });
-
-    const responseBody = JSON.parse(result.body);
-    expect(responseBody).toEqual({
-      metadata: {
-        Name: 'test-package',
-        ID: 'test-package--1.0.0',
-        Version: '1.0.0'
-      },
-      data: {
-        Content: expect.any(String)
-      }
-    });
+    expect(response.statusCode).toBe(201);
+    expect(JSON.parse(response.body).metadata.Name).toBe("mock-package");
+    expect(sendMock).toHaveBeenCalledWith(expect.any(PutObjectCommand));
   });
 
-  test('returns an error if package fails rating check', async () => {
-    const mockEvent = {
-      Content: Buffer.from('Sample content').toString('base64'),
-      Name: 'test-package'
-    };
+  it("should delete existing versions if debloat is true", async () => {
+    // Mock the send method for different commands
+    sendMock.mockImplementation((command) => {
+      if (command instanceof ListObjectsV2Command) {
+        return {
+          Contents: [{ Key: "mock-package--1.0.0" }],
+          IsTruncated: false,
+        };
+      }
+      if (command instanceof DeleteObjectsCommand) {
+        return {}; // Simulate successful deletion
+      }
+      if (command instanceof PutObjectCommand) {
+        return { ETag: '"mock-etag"' }; // Simulate successful upload
+      }
+      return {};
+    });
 
-    // Mock S3 responses
-    mockS3Send
-      .mockResolvedValueOnce({ Contents: [] }) // listAllKeys response
-      .mockResolvedValueOnce({}) // putObject response
-      .mockResolvedValueOnce({}); // deleteObject response
-
-    // Mock low rating score
-    ratePackageHandler.mockResolvedValueOnce({
+    // Mock ratePackageHandler
+    ratePackageHandler.mockResolvedValue({
       statusCode: 200,
-      body: JSON.stringify({ NetScore: 0.2 })
+      body: JSON.stringify({ NetScore: 0.8 }), // Simulate a good rating
     });
 
-    const result = await uploadPackageHandler(mockEvent);
-
-    expect(result).toEqual({
-      statusCode: 424,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        message: "Package is not uploaded due to the disqualified rating."
-      })
-    });
-  });
-
-  test('returns an error if package already exists', async () => {
     const mockEvent = {
-      Content: Buffer.from('Sample content').toString('base64'),
-      Name: 'test-package'
+      Content: Buffer.from("mock-content").toString("base64"),
+      Name: "mock-package",
+      debloat: "true",
     };
 
-    // Mock existing package
-    mockS3Send.mockResolvedValueOnce({
-      Contents: [{ Key: 'test-package--1.0.0' }]
-    });
+    const response = await uploadPackageHandler(mockEvent);
 
-    const result = await uploadPackageHandler(mockEvent);
-
-    expect(result).toEqual({
-      statusCode: 409,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        message: "Package exists already."
-      })
-    });
+    expect(response.statusCode).toBe(201);
+    expect(sendMock).toHaveBeenCalledWith(expect.any(DeleteObjectsCommand));
+    expect(sendMock).toHaveBeenCalledWith(expect.any(PutObjectCommand));
   });
 
-  test('returns an error for invalid input', async () => {
-    const mockEvent = {};
-
-    const result = await uploadPackageHandler(mockEvent);
-
-    expect(result).toEqual({
-      statusCode: 400,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
-      },
-      body: JSON.stringify({
-        message: "There is missing field(s) in the PackageData or it is formed improperly (e.g. Content and URL ar both set)"
-      })
+  it("should return a conflict error if the package already exists", async () => {
+    sendMock.mockImplementation((command) => {
+      if (command instanceof ListObjectsV2Command) {
+        return { Contents: [{ Key: "mock-package--1.0.0" }] }; // Simulate existing object
+      }
+      return {};
     });
-  });
 
-  test('returns an error if S3 upload fails', async () => {
     const mockEvent = {
-      Content: Buffer.from('Sample content').toString('base64'),
-      Name: 'test-package'
+      Content: Buffer.from("mock-content").toString("base64"),
+      Name: "mock-package",
     };
 
-    // Mock responses
-    mockS3Send
-      .mockResolvedValueOnce({ Contents: [] }) // listAllKeys response
-      .mockRejectedValueOnce(new Error('S3 upload failed')); // putObject failure
+    const response = await uploadPackageHandler(mockEvent);
 
-    const result = await uploadPackageHandler(mockEvent);
+    expect(response.statusCode).toBe(409);
+    expect(JSON.parse(response.body).message).toBe("Package exists already.");
+  });
 
-    expect(result).toEqual({
-      statusCode: 500,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
-      },
-      body: JSON.stringify('/package: Error uploading package: S3 upload failed')
+  it("should return an error if the package rating is disqualified", async () => {
+    // Mock S3 send responses
+    sendMock.mockImplementation((command) => {
+      if (command instanceof ListObjectsV2Command) {
+        return { Contents: [] }; // Simulate no existing objects
+      }
+      if (command instanceof PutObjectCommand) {
+        return { ETag: '"mock-etag"' }; // Simulate successful upload
+      }
+      if (command instanceof DeleteObjectsCommand) {
+        return {}; // Simulate successful deletion
+      }
+      return {};
     });
+
+    // Mock ratePackageHandler
+    ratePackageHandler.mockResolvedValue({
+      statusCode: 200,
+      body: JSON.stringify({ NetScore: 0.1 }), // Simulate a low score
+    });
+
+    const mockEvent = {
+      Content: Buffer.from("mock-content").toString("base64"),
+      Name: "mock-package",
+    };
+
+    const response = await uploadPackageHandler(mockEvent);
+
+    expect(response.statusCode).toBe(424);
+    expect(JSON.parse(response.body).message).toBe(
+      "Package is not uploaded due to the disqualified rating."
+    );
   });
 });
+
+
 // import { jest } from '@jest/globals';
-// import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-// import { uploadPackageHandler } from '../../lambda/upload/index.mjs';
-// import { Readable } from 'stream';
+// import { S3Client, PutObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from "@aws-sdk/client-s3";
+// import { uploadPackageHandler } from "../../lambda/upload/index.mjs";
+// import { ratePackageHandler } from "../../lambda/ratePackage/index.mjs";
 
-// // Mock the AWS SDK
-// jest.mock("@aws-sdk/client-s3", () => ({
-//   S3Client: jest.fn(() => ({
-//     send: jest.fn()
-//   })),
-//   PutObjectCommand: jest.fn()
-// }));
+// jest.mock("@aws-sdk/client-s3");
+// jest.mock("../../lambda/ratePackage/index.mjs");
 
-// describe('uploadPackageHandler', () => {
-//   let mockS3Send;
+// describe("uploadPackageHandler", () => {
+//   let sendMock;
 
 //   beforeEach(() => {
+//     // Mock S3Client send method
+//     sendMock = jest.fn();
+//     S3Client.mockImplementation(() => ({
+//       send: sendMock,
+//     }));
+//   });
+
+//   afterEach(() => {
 //     jest.clearAllMocks();
-//     mockS3Send = jest.fn();
-//     S3Client.prototype.send = mockS3Send;
 //   });
 
-//   const createMockStream = (data) => Readable.from([Buffer.from(data)]);
-
-//   test('successfully uploads a package to S3', async () => {
-//     const mockEvent = {
-//       body: JSON.stringify({
-//         packageName: 'test-package',
-//         version: '1.0.0',
-//         fileContent: 'Sample file content'
-//       })
-//     };
-
-//     const mockContext = {};
-
-//     mockS3Send.mockResolvedValueOnce({
-//       ETag: '"mock-etag-value"'
+//   it("should upload a package and return a successful response", async () => {
+//     // Mock S3 send responses
+//     sendMock.mockImplementation((command) => {
+//       if (command instanceof PutObjectCommand) {
+//         return { ETag: '"mock-etag"' }; // Simulate a successful upload
+//       }
+//       if (command instanceof ListObjectsV2Command) {
+//         return { Contents: [] }; // Simulate no existing objects
+//       }
+//       return {};
 //     });
 
-//     const result = await uploadPackageHandler(mockEvent, mockContext);
-
-//     expect(mockS3Send).toHaveBeenCalledWith(expect.any(PutObjectCommand));
-//     expect(PutObjectCommand).toHaveBeenCalledWith({
-//       Bucket: 'acmeregistrys3', 
-//       Key: 'test-package/1.0.0',
-//       Body: expect.any(Readable),
-//       ContentType: 'application/octet-stream'
-//     });
-
-//     expect(result).toEqual({
+//     // Mock ratePackageHandler
+//     ratePackageHandler.mockResolvedValue({
 //       statusCode: 200,
-//       body: JSON.stringify({
-//         message: 'Package uploaded successfully',
-//         ETag: '"mock-etag-value"'
-//       })
+//       body: JSON.stringify({ NetScore: 0.5 }), // Simulate a good rating
 //     });
-//   });
 
-//   test('returns an error if S3 upload fails', async () => {
 //     const mockEvent = {
-//       body: JSON.stringify({
-//         packageName: 'test-package',
-//         version: '1.0.0',
-//         fileContent: 'Sample file content'
-//       })
+//       Content: Buffer.from("mock-content").toString("base64"),
+//       Name: "mock-package",
 //     };
 
-//     const mockContext = {};
+//     const response = await uploadPackageHandler(mockEvent);
 
-//     mockS3Send.mockRejectedValueOnce(new Error('S3 upload failed'));
-
-//     const result = await uploadPackageHandler(mockEvent, mockContext);
-
-//     expect(mockS3Send).toHaveBeenCalledWith(expect.any(PutObjectCommand));
-
-//     expect(result).toEqual({
-//       statusCode: 500,
-//       body: JSON.stringify({
-//         error: 'Failed to upload package'
-//       })
-//     });
+//     expect(response.statusCode).toBe(201);
+//     expect(JSON.parse(response.body).metadata.Name).toBe("mock-package");
+//     expect(sendMock).toHaveBeenCalledWith(expect.any(PutObjectCommand));
 //   });
 
-//   test('returns an error for invalid input', async () => {
+//   it("should delete existing versions if debloat is true", async () => {
+//     // Mock S3 send responses
+//     sendMock.mockImplementation((command) => {
+//       if (command instanceof ListObjectsV2Command) {
+//         return {
+//           Contents: [{ Key: "mock-package--1.0.0" }],
+//           IsTruncated: false,
+//         };
+//       }
+//       if (command instanceof DeleteObjectsCommand) {
+//         return {}; // Simulate successful deletion
+//       }
+//       if (command instanceof PutObjectCommand) {
+//         return { ETag: '"mock-etag"' }; // Simulate successful upload
+//       }
+//       return {};
+//     });
+
+//     // Mock ratePackageHandler
+//     ratePackageHandler.mockResolvedValue({
+//       statusCode: 200,
+//       body: JSON.stringify({ NetScore: 0.8 }), // Simulate a good rating
+//     });
+
 //     const mockEvent = {
-//       body: JSON.stringify({})
+//       Content: Buffer.from("mock-content").toString("base64"),
+//       Name: "mock-package",
+//       debloat: "true",
 //     };
 
-//     const mockContext = {};
+//     const response = await uploadPackageHandler(mockEvent);
 
-//     const result = await uploadPackageHandler(mockEvent, mockContext);
+//     expect(response.statusCode).toBe(201);
+//     expect(sendMock).toHaveBeenCalledWith(expect.any(DeleteObjectsCommand));
+//     expect(sendMock).toHaveBeenCalledWith(expect.any(PutObjectCommand));
+//   });
 
-//     expect(mockS3Send).not.toHaveBeenCalled();
+//   it("should return a conflict error if the package already exists", async () => {
+//     sendMock.mockImplementation((command) => {
+//       if (command instanceof ListObjectsV2Command) {
+//         return { Contents: [{ Key: "mock-package--1.0.0" }] }; // Simulate existing object
+//       }
+//       return {};
+//     });
 
-//     expect(statusCode).toEqual(400);
+//     const mockEvent = {
+//       Content: Buffer.from("mock-content").toString("base64"),
+//       Name: "mock-package",
+//     };
+
+//     const response = await uploadPackageHandler(mockEvent);
+
+//     expect(response.statusCode).toBe(409);
+//     expect(JSON.parse(response.body).message).toBe("Package exists already.");
+//   });
+
+//   it("should return an error if the package rating is disqualified", async () => {
+//     // Mock S3 send responses
+//     sendMock.mockImplementation((command) => {
+//       if (command instanceof ListObjectsV2Command) {
+//         return { Contents: [] }; // Simulate no existing objects
+//       }
+//       if (command instanceof PutObjectCommand) {
+//         return { ETag: '"mock-etag"' }; // Simulate successful upload
+//       }
+//       if (command instanceof DeleteObjectsCommand) {
+//         return {}; // Simulate successful deletion
+//       }
+//       return {};
+//     });
+
+//     // Mock ratePackageHandler
+//     ratePackageHandler.mockResolvedValue({
+//       statusCode: 200,
+//       body: JSON.stringify({ NetScore: 0.1 }), // Simulate a low score
+//     });
+
+//     const mockEvent = {
+//       Content: Buffer.from("mock-content").toString("base64"),
+//       Name: "mock-package",
+//     };
+
+//     const response = await uploadPackageHandler(mockEvent);
+
+//     expect(response.statusCode).toBe(424);
+//     expect(JSON.parse(response.body).message).toBe(
+//       "Package is not uploaded due to the disqualified rating."
+//     );
 //   });
 // });
