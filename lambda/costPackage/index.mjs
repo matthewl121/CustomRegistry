@@ -274,6 +274,20 @@ const processPackage = async (packageId, bucketName, processedPackages) => {
 export const packageCostHandler = async (event) => {
   const bucketName = "acmeregistrys3";
 
+  if (!event) {
+    console.error("/package/{id}/cost: Missing package ID in path parameters");
+    return {
+      statusCode: 400,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ message: "There is missing field(s) in the PackageID" }),
+    };
+  }
+
   const packageId = event.id;
   // was previously checking for equality with (string) "true" instead of (boolean) true
   const dependencyFlag = event.dependency === true; 
