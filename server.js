@@ -18,7 +18,6 @@ import { packageCostHandler } from './lambda/costPackage/index.mjs';
 const app = express();
 const PORT = 5000;
 
-// Get the current directory equivalent to __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -70,10 +69,10 @@ app.get('/tracks', async (req, res) => {
     }
 });
 
-// Other endpoints (unchanged except for logs redirected to the file)
+// Download
 app.get('/package/:id', async (req, res) => {
     console.log("\n\nPackage download endpoint.");
-    const { id } = req.params;
+    const id = req?.params?.id;
     console.log(`Request ID: ${id}`);
     try {
         const response = await downloadPackageHandler(id);
