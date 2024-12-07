@@ -61,6 +61,7 @@ const runCustomRegistryProgram = async (url) => {
         await fs.writeFile(URL_FILE_PATH, sanitizedUrl);
 
         // Execute the program from the correct directory
+        console.log('Current Directory:', __dirname);
         const { stdout, stderr } = await execAsync('./run data/url.txt', {
             cwd: CUSTOM_REGISTRY_DIR
         });
@@ -238,6 +239,97 @@ const checkPackageExists = async (packageId) => {
 };
 
 // Main handler function
+// export const ratePackageHandler = async (event) => {
+//     console.log('Received event:', JSON.stringify(event, null, 2));
+
+//     try {
+//         // Input validation
+//         const packageId = event.pathParameters?.id;
+//         if (!packageId) {
+//             return createResponse(400, { message: 'There is missing field(s) in the PackageID' });
+//         }
+
+//         // Check if package exists
+//         const exists = await checkPackageExists(packageId);
+//         if (!exists) {
+//             console.log(`Package ${packageId} not found`);
+//             return createResponse(404, { message: "Package does not exist." });
+//         }
+
+//         // Fetch package data from S3
+//         const response = await s3Client.send(new GetObjectCommand({
+//             Bucket: BUCKET_NAME,
+//             Key: packageId
+//         }));
+
+//         let metadata = response.Metadata || {};
+
+//         // Add/update score if missing
+//         if (!metadata.score) {
+//             metadata.score = DEFAULT_SCORE;
+//             metadata.lastUpdated = new Date().toISOString();
+//         }
+
+//         // Construct and add package URL to metadata
+//         const packageUrl = await constructPackageUrl(metadata.uploadvia, metadata, response);
+//         if (packageUrl && packageUrl !== metadata.packageurl) { // S3 metadata keys are lowercase
+//             metadata.packageurl = packageUrl; // S3 metadata keys are automatically lowercased
+
+//             // Update the metadata in S3
+//             try {
+//                 await s3Client.send(new PutObjectCommand({
+//                     Bucket: BUCKET_NAME,
+//                     Key: packageId,
+//                     Metadata: metadata,
+//                     Body: response.Body // Re-upload the same body with updated metadata
+//                 }));
+//                 console.log(`Updated metadata for package ${packageId}`);
+//             } catch (error) {
+//                 console.error('Error updating S3 metadata:', error);
+//                 // Proceed without updating metadata
+//             }
+
+//             // Run the Custom Registry program with the URL
+//             try {
+//                 const programOutput = await runCustomRegistryProgram(packageUrl);
+//                 console.log('Custom Registry program completed with output:', programOutput);
+//                 metadata.customregistryresult = programOutput; // S3 metadata keys are lowercase
+//             } catch (error) {
+//                 console.error('Failed to run Custom Registry program:', error);
+//                 metadata.customregistryresult = `Error: ${error.message}`;
+//             }
+//         }
+
+//         // Parse customRegistryResult and map it to the required fields
+//         const customRegistryResult = metadata.customregistryresult || '';
+//         const parsedResult = {
+//             BusFactor: parseFloat(customRegistryResult.match(/BusFactor: (\d+\.\d+)/)?.[1] || 0),
+//             BusFactorLatency: parseFloat(customRegistryResult.match(/BusFactorLatency: (\d+\.\d+)/)?.[1] || 0),
+//             Correctness: parseFloat(customRegistryResult.match(/Correctness: (\d+\.\d+)/)?.[1] || 0),
+//             CorrectnessLatency: parseFloat(customRegistryResult.match(/CorrectnessLatency: (\d+\.\d+)/)?.[1] || 0),
+//             RampUp: parseFloat(customRegistryResult.match(/RampUp: (\d+\.\d+)/)?.[1] || 0),
+//             RampUpLatency: parseFloat(customRegistryResult.match(/RampUpLatency: (\d+\.\d+)/)?.[1] || 0),
+//             ResponsiveMaintainer: parseFloat(customRegistryResult.match(/ResponsiveMaintainer: (\d+\.\d+)/)?.[1] || 0),
+//             ResponsiveMaintainerLatency: parseFloat(customRegistryResult.match(/ResponsiveMaintainerLatency: (\d+\.\d+)/)?.[1] || 0),
+//             LicenseScore: parseFloat(customRegistryResult.match(/LicenseScore: (\d+\.\d+)/)?.[1] || 0),
+//             LicenseScoreLatency: parseFloat(customRegistryResult.match(/LicenseScoreLatency: (\d+\.\d+)/)?.[1] || 0),
+//             GoodPinningPractice: parseFloat(customRegistryResult.match(/GoodPinningPractice: (\d+\.\d+)/)?.[1] || 0),
+//             GoodPinningPracticeLatency: parseFloat(customRegistryResult.match(/GoodPinningPracticeLatency: (\d+\.\d+)/)?.[1] || 0),
+//             PullRequest: parseFloat(customRegistryResult.match(/PullRequest: (\d+\.\d+)/)?.[1] || 0),
+//             PullRequestLatency: parseFloat(customRegistryResult.match(/PullRequestLatency: (\d+\.\d+)/)?.[1] || 0),
+//             NetScore: parseFloat(customRegistryResult.match(/NetScore: (\d+\.\d+)/)?.[1] || 0),
+//             NetScoreLatency: parseFloat(customRegistryResult.match(/NetScoreLatency: (\d+\.\d+)/)?.[1] || 0),
+//         };
+
+//         // Return only parsed results in the response
+//         return createResponse(200, {
+//             ...parsedResult // Spread parsed result directly in the response body
+//         });
+//     } catch (error) {
+//         console.error('Error:', error);
+//         return createResponse(500, { message: "The package rating system choked on at least one of the metrics."});
+//     }
+// };
 export const ratePackageHandler = async (event) => {
     console.log('Received event:', JSON.stringify(event, null, 2));
 
@@ -326,6 +418,6 @@ export const ratePackageHandler = async (event) => {
         });
     } catch (error) {
         console.error('Error:', error);
-        return createResponse(500, { message: "The package rating system choked on at least one of the metrics."});
+        return createResponse(500, { message: "The package rating system choked on at least one of the metrics." });
     }
 };
