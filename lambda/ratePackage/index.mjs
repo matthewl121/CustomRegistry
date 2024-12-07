@@ -274,6 +274,7 @@ export const ratePackageHandler = async (event) => {
 
         // Construct and add package URL to metadata
         const packageUrl = await constructPackageUrl(metadata.uploadvia, metadata, response);
+        console.log(`packageUrl: ${packageUrl}`);
         if (packageUrl && packageUrl !== metadata.packageurl) { // S3 metadata keys are lowercase
             metadata.packageurl = packageUrl; // S3 metadata keys are automatically lowercased
 
