@@ -89,7 +89,19 @@ const transformKeys = (keys) => {
 
 
 export const getPackageByRegexHandler = async (event) => {
-  // MIGHT NEETO TO ADD 'pathParameters' OR SIMILAR TO 'event' FIELDS
+  if (!event) {
+    console.error("/package/byReGex: Data is empty or null");
+    return {
+      statusCode: 400,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ message: "There is missing field(s) in the PackageRegEx or it is formed improperly, or is invalid" }),
+    };
+  }
   const bucketName = "acmeregistrys3";
   const regexPattern = event.RegEx;
 
