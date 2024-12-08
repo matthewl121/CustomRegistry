@@ -1,1 +1,0 @@
-{"version":3,"file":"child-loader.d.ts","sourceRoot":"","sources":["../../../../../../phase1/repos/TypeStrong_ts-node/src/child/child-loader.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,mBAAmB,EAAE,mBAAmB,EAAE,MAAM,IAAI,CAAC;AAKnE,gBAAgB;AAChB,wBAAgB,aAAa,CAAC,MAAM,EAAE,mBAAmB,GAAG,mBAAmB,QAE9E;AAiBD,gBAAgB;AAChB,eAAO,MAAQ,OAAO,mCAAE,IAAI,gCAAE,SAAS,qCAAE,eAAe,yCACnC,CAAC"}
