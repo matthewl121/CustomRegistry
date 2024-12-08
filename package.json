@@ -56,7 +56,7 @@
     "testMatch": [
       "**/*.test.mjs",
       "**/*.test.ts",
-      "!phase1/test/*"
+      "!phase1/test/index.test.mjs"
     ],
     "testTimeout": 3000000,
     "moduleNameMapper": {
