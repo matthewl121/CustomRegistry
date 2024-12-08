@@ -114,9 +114,7 @@ const getDepsFromTarGz = async (s3Response) => {
 
     // At this point, packageJson should be set
     const dependencies = packageJson.dependencies || {};
-    const devDependencies = packageJson.devDependencies || {};
-
-    const allDependencies = { ...dependencies, ...devDependencies };
+    const allDependencies = { ...dependencies };
 
     const depsList = Object.entries(allDependencies).map(([name, version]) => ({
       name,
