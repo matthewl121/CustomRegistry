@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - dev_dirs
-
+      - main
 jobs:
   test:
     runs-on: ubuntu-latest

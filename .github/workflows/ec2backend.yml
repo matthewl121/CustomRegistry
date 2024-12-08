@@ -1,6 +1,7 @@
 name: Deploy to EC2 Backendv2
 on:
-  push:
+  pull_request:
+    types: [closed]
     branches: [ dev_dirs ]
 
 jobs:
