@@ -1,3 +1,20 @@
+/**
+ * Package Cost Calculator - AWS Lambda Handler
+ * 
+ * This module provides functionality to calculate storage costs for packages in an S3 registry.
+ * It processes packages stored in a specified S3 bucket, extracts dependency information from
+ * package.json files (supporting both tar.gz and zip formats), and calculates costs based on
+ * file sizes. The system can evaluate both individual package costs and full dependency trees.
+ * 
+ * Key features:
+ * - Extracts and processes package.json from compressed archives (tar.gz/zip)
+ * - Calculates storage costs based on package sizes in MB
+ * - Supports recursive dependency cost calculation
+ * - Handles both direct package costs and full dependency tree analysis
+ * - Implements security measures for package ID validation
+ * - Provides CORS-enabled REST API responses
+ * 
+ */
 import { S3Client, GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
 import { x } from 'tar';
 import { gunzipSync } from 'zlib';

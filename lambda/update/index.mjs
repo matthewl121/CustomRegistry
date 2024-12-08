@@ -1,3 +1,39 @@
+/**
+ * Update Package Handler - AWS Lambda Function
+ * 
+ * This module implements an AWS Lambda function that handles package updates in an S3-based
+ * registry. It supports multiple update methods including direct content upload and URL-based
+ * imports from GitHub and NPM. The handler includes version management and optional package
+ * debloating functionality.
+ * 
+ * Key Features:
+ * - Multiple update methods:
+ *   - Direct content upload (Base64 encoded)
+ *   - GitHub repository imports
+ *   - NPM package imports
+ * - Version management:
+ *   - Validates patch version updates
+ *   - Maintains version history
+ * - Package debloating:
+ *   - Optional removal of old versions
+ *   - Maintains single version when enabled
+ * - Metadata handling:
+ *   - Preserves upload method
+ *   - Tracks package versions
+ * 
+ * Dependencies:
+ * - @aws-sdk/client-s3: AWS SDK for S3 operations
+ * 
+ * 
+ * Input:
+ * - event.metadata: Package metadata (Name, Version, ID)
+ * - event.data: Package content or URL
+ * - event.data.debloat: Optional flag for removing old versions
+ * 
+ * @module updatePackageHandler
+ * @since 2024
+ */
+
 import { S3Client, PutObjectCommand, HeadObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 const s3 = new S3Client({ region: "us-east-1" });
 

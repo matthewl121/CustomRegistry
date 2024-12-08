@@ -1,4 +1,26 @@
-// /package/byRegEx
+/**
+ * Package RegEx Search Handler - AWS Lambda Function
+ * 
+ * This module implements an AWS Lambda function that searches for packages in an S3 bucket
+ * using regular expressions. It provides functionality to list and filter packages based on
+ * regex patterns, with safety checks and proper error handling.
+ * 
+ * Features:
+ * - Searches packages using regex patterns
+ * - Validates regex patterns for safety (prevents excessive quantifiers)
+ * - Lists all packages in S3 bucket with pagination support
+ * - Transforms package keys into standardized response format
+ * - Handles package naming format: "name--version"
+ * - Provides CORS-enabled REST API responses
+ * 
+ * Dependencies:
+ * - @aws-sdk/client-s3: AWS SDK for S3 operations
+ *
+ * 
+ * @module getPackageByRegexHandler
+ * @since 2024
+ */
+
 import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
 const s3 = new S3Client({ region: "us-east-1" });
 

@@ -1,3 +1,43 @@
+/**
+ * Package Upload Handler - AWS Lambda Function
+ * 
+ * This module implements an AWS Lambda function that handles package uploads to an S3-based
+ * registry. It supports multiple upload methods including direct content upload and URL-based
+ * imports from GitHub and NPM, with automatic version detection and metadata management.
+ * 
+ * Key Features:
+ * - Multiple upload sources:
+ *   - Direct content upload (Base64 encoded)
+ *   - GitHub repository imports with version detection from:
+ *     - Release tags
+ *     - Package.json
+ *     - Default versioning
+ *   - NPM package imports with latest version detection
+ * - Package management:
+ *   - Automatic version detection and assignment
+ *   - Duplicate package checking
+ *   - Optional package debloating (removal of old versions)
+ * - Quality Control:
+ *   - Integrated package rating system
+ *   - Automatic rejection of low-quality packages (NetScore <= 0.25)
+ * - Metadata handling:
+ *   - Source tracking
+ *   - Version management
+ *   - URL preservation for remote packages
+ * 
+ * Dependencies:
+ * - @aws-sdk/client-s3: AWS SDK for S3 operations
+ * - node-fetch: For external API calls
+ * 
+ * Input:
+ * - event.Content: Base64 encoded package content
+ * - event.URL: GitHub or NPM package URL
+ * - event.Name: Package name (optional for URL uploads)
+ * - event.debloat: Flag for removing old versions
+ * 
+ * @module uploadPackageHandler
+ * @since 2024
+ */
 import { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand, DeleteObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 const s3 = new S3Client({ region: "us-east-1" });
 import { ratePackageHandler } from "../ratePackage/index.mjs";
