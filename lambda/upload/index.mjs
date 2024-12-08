@@ -389,6 +389,8 @@ export const uploadPackageHandler = async (event) => {
     Metadata: metadata, // custom metadata as key-value pairs
   };
 
+  console.log("metadata:", metadata)
+
   // manage debloat
   if (debloat) {
     // remove all packages with same packageName
