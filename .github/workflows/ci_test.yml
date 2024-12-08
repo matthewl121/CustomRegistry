@@ -25,23 +25,34 @@ jobs:
         run: |
           mkdir -p phase1/data
           touch phase1/data/url.txt
-          # Create any other necessary test directories and files
           
       - name: Setup test environment variables
         run: |
           echo "LOG_FILE=test.log" >> .env
           echo "AWS_REGION=us-east-1" >> .env
           
-      - name: Run tests
+      - name: Run tests with coverage
         env:
           NODE_OPTIONS: --experimental-vm-modules --experimental-modules
           JEST_RUNTIME_ENV: node
         run: |
-          # Run tests in sequence with proper jest configuration
           npm install
-          npm run test:backend
+          npm run test:backend -- --coverage --coverageReporters="text" --coverageReporters="html" --coverageReporters="lcov" --testResultsProcessor="jest-junit"
           
-      - name: Upload Jest Reports
+      - name: Generate test summary
+        run: |
+          echo "# Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "## Coverage Report" >> $GITHUB_STEP_SUMMARY
+          cat coverage/lcov-report/index.html >> $GITHUB_STEP_SUMMARY
+          
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/lcov.info
+          flags: unittests
+          fail_ci_if_error: true
+          
+      - name: Upload Test Reports
         if: always()
         uses: actions/upload-artifact@v3
         with:
@@ -49,78 +60,4 @@ jobs:
           path: |
             ./test-report.html
             ./lambda_test/test_results/junit.xml
-# name: CI Test Pipeline
-
-# on:
-#   push:
-#     branches:
-#       - dev_dirs
-
-# jobs:
-#   test:
-#     runs-on: ubuntu-latest
-
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v3
-
-#       - name: Set up Node.js
-#         uses: actions/setup-node@v3
-#         with:
-#           node-version: '22.9.0' # or your Lambda runtime version
-
-#       - name: Install dependencies
-#         run: npm install
-      
-#       - name: Run tests
-#         run: npm test
-      
-#       - name: Upload Jest Report
-#         uses: actions/upload-artifact@v3
-#         with:
-#           name: test-report
-#           path: ./test-report.html
-
-# name: CI Test Pipeline
-
-# on:
-#   push:
-#     branches:
-#       - dev_dirs
-
-# jobs:
-#   test:
-#     runs-on: ubuntu-latest
-    
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v3
-      
-#       - name: Set up Node.js
-#         uses: actions/setup-node@v3
-#         with:
-#           node-version: '22.9.0'
-      
-#       - name: Install dependencies
-#         run: npm install
-        
-#       - name: Initialize TypeScript config
-#         run: npx tsc --init
-        
-#       - name: Compile TypeScript
-#         run: npx tsc
-      
-#       - name: Run tests with coverage
-#         run: |
-#           node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage
-      
-#       - name: Upload Test Reports
-#         if: always()
-#         uses: actions/upload-artifact@v3
-#         with:
-#           name: test-reports
-#           path: |
-#             coverage/
-#             test-report.html
-#             junit.xml
-#           retention-days: 30
+            ./coverage/**
