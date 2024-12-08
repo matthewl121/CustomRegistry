@@ -92,11 +92,9 @@ const getUrlFromArchive = async (s3Response) => {
             ? await streamToBuffer(s3Response.Body)
             : s3Response.Body;
 
-        console.log(`Buffer size: ${buffer.length} bytes`);
 
         // Check if the data is a ZIP archive (signature starts with 'PK')
         if (buffer.slice(0, 2).toString('hex') === '504b') { // 'PK' in hex
-            console.log('Detected ZIP file format');
 
             // Parse ZIP using AdmZip
             const zip = new AdmZip(buffer);
@@ -110,8 +108,6 @@ const getUrlFromArchive = async (s3Response) => {
 
             const packageJsonContent = entry.getData().toString('utf8');
             const packageJson = JSON.parse(packageJsonContent);
-
-            console.log('Extracted package.json:', packageJson);
 
             // Extract URL
             const url = packageJson.repository?.url ||
@@ -127,12 +123,9 @@ const getUrlFromArchive = async (s3Response) => {
         }
 
         // If not a ZIP file, assume gzip
-        console.log('Assuming gzip format');
         let unzippedBuffer;
         try {
             unzippedBuffer = gunzipSync(buffer);
-            console.log('Unzipped Buffer Length:', unzippedBuffer.length);
-            console.log('Unzipped Buffer (first 100 chars):', unzippedBuffer.toString('utf8').slice(0, 100));
         } catch (error) {
             console.error('Error decompressing gzip data:', error);
             throw new Error('Failed to decompress package data - invalid gzip format');
@@ -142,7 +135,6 @@ const getUrlFromArchive = async (s3Response) => {
         let packageJson;
         try {
             packageJson = JSON.parse(unzippedBuffer.toString('utf8'));
-            console.log('Parsed package.json:', packageJson);
         } catch (error) {
             console.error('Error parsing package.json:', error);
             throw new Error('Invalid package.json format - failed to parse JSON');
@@ -294,7 +286,6 @@ export const ratePackageHandler = async (event) => {
             // Run the Custom Registry program with the URL
             try {
                 const programOutput = await runCustomRegistryProgram(packageUrl);
-                console.log('Custom Registry program completed with output:', programOutput);
                 metadata.customregistryresult = programOutput; // S3 metadata keys are lowercase
             } catch (error) {
                 console.error('Failed to run Custom Registry program:', error);
@@ -338,9 +329,6 @@ export const ratePackageHandler = async (event) => {
 
        // Parse customRegistryResult and map it to the required fields
         const customRegistryResult = metadata.customregistryresult || '';
-        console.log("\n\nINSIDE RATEPACKAGE");
-        console.log(customRegistryResult);
-
         // Parse the JSON string to an object
         let parsedCustomRegistryResult;
         try {
@@ -350,7 +338,7 @@ export const ratePackageHandler = async (event) => {
             parsedCustomRegistryResult = {};
         }
 
-        console.log("JSON parsed response", parsedCustomRegistryResult); // Log to verify parsed object
+        console.log("JSON parsed result", parsedCustomRegistryResult); // Log to verify parsed object
         console.log("Bus Factor", parsedCustomRegistryResult.BusFactor); // Log to verify parsed object
 
         const parsedResult = {
@@ -372,8 +360,7 @@ export const ratePackageHandler = async (event) => {
             NetScoreLatency: parseFloat(parsedCustomRegistryResult.NetScore_Latency || 0),
         };
 
-        console.log(parsedResult);
-        console.log(JSON.stringify(parsedResult));
+        console.log("Parsed response:", parsedResult);
         console.log("\n\n");
 
         // Return only parsed results in the response
