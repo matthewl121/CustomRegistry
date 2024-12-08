@@ -55,8 +55,10 @@
     ],
     "testMatch": [
       "**/*.test.mjs",
-      "**/*.test.ts",
-      "!phase1/test/index.test.mjs"
+      "**/*.test.ts"
+    ],
+    "testPathIgnorePatterns": [
+      "/phase1/"
     ],
     "testTimeout": 3000000,
     "moduleNameMapper": {
