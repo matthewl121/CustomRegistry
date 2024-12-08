@@ -39,7 +39,7 @@
     "test:reset": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/reset_test/index.test.mjs",
     "test:upload": "node --trace-warnings --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/upload_test/index.test.mjs",
     "test:regex": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/getPackageByRegex_test/index.test.mjs",
-    "test:backend": "npm run test:tracks && npm run test:reset && npm run test:regex && npm run test:download && npm run test:post",
+    "test:backend": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage lambda_test/getTracks_test/index.test.mjs lambda_test/reset_test/index.test.mjs lambda_test/getPackageByRegex_test/index.test.mjs lambda_test/download_test/index.test.mjs lambda_test/postPackages_test/index.test.mjs",
     "compile": "tsc",
     "install-deps": "npm install --save-dev && tsc --init"
   },
@@ -64,25 +64,41 @@
     },
     "coverageReporters": [
       "text",
-      "html"
+      "html",
+      "lcov",
+      "json-summary"
     ],
+    "coverageDirectory": "./coverage",
     "coveragePathIgnorePatterns": [
       "/node_modules/",
       "/lambda/upload/index.mjs",
       "/lambda/update/index.mjs"
     ],
+    "collectCoverage": true,
     "collectCoverageFrom": [
       "lambda/**/*.mjs",
       "!lambda/upload/**",
       "!lambda/update/**"
     ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 70,
+        "functions": 70,
+        "lines": 70,
+        "statements": 70
+      }
+    },
     "reporters": [
       "default",
       [
         "jest-html-reporter",
         {
           "pageTitle": "Test Report",
-          "outputPath": "./test-report.html"
+          "outputPath": "./test-report.html",
+          "includeFailureMsg": true,
+          "includeSuiteFailure": true,
+          "includeConsoleLog": true,
+          "useCSSFile": true
         }
       ],
       [
