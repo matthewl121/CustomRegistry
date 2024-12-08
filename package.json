@@ -30,7 +30,7 @@
   "scripts": {
     "start": "node server.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
-    "test:rate": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/ratePackage_test/index.test.mjs  --testTimeout=120000 --verbose",
+    "test:rate": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/ratePackage_test/index.test.mjs --testTimeout=120000 --verbose",
     "test:download": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/download_test/index.test.mjs",
     "test:post": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/postPackages_test/index.test.mjs",
     "test:update": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/update_test/index.test.mjs",
@@ -96,6 +96,10 @@
           "titleTemplate": "{title}"
         }
       ]
+    ],
+    "modulePathIgnorePatterns": [
+      "<rootDir>/frontend/package.json",
+      "<rootDir>/phase1/package.json"
     ]
   },
   "type": "module"
