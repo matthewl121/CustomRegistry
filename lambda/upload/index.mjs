@@ -442,6 +442,7 @@ export const uploadPackageHandler = async (event) => {
 
     // store zip file to S3
     const command = new PutObjectCommand(params);
+    console.log("command", JSON.stringify(command))
     const response = await s3.send(command);
     console.log("/package: Package uploaded successfully:", response);
 
