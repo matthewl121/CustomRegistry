@@ -1,43 +1,126 @@
 {
   "dependencies": {
-    "@microsoft/eslint-formatter-sarif": "^2.1.7",
-    "aws-sdk": "^2.1691.0",
-    "axios": "^1.7.7",
-    "commander": "^12.1.0",
-    "dotenv": "^16.4.5",
-    "eslint": "^8.57.0",
-    "isomorphic-git": "^1.27.1",
-    "node": "^22.9.0",
-    "node-fetch": "^2.7.0",
-    "npm": "^10.8.3",
-    "npx": "^3.0.0",
-    "ts-node": "^10.9.2",
-    "types": "^0.1.1"
+    "@aws-sdk/client-s3": "^3.701.0",
+    "@microsoft/eslint-formatter-sarif": "^3.1.0",
+    "adm-zip": "^0.5.10",
+    "aws-sdk-client-mock": "^4.1.0",
+    "commander": "^11.1.0",
+    "cors": "^2.8.5",
+    "eslint-config-standard": "^17.1.0",
+    "express": "^4.21.1",
+    "fs": "^0.0.1-security",
+    "http": "^0.0.1-security",
+    "https": "^1.0.0",
+    "tar": "^6.2.1",
+    "unzipper": "^0.12.3"
   },
   "devDependencies": {
-    "@eslint/js": "^9.10.0",
-    "@types/axios": "^0.14.0",
-    "@types/jest": "^29.5.13",
-    "@types/node": "^22.5.4",
-    "eslint": "^8.57.0",
-    "eslint-config-standard": "^17.1.0",
-    "eslint-plugin-import": "^2.30.0",
-    "eslint-plugin-n": "^16.6.2",
-    "eslint-plugin-promise": "^6.6.0",
-    "globals": "^15.9.0",
+    "@babel/register": "^7.25.9",
+    "@jest/globals": "^29.7.0",
+    "@types/axios": "^0.14.4",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20.0.0",
     "jest": "^29.7.0",
+    "jest-html-reporter": "^3.10.2",
+    "jest-junit": "^16.0.0",
+    "jest-silent-reporter": "^0.6.0",
     "ts-jest": "^29.2.5",
-    "typescript": "^5.6.2",
-    "typescript-eslint": "^8.5.0"
+    "typescript": "^5.7.2"
   },
-  "name": "customregistry",
-  "description": "Aidan Poor Glen Cheng Julianne Iacarrino Matthew Li",
-  "version": "1.0.0",
-  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:rate": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/ratePackage_test/index.test.mjs --testTimeout=120000 --verbose",
+    "test:download": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/download_test/index.test.mjs",
+    "test:post": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/postPackages_test/index.test.mjs",
+    "test:update": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/update_test/index.test.mjs",
+    "test:cost": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/costPackage_test/index.test.mjs --silent --noStackTrace",
+    "test:tracks": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/getTracks_test/index.test.mjs",
+    "test:reset": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/reset_test/index.test.mjs",
+    "test:upload": "node --trace-warnings --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/upload_test/index.test.mjs",
+    "test:regex": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/getPackageByRegex_test/index.test.mjs",
+    "test:backend": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage lambda_test/getTracks_test/index.test.mjs lambda_test/reset_test/index.test.mjs lambda_test/getPackageByRegex_test/index.test.mjs lambda_test/download_test/index.test.mjs lambda_test/postPackages_test/index.test.mjs",
+    "compile": "tsc",
+    "install-deps": "npm install --save-dev && tsc --init"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "jest": {
+    "transform": {},
+    "testEnvironment": "node",
+    "moduleFileExtensions": [
+      "js",
+      "mjs",
+      "cjs",
+      "json",
+      "ts"
+    ],
+    "testMatch": [
+      "**/*.test.mjs",
+      "**/*.test.ts"
+    ],
+    "testPathIgnorePatterns": [
+      "/phase1/"
+    ],
+    "testTimeout": 3000000,
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    },
+    "coverageReporters": [
+      ["text-summary", { "skipFull": true }]
+    ],
+    "coverageDirectory": "./coverage",
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "/lambda/upload/index.mjs",
+      "/lambda/update/index.mjs",
+      "/node_modules/",
+      "/lambda/costPackage/",
+      "/lambda/ratePackage/",
+      "/lambda/ratePackage/utils/"
+    ],
+    "collectCoverage": true,
+    "collectCoverageFrom": [
+      "lambda/**/*.mjs",
+      "!lambda/upload/**",
+      "!lambda/update/**"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 60,
+        "functions": 60,
+        "lines": 60,
+        "statements": 60
+      }
+    },
+    "reporters": [
+      "default",
+      [
+        "jest-html-reporter",
+        {
+          "pageTitle": "Test Report",
+          "outputPath": "./test-report.html",
+          "includeFailureMsg": true,
+          "includeSuiteFailure": true,
+          "includeConsoleLog": true,
+          "useCSSFile": true
+        }
+      ],
+      [
+        "jest-junit",
+        {
+          "outputDirectory": "lambda_test/test_results/",
+          "outputName": "junit.xml",
+          "ancestorSeparator": " › ",
+          "uniqueOutputName": "false",
+          "suiteNameTemplate": "{filepath}",
+          "classNameTemplate": "{classname}",
+          "titleTemplate": "{title}"
+        }
+      ]
+    ],
+    "modulePathIgnorePatterns": [
+      "<rootDir>/frontend/package.json",
+      "<rootDir>/phase1/package.json"
+    ]
+  },
+  "type": "module"
 }

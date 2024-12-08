@@ -1,6 +1,6 @@
-node_modules
+phase1/node_modules
 .env
 !run.js
-*.json
-*.txt
-repos/
+phase1/repos/*
+node_modules/
+ss.json

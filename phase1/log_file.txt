@@ -1,0 +1,26 @@
+Processing: lodash, lodash, https://github.com/lodash/lodash, busFactor
+Processing: lodash, lodash, https://github.com/lodash/lodash, correctness
+Processing: lodash, lodash, https://github.com/lodash/lodash, rampUp
+Processing: lodash, lodash, https://github.com/lodash/lodash, responsiveness
+Processing: lodash, lodash, https://github.com/lodash/lodash, license
+Processing: lodash, lodash, https://github.com/lodash/lodash, dependencyPinning
+Processing: lodash, lodash, https://github.com/lodash/lodash, codeReview
+{
+  "URL": "https://www.npmjs.com/package/lodash",
+  "NetScore": 0.5979758420388679,
+  "NetScore_Latency": 0,
+  "RampUp": 0.5,
+  "RampUp_Latency": 0.001,
+  "Correctness": 0.9820303383897316,
+  "Correctness_Latency": 0.001,
+  "BusFactor": 0.05404053109323459,
+  "BusFactor_Latency": 0.984,
+  "ResponsiveMaintainer": 0.16666666666666666,
+  "ResponsiveMaintainer_Latency": 0.003,
+  "License": 1,
+  "License_Latency": 0.27,
+  "DependencyPinning": 1,
+  "DependencyPinning_Latency": 0.138,
+  "CodeReview": 0.9999348455612131,
+  "CodeReview_Latency": 4.973
+}

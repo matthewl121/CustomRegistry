@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="22" failures="0" errors="0" time="1.675">
+  <testsuite name="lambda_test/postPackages_test/index.test.mjs" errors="0" failures="0" skipped="0" timestamp="2024-12-08T14:20:09" time="0.601" tests="5">
+    <testcase classname="postPackagesHandler" name="200: valid input with exact package matches" time="0.004">
+    </testcase>
+    <testcase classname="postPackagesHandler" name="400: invalid input missing required fields" time="0.001">
+    </testcase>
+    <testcase classname="postPackagesHandler" name="413: too many packages returned for wildcard query" time="0.001">
+    </testcase>
+    <testcase classname="postPackagesHandler" name="handles S3 errors gracefully" time="0.001">
+    </testcase>
+    <testcase classname="postPackagesHandler" name="handles version ranges correctly" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="lambda_test/getPackageByRegex_test/index.test.mjs" errors="0" failures="0" skipped="0" timestamp="2024-12-08T14:20:09" time="0.399" tests="5">
+    <testcase classname="getPackageByRegexHandler" name="successfully retrieves matching packages" time="0.012">
+    </testcase>
+    <testcase classname="getPackageByRegexHandler" name="handles malformed keys in S3" time="0.006">
+    </testcase>
+    <testcase classname="getPackageByRegexHandler" name="returns 400 when regex pattern is missing" time="0.002">
+    </testcase>
+    <testcase classname="getPackageByRegexHandler" name="returns 404 when no packages match the regex" time="0.003">
+    </testcase>
+    <testcase classname="getPackageByRegexHandler" name="returns 400 when S3 operation fails" time="0.005">
+    </testcase>
+  </testsuite>
+  <testsuite name="lambda_test/download_test/index.test.mjs" errors="0" failures="0" skipped="0" timestamp="2024-12-08T14:20:10" time="0.254" tests="6">
+    <testcase classname="downloadPackageHandler" name="200: successfully downloads and processes a package" time="0.008">
+    </testcase>
+    <testcase classname="downloadPackageHandler" name="404: returns error when package does not exist" time="0.001">
+    </testcase>
+    <testcase classname="downloadPackageHandler" name="400: returns error when download fails" time="0.001">
+    </testcase>
+    <testcase classname="downloadPackageHandler" name="properly capitalizes metadata fields" time="0.003">
+    </testcase>
+    <testcase classname="downloadPackageHandler" name="handles empty and missing metadata gracefully" time="0.003">
+    </testcase>
+    <testcase classname="downloadPackageHandler" name="handles large file downloads efficiently" time="0.011">
+    </testcase>
+  </testsuite>
+  <testsuite name="lambda_test/reset_test/index.test.mjs" errors="0" failures="0" skipped="0" timestamp="2024-12-08T14:20:10" time="0.22" tests="3">
+    <testcase classname="resetRegistryHandler" name="/reset | DELETE | Successful" time="0.005">
+    </testcase>
+    <testcase classname="resetRegistryHandler" name="/reset | DELETE | Unsuccessful" time="0.008">
+    </testcase>
+    <testcase classname="resetRegistryHandler" name="successfully handles empty registry" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="lambda_test/getTracks_test/index.test.mjs" errors="0" failures="0" skipped="0" timestamp="2024-12-08T14:20:10" time="0.099" tests="3">
+    <testcase classname="getTracksHandler" name="200: returns empty plannedTracks array for valid input" time="0.002">
+    </testcase>
+    <testcase classname="getTracksHandler" name="handles unexpected response structure gracefully" time="0.002">
+    </testcase>
+    <testcase classname="getTracksHandler" name="handles system error correctly" time="0">
+    </testcase>
+  </testsuite>
+</testsuites>
