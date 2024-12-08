@@ -388,9 +388,12 @@ export const uploadPackageHandler = async (event) => {
     ContentType: "application/zip",
     Metadata: metadata, // custom metadata as key-value pairs
   };
+  console.log("before debloat:", metadata)
 
   // manage debloat
   if (debloat) {
+    console.log("inside debloat:", metadata)
+
     // remove all packages with same packageName
     const prefix = `${packageName}--`;
     try {
@@ -414,11 +417,14 @@ export const uploadPackageHandler = async (event) => {
       };
     }
   }
+  console.log("outside debloat:")
 
   try {
     //Check if package already exists in s3
+    console.log("inside packagecheck:")
     const packageID = `${packageName}--${packageVersion}`;
     const samePackage = await listAllKeys(s3, bucketName, packageID)
+    console.log("after keylisting:")
     
     if (samePackage.length > 0) {
       return {
@@ -432,6 +438,7 @@ export const uploadPackageHandler = async (event) => {
         body: JSON.stringify({ message: "Package exists already."})
       };
     }
+    console.log("before zip store:")
 
     // store zip file to S3
     const command = new PutObjectCommand(params);
@@ -454,6 +461,7 @@ export const uploadPackageHandler = async (event) => {
     // };
     // console.log("/package: System Metadata:", JSON.stringify(systemMetadata, null, 2));
     // console.log("/package: User Metadata:", JSON.stringify(userMetadata, null, 2));
+    console.log("before response body:", metadata)
 
     let responseBody;
     if (event.Content) {
