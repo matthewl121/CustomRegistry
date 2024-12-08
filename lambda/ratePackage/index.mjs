@@ -337,32 +337,44 @@ export const ratePackageHandler = async (event) => {
         */
 
        // Parse customRegistryResult and map it to the required fields
-       const customRegistryResult = metadata.customregistryresult || '';
-       console.log("\n\nINSIDE RATEPACKAGE");
-       console.log(customRegistryResult);
-       console.log(JSON.stringify(customRegistryResult));
-       console.log(`BusFactor: ${customRegistryResult.BusFactor}`);
-       const parsedResult = {
-           BusFactor: parseFloat(customRegistryResult.BusFactor || 0),
-           BusFactorLatency: parseFloat(customRegistryResult.BusFactor_Latency || 0),
-           Correctness: parseFloat(customRegistryResult.Correctness || 0),
-           CorrectnessLatency: parseFloat(customRegistryResult.Correctness_Latency || 0),
-           RampUp: parseFloat(customRegistryResult.RampUp || 0),
-           RampUpLatency: parseFloat(customRegistryResult.RampUp_Latency || 0),
-           ResponsiveMaintainer: parseFloat(customRegistryResult.ResponsiveMaintainer || 0),
-           ResponsiveMaintainerLatency: parseFloat(customRegistryResult.ResponsiveMaintainer_Latency || 0),
-           LicenseScore: parseFloat(customRegistryResult.LicenseScore || 0),
-           LicenseScoreLatency: parseFloat(customRegistryResult.LicenseScore_Latency || 0),
-           GoodPinningPractice: parseFloat(customRegistryResult.GoodPinningPractice || 0),
-           GoodPinningPracticeLatency: parseFloat(customRegistryResult.GoodPinningPractice_Latency || 0),
-           PullRequest: parseFloat(customRegistryResult.PullRequest || 0),
-           PullRequestLatency: parseFloat(customRegistryResult.PullRequest_Latency || 0),
-           NetScore: parseFloat(customRegistryResult.NetScore || 0),
-           NetScoreLatency: parseFloat(customRegistryResult.NetScore_Latency || 0),
-       };
-       console.log(parsedResult);
-       console.log(JSON.stringify(parsedResult));
-       console.log("\n\n");
+        const customRegistryResult = metadata.customregistryresult || '';
+        console.log("\n\nINSIDE RATEPACKAGE");
+        console.log(customRegistryResult);
+
+        // Parse the JSON string to an object
+        let parsedCustomRegistryResult;
+        try {
+            parsedCustomRegistryResult = JSON.parse(customRegistryResult);
+        } catch (error) {
+            console.error("Error parsing customRegistryResult:", error);
+            parsedCustomRegistryResult = {};
+        }
+
+        console.log("JSON parsed response", parsedCustomRegistryResult); // Log to verify parsed object
+        console.log("Bus Factor", parsedCustomRegistryResult.BusFactor); // Log to verify parsed object
+
+        const parsedResult = {
+            BusFactor: parseFloat(parsedCustomRegistryResult.BusFactor || 0),
+            BusFactorLatency: parseFloat(parsedCustomRegistryResult.BusFactor_Latency || 0),
+            Correctness: parseFloat(parsedCustomRegistryResult.Correctness || 0),
+            CorrectnessLatency: parseFloat(parsedCustomRegistryResult.Correctness_Latency || 0),
+            RampUp: parseFloat(parsedCustomRegistryResult.RampUp || 0),
+            RampUpLatency: parseFloat(parsedCustomRegistryResult.RampUp_Latency || 0),
+            ResponsiveMaintainer: parseFloat(parsedCustomRegistryResult.ResponsiveMaintainer || 0),
+            ResponsiveMaintainerLatency: parseFloat(parsedCustomRegistryResult.ResponsiveMaintainer_Latency || 0),
+            LicenseScore: parseFloat(parsedCustomRegistryResult.LicenseScore || 0),
+            LicenseScoreLatency: parseFloat(parsedCustomRegistryResult.LicenseScore_Latency || 0),
+            GoodPinningPractice: parseFloat(parsedCustomRegistryResult.GoodPinningPractice || 0),
+            GoodPinningPracticeLatency: parseFloat(parsedCustomRegistryResult.GoodPinningPractice_Latency || 0),
+            PullRequest: parseFloat(parsedCustomRegistryResult.PullRequest || 0),
+            PullRequestLatency: parseFloat(parsedCustomRegistryResult.PullRequest_Latency || 0),
+            NetScore: parseFloat(parsedCustomRegistryResult.NetScore || 0),
+            NetScoreLatency: parseFloat(parsedCustomRegistryResult.NetScore_Latency || 0),
+        };
+
+        console.log(parsedResult);
+        console.log(JSON.stringify(parsedResult));
+        console.log("\n\n");
 
         // Return only parsed results in the response
         return createResponse(200, {
