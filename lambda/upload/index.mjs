@@ -378,9 +378,13 @@ export const uploadPackageHandler = async (event) => {
     id: packageId,
     version: packageVersion,
     uploadvia: uploadVia,
-    url: parsedURL.href,
+  };
+  
+  // add url if URL method is used
+  if (uploadVia !== "github" || uploadVia !== "npm") {
+    metadata.url = parsedURL.href;
   }
-
+  
   const params = {
     Bucket: bucketName,
     Key: packageId, // key is the id
