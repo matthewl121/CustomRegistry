@@ -1,3 +1,37 @@
+/**
+ * Package Rating Handler - AWS Lambda Function
+ * 
+ * This module implements an AWS Lambda function that handles package ratings and metrics
+ * calculation. It processes package metadata, extracts repository URLs from various sources,
+ * and calculates multiple quality metrics for packages stored in S3.
+ * 
+ * Features:
+ * - Extracts and validates repository URLs from multiple sources:
+ *   - GitHub repositories
+ *   - NPM packages
+ *   - Uploaded package content (ZIP/tar.gz)
+ * - Processes package.json from compressed archives
+ * - Calculates comprehensive package metrics including:
+ *   - Bus Factor and latency
+ *   - Correctness scores
+ *   - Ramp-up time
+ *   - Maintainer responsiveness
+ *   - License compliance
+ *   - Dependency pinning practices
+ *   - Pull request metrics
+ *   - Net score calculations
+ * 
+ * Dependencies:
+ * - @aws-sdk/client-s3: AWS SDK for S3 operations
+ * - adm-zip: For ZIP file processing
+ * - unzipper: For archive extraction
+ * - child_process: For custom registry program execution
+ * 
+ * 
+ * @module ratePackageHandler
+ * @since 2024
+ */
+
 import { S3Client, GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
 import { createResponse } from './utils/createResponse.mjs';
 import { exec } from 'child_process';

@@ -1,3 +1,23 @@
+/**
+ * Get Tracks Handler - AWS Lambda Function
+ * 
+ * This module implements an AWS Lambda function that retrieves planned tracks
+ * information. Currently returns an empty array of planned tracks with proper
+ * error handling and CORS support.
+ * 
+ * Features:
+ * - Retrieves planned tracks information
+ * - Provides CORS-enabled REST API responses
+ * - Implements error handling with appropriate status codes
+ * 
+ * Response Format:
+ * - Success: Returns an array of planned tracks (currently empty)
+ * - Error: Returns appropriate error message with 500 status code
+ * 
+ * @module getTracksHandler
+ * @since 2024
+ */
+
 export const getTracksHandler = async () => {
   try {
     return {

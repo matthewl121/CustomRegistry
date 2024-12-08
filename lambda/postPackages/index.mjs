@@ -1,3 +1,30 @@
+/**
+ * Package Query Handler - AWS Lambda Function
+ * 
+ * This module implements an AWS Lambda function that searches for packages in an S3 bucket
+ * based on name and version criteria. It supports complex version matching patterns and
+ * wildcard searches with pagination support.
+ * 
+ * Features:
+ * - Supports multiple version formats:
+ *   - Exact versions (e.g., "1.2.3")
+ *   - Bounded ranges (e.g., "1.2.3-2.1.0")
+ *   - Carat ranges (e.g., "^1.2.3")
+ *   - Tilde ranges (e.g., "~1.2.3")
+ * - Implements wildcard (*) package searches
+ * - Handles pagination for large result sets
+ * - Provides case-insensitive package name matching
+ * - Limits results to 30 packages for wildcard searches
+ * 
+ * Dependencies:
+ * - @aws-sdk/client-s3: AWS SDK for S3 operations
+ * - express: For query parsing
+ * - S3 Bucket: acmeregistrys3
+ * 
+ * @module postPackagesHandler
+ * @since 2024
+ */
+
 import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { query } from "express";
 

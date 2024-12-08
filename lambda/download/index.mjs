@@ -1,4 +1,25 @@
 
+/**
+ * Download Package Handler - AWS Lambda Function
+ * 
+ * This module implements an AWS Lambda function that handles package downloads from an S3 bucket.
+ * It provides functionality to retrieve packages and their associated metadata, with support for
+ * proper error handling and response formatting.
+ * 
+ * Features:
+ * - Downloads package content from S3
+ * - Retrieves and formats package metadata
+ * - Converts downloaded content to base64 for transmission
+ * - Provides CORS-enabled REST API responses
+ * - Implements error handling for missing/invalid packages
+ * 
+ * Dependencies:
+ * - @aws-sdk/client-s3: AWS SDK for S3 operations
+ * 
+ * @module downloadPackageHandler
+ * @since 2024
+ */
+
 import { S3Client, GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
 
 const s3 = new S3Client({ region: "us-east-1" });

@@ -1,8 +1,34 @@
+/**
+ * Registry Reset Handler - AWS Lambda Function
+ * 
+ * This module implements an AWS Lambda function that completely resets the package registry
+ * by deleting all objects in the specified S3 bucket. It handles pagination for large buckets
+ * and provides detailed error reporting for failed deletions.
+ * 
+ * Features:
+ * - Bulk deletion of all objects in S3 bucket
+ * - Handles pagination for large object lists
+ * - Provides detailed logging of deleted objects
+ * - Implements error handling for failed deletions
+ * 
+ * Dependencies:
+ * - @aws-sdk/client-s3: AWS SDK for S3 operations
+ * 
+ * 
+ * @module resetRegistryHandler
+ * @since 2024
+ */
+
 import { S3Client, ListObjectsV2Command, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 const s3 = new S3Client({ region: "us-east-1" });
 
 
-// Helper function to list all object keys in the bucket
+/**
+ * Lists all object keys in an S3 bucket, handling pagination
+ * @param {S3Client} s3Client - Initialized S3 client
+ * @param {string} bucket - Name of the S3 bucket
+ * @returns {Promise<Array>} Array of objects containing Keys
+ */
 const listAllKeys = async (s3Client, bucket) => {
   let isTruncated = true;
   let continuationToken = null;
@@ -33,7 +59,13 @@ const listAllKeys = async (s3Client, bucket) => {
   return keys;
 };
 
-// Helper function to delete multiple objects given their keys
+/**
+ * Deletes multiple objects from an S3 bucket
+ * @param {S3Client} s3Client - Initialized S3 client
+ * @param {string} bucket - Name of the S3 bucket
+ * @param {Array} objects - Array of objects to delete
+ * @returns {Promise<void>}
+ */
 const deleteObjects = async (s3Client, bucket, objects) => {
   if (objects.length === 0) return;
 
@@ -68,7 +100,11 @@ const deleteObjects = async (s3Client, bucket, objects) => {
   }
 };
 
-
+/**
+ * Lambda handler function to reset the registry by deleting all objects
+ * @param {Object} event - Lambda event object
+ * @returns {Object} Response object with status code and message
+ */
 export const resetRegistryHandler = async (event) => {
   const bucketName = "acmeregistrys3";
 
