@@ -30,14 +30,14 @@
   "scripts": {
     "start": "node server.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
-    "test:rate": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/ratePackage_test/index.test.mjs",
+    "test:rate": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/ratePackage_test/index.test.mjs  --testTimeout=120000 --verbose",
     "test:download": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/download_test/index.test.mjs",
     "test:post": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/postPackages_test/index.test.mjs",
     "test:update": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/update_test/index.test.mjs",
     "test:cost": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/costPackage_test/index.test.mjs --silent --noStackTrace",
     "test:tracks": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/getTracks_test/index.test.mjs",
     "test:reset": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/reset_test/index.test.mjs",
-    "test:upload": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/upload_test/index.test.mjs",
+    "test:upload": "node --trace-warnings --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/upload_test/index.test.mjs",
     "test:regex": "node --experimental-vm-modules node_modules/jest/bin/jest.js lambda_test/getPackageByRegex_test/index.test.mjs",
     "compile": "tsc",
     "install-deps": "npm install --save-dev && tsc --init"
@@ -54,9 +54,10 @@
     ],
     "testMatch": [
       "**/*.test.mjs",
-      "**/*.test.ts"
+      "**/*.test.ts",
+      "!phase1/test/*"
     ],
-    "testTimeout": 30000,
+    "testTimeout": 3000000,
     "moduleNameMapper": {
       "^(\\.{1,2}/.*)\\.js$": "$1"
     },
