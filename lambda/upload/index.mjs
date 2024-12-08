@@ -12,7 +12,7 @@ const capitalizeFirstLetter = (str) => {
 const formatMetadata = (obj) => {
   const result = {};
   for (const key in obj) {
-    if (obj.hasOwnProperty(key) && key.toLowerCase() !== 'uploadvia') {
+    if (obj.hasOwnProperty(key) && key.toLowerCase() !== 'uploadvia' && key.toLowerCase() !== 'url') {
       const capitalizedKey = capitalizeFirstLetter(key);
       result[capitalizedKey] = obj[key];
     }
@@ -250,7 +250,7 @@ export const uploadPackageHandler = async (event) => {
   let content;
   let packageVersion;
   let uploadVia;
-
+  let parsedURL;
 
   // Check if Content or URL is provided
   if (event.Content) {
@@ -262,7 +262,7 @@ export const uploadPackageHandler = async (event) => {
 
   } else if (event.URL) {
     // Determine if the URL is npm or GitHub based on hostname
-    const parsedURL = new URL(event.URL);
+    parsedURL = new URL(event.URL);
     
     try {
       if (parsedURL.hostname === "www.github.com" || parsedURL.hostname === "github.com") {
@@ -378,6 +378,7 @@ export const uploadPackageHandler = async (event) => {
     id: packageId,
     version: packageVersion,
     uploadvia: uploadVia,
+    url: parsedURL,
   }
 
   const params = {

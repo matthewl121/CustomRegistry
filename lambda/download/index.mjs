@@ -13,7 +13,7 @@ const capitalizeFirstLetter = (str) => {
 const formatMetadata = (obj) => {
   const result = {};
   for (const key in obj) {
-    if (obj.hasOwnProperty(key) && key.toLowerCase() !== 'uploadvia') {
+    if (obj.hasOwnProperty(key) && key.toLowerCase() !== 'uploadvia' && key.toLowerCase() !== 'url') {
       const capitalizedKey = capitalizeFirstLetter(key);
       result[capitalizedKey] = obj[key];
     }
