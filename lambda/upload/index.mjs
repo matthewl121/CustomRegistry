@@ -255,11 +255,12 @@ export const uploadPackageHandler = async (event) => {
   // Check if Content or URL is provided
   if (event.Content) {
     // Use Content (Base64-encoded) directly
+    console.log("Start of content")
     packageName = event.Name;
     content = Buffer.from(event.Content, 'base64');
     packageVersion = "1.0.0";  // Default version if uploaded via Content
     uploadVia = "content";
-
+    console.log("End of content")
   } else if (event.URL) {
     // Determine if the URL is npm or GitHub based on hostname
     parsedURL = new URL(event.URL);
@@ -373,6 +374,8 @@ export const uploadPackageHandler = async (event) => {
   }
 
   const packageId = packageName + '--' + packageVersion;
+  console.log("constructing metadata")
+
   const metadata = {
     name: packageName,
     id: packageId,
@@ -381,7 +384,7 @@ export const uploadPackageHandler = async (event) => {
   };
   
   // add url if URL method is used
-  if (uploadVia !== "github" || uploadVia !== "npm") {
+  if (uploadVia === "github" || uploadVia === "npm") {
     metadata.url = parsedURL.href;
   }
   
@@ -446,7 +449,6 @@ export const uploadPackageHandler = async (event) => {
 
     // store zip file to S3
     const command = new PutObjectCommand(params);
-    console.log("command", JSON.stringify(command))
     const response = await s3.send(command);
     console.log("/package: Package uploaded successfully:", response);
 
