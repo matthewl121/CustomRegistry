@@ -36,5 +36,4 @@ jobs:
           NODE_OPTIONS: --experimental-vm-modules --experimental-modules
           JEST_RUNTIME_ENV: node
         run: |
-          npm install
           npm run test:backend -- --coverage 

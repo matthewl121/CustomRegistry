@@ -1,7 +1,6 @@
 name: Deploy to EC2 Frontend
 on:
-  pull_request:
-    types: [closed]
+  push:
     branches: [ dev_dirs ]
 jobs:
   deploy:
