@@ -64,6 +64,16 @@
       "text",
       "html"
     ],
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "/lambda/upload/index.mjs",
+      "/lambda/update/index.mjs"
+    ],
+    "collectCoverageFrom": [
+      "lambda/**/*.mjs",
+      "!lambda/upload/**",
+      "!lambda/update/**"
+    ],
     "reporters": [
       "default",
       [
