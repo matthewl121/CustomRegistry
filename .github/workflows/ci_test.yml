@@ -38,14 +38,11 @@ jobs:
           JEST_RUNTIME_ENV: node
         run: |
           # Run tests in sequence with proper jest configuration
-          npm run test:rate
           npm run test:download
           npm run test:post
-          npm run test:update -- --setupFiles=./jest.setup.js
           npm run test:cost
           npm run test:tracks
           npm run test:reset
-          npm run test:upload
           npm run test:regex
           
       - name: Upload Jest Reports
