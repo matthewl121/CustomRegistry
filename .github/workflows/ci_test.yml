@@ -39,12 +39,7 @@ jobs:
         run: |
           # Run tests in sequence with proper jest configuration
           npm install
-          npm run test:tracks
-          npm run test:reset
-          npm run test:regex
-          npm run test:download
-          npm run test:post
-          npm run test:update
+          npm run test:backend
           
       - name: Upload Jest Reports
         if: always()
