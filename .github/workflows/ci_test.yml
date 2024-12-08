@@ -37,27 +37,4 @@ jobs:
           JEST_RUNTIME_ENV: node
         run: |
           npm install
-          npm run test:backend -- --coverage --coverageReporters="text" --coverageReporters="html" --coverageReporters="lcov" --testResultsProcessor="jest-junit"
-          
-      - name: Generate test summary
-        run: |
-          echo "# Test Results" >> $GITHUB_STEP_SUMMARY
-          echo "## Coverage Report" >> $GITHUB_STEP_SUMMARY
-          cat coverage/lcov-report/index.html >> $GITHUB_STEP_SUMMARY
-          
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          files: ./coverage/lcov.info
-          flags: unittests
-          fail_ci_if_error: true
-          
-      - name: Upload Test Reports
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: test-reports
-          path: |
-            ./test-report.html
-            ./lambda_test/test_results/junit.xml
-            ./coverage/**
+          npm run test:backend -- --coverage 
