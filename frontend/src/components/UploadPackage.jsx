@@ -9,6 +9,7 @@ export const UploadPackage = () => {
     const [debloat, setDebloat] = useState(false);  // Debloat flag
     const [packageName, setPackageName] = useState('');  // Package name
     const [jsProgram, setJsProgram] = useState('');  // JSProgram input
+    const [urlName, setUrlName] = useState('');  // Optional name for URL upload
     const [metadata, setMetadata] = useState(null);  // Store metadata after upload
     const [error, setError] = useState("");  // Store error message
 
@@ -38,6 +39,10 @@ export const UploadPackage = () => {
     
         if (uploadMode === 'url') {
             packageData.URL = url;  // Attach URL if provided
+            console.log(urlName)
+            if (urlName) {
+                packageData.Name = urlName;  // Optional Name if provided
+            }
         }
     
         // Ensure Content and URL are not both set simultaneously
@@ -83,6 +88,7 @@ export const UploadPackage = () => {
         setPackageName('');
         setJsProgram('');
         setDebloat(false);
+        setUrlName('');  // Reset URL name field
         setError("");  // Clear error message on mode change
     };
 
@@ -96,9 +102,14 @@ export const UploadPackage = () => {
             {uploadMode === 'url' && (
                 <div style={{ maxWidth: "400px" }}>
                     <CustomTextInput
-                        placeholder="Enter npm URL"
+                        placeholder="Enter URL"
                         input={url}
                         setInput={setUrl}
+                    />
+                    <CustomTextInput
+                        placeholder="Optional Name"
+                        input={urlName}
+                        setInput={setUrlName}
                     />
                     <textarea
                         placeholder="Enter JSProgram"

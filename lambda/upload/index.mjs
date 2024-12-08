@@ -324,7 +324,7 @@ export const uploadPackageHandler = async (event) => {
 
         // Get repo name
         try {
-          packageName = extractNpmPackageName(parsedURL);
+          packageName = event.Name || extractNpmPackageName(parsedURL);
         } catch (error) {
           throw new Error(`/package: ${error.message}`);
         }
