@@ -193,7 +193,6 @@ const constructPackageUrl = async (uploadVia, metadata, s3Response) => {
     switch (uploadVia?.toLowerCase()) {
         case 'github':
             const githubUrl = metadata.url || 'Invalid GitHub URL';
-            console.log(`metadata: ${JSON.stringify(metadata)}`);
             return isValidUrl(githubUrl) ? githubUrl : 'Invalid GitHub URL';
         case 'npm':
             const npmUrl = metadata.name ? `https://www.npmjs.com/package/${metadata.name}` : 'Invalid NPM package name';
@@ -275,7 +274,6 @@ export const ratePackageHandler = async (event) => {
 
         // Construct and add package URL to metadata
         const packageUrl = await constructPackageUrl(metadata.uploadvia, metadata, response);
-        console.log(`packageUrl: ${packageUrl}`);
         if (packageUrl && packageUrl !== metadata.packageurl) { // S3 metadata keys are lowercase
             metadata.packageurl = packageUrl; // S3 metadata keys are automatically lowercased
 
