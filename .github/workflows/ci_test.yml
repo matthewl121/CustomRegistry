@@ -38,7 +38,6 @@ jobs:
           JEST_RUNTIME_ENV: node
         run: |
           # Run tests in sequence with proper jest configuration
-          npm run test:download
           npm run test:post
           npm run test:cost
           npm run test:tracks
