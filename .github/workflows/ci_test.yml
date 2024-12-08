@@ -8,27 +8,70 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
+        
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '22.9.0' # or your Lambda runtime version
-
+          node-version: '20.x'  # Updated from 22.9.0 since it's not yet released
+          
       - name: Install dependencies
         run: npm install
-      
+        
       - name: Run tests
-        run: npm test
-      
-      - name: Upload Jest Report
+        run: |
+          npm run test:rate
+          npm run test:download
+          npm run test:post
+          npm run test:update
+          npm run test:cost
+          npm run test:tracks
+          npm run test:reset
+          npm run test:upload
+          npm run test:regex
+          
+      - name: Upload Jest Reports
         uses: actions/upload-artifact@v3
+        if: always()  # Upload reports even if tests fail
         with:
-          name: test-report
-          path: ./test-report.html
+          name: test-reports
+          path: |
+            ./test-report.html
+            ./lambda_test/test_results/junit.xml
+# name: CI Test Pipeline
+
+# on:
+#   push:
+#     branches:
+#       - dev_dirs
+
+# jobs:
+#   test:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
+
+#       - name: Set up Node.js
+#         uses: actions/setup-node@v3
+#         with:
+#           node-version: '22.9.0' # or your Lambda runtime version
+
+#       - name: Install dependencies
+#         run: npm install
+      
+#       - name: Run tests
+#         run: npm test
+      
+#       - name: Upload Jest Report
+#         uses: actions/upload-artifact@v3
+#         with:
+#           name: test-report
+#           path: ./test-report.html
 
 # name: CI Test Pipeline
 
