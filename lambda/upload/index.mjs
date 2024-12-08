@@ -378,7 +378,7 @@ export const uploadPackageHandler = async (event) => {
     id: packageId,
     version: packageVersion,
     uploadvia: uploadVia,
-    // url: parsedURL,
+    url: parsedURL.href,
   }
 
   const params = {
