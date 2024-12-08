@@ -159,11 +159,6 @@ export const postPackagesHandler = async (event) => {
   }
 };
 
-// Check if a version is valid based on the defined regex patterns
-function isValidVersion(version) {
-  return Object.values(VALID_VERSIONS).some((regex) => regex.test(version));
-}
-
 // Search for matching packages in the S3 bucket with "OR" logic
 async function searchPackagesInS3(queries) {
   const params = { Bucket: BUCKET_NAME };
