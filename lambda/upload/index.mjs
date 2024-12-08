@@ -487,12 +487,10 @@ export const uploadPackageHandler = async (event) => {
         }
       });
     }
-    console.log("metadata before rate:", metadata)
 
     // Rate the package
     const ratePackageResponse = await ratePackageHandler(packageID);
     const ratePackageBody = JSON.parse(ratePackageResponse.body);
-    console.log("metadata after rate:", metadata)
 
     if(ratePackageResponse.statusCode === 200 && ratePackageBody.NetScore <= 0.25) {
       // delete the package
@@ -514,9 +512,6 @@ export const uploadPackageHandler = async (event) => {
         body: JSON.stringify({message: "Package is not uploaded due to the disqualified rating."})
       };
     }
-
-    console.log("metadata after after rate:", metadata)
-
 
     return {
       statusCode: 201,
