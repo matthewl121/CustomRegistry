@@ -278,18 +278,18 @@ export const ratePackageHandler = async (event) => {
             metadata.packageurl = packageUrl; // S3 metadata keys are automatically lowercased
 
             // Update the metadata in S3
-            try {
-                await s3Client.send(new PutObjectCommand({
-                    Bucket: BUCKET_NAME,
-                    Key: packageId,
-                    Metadata: metadata,
-                    Body: response.Body // Re-upload the same body with updated metadata
-                }));
-                console.log(`Updated metadata for package ${packageId}`);
-            } catch (error) {
-                console.error('Error updating S3 metadata:', error);
-                // Proceed without updating metadata
-            }
+            // try {
+            //     await s3Client.send(new PutObjectCommand({
+            //         Bucket: BUCKET_NAME,
+            //         Key: packageId,
+            //         Metadata: metadata,
+            //         Body: response.Body // Re-upload the same body with updated metadata
+            //     }));
+            //     console.log(`Updated metadata for package ${packageId}`);
+            // } catch (error) {
+            //     console.error('Error updating S3 metadata:', error);
+            //     // Proceed without updating metadata
+            // }
 
             // Run the Custom Registry program with the URL
             try {
