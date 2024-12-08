@@ -1,4 +1,4 @@
-[![ESLint](https://github.com/matthewl121/CustomRegistry/actions/workflows/eslint.yml/badge.svg?branch=main)](https://github.com/matthewl121/CustomRegistry/actions/workflows/eslint.yml)
+[![ESLint](https://github.com/matthewl121/CustomRegistry/actions/workflows/eslint.yml/badge.svg?branch=main)](https://github.com/matthewl121/CustomRegistry/actions/workflows/eslint.yml) [![Deploy to EC2 Backendv2](https://github.com/matthewl121/CustomRegistry/actions/workflows/ec2backend.yml/badge.svg)](https://github.com/matthewl121/CustomRegistry/actions/workflows/ec2backend.yml) [![Deploy to EC2 Frontend](https://github.com/matthewl121/CustomRegistry/actions/workflows/ec2frontend.yml/badge.svg)](https://github.com/matthewl121/CustomRegistry/actions/workflows/ec2frontend.yml) [![CI Test Pipeline](https://github.com/matthewl121/CustomRegistry/actions/workflows/ci_test.yml/badge.svg)](https://github.com/matthewl121/CustomRegistry/actions/workflows/ci_test.yml)
 # ACME Corp CLI Interface for Module Reuse
 
 ## Project Overview
