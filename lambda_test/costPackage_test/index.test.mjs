@@ -1,9 +1,24 @@
+/**
+ * @fileoverview Test suite for the Package Cost Handler Lambda function
+ * @description Tests the functionality of calculating package costs with and without dependencies,
+ *              including error cases and edge conditions. Uses AWS S3 mocking for integration tests.
+ * 
+ * @test-coverage
+ * - Package cost calculation with dependencies
+ * - Package cost calculation without dependencies
+ * - Nonexistent package handling
+ * - Invalid package ID format handling
+ * - Missing package ID handling
+ * - Default dependency flag behavior
+ */
+
 import { expect } from '@jest/globals';
 import { packageCostHandler } from '../../lambda/costPackage/index.mjs';
 import { S3Client, GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
 import { mockClient } from "aws-sdk-client-mock";
 import { Readable } from 'stream';
 
+// Create mock S3 client for testing
 const s3Mock = mockClient(S3Client);
 const testData = {
   n: "test-item",
@@ -11,7 +26,7 @@ const testData = {
   d: { "express": "^4.17.1" }
 };
 
-// Expected response definitions
+// Define expected API response formats for different status codes
 const expectedResponses = {
   200: {
     description: "Return the total cost of package and its dependencies",
@@ -39,8 +54,10 @@ const expectedResponses = {
   }
 };
 
+// Array to store test results for reporting
 let testResults = [];
 
+// Validate if response matches expected format for given status code
 const validateResponse = (statusCode, response, hasDependencies = false) => {
   const expected = expectedResponses[statusCode];
   if (!expected) return false;
@@ -53,6 +70,7 @@ const validateResponse = (statusCode, response, hasDependencies = false) => {
       const packageId = Object.keys(body)[0];
       const data = body[packageId];
       
+      // Check total cost
       if (!data || typeof data.totalCost !== 'number') return false;
       if (hasDependencies && typeof data.standaloneCost !== 'number') return false;
     } else {
@@ -65,6 +83,7 @@ const validateResponse = (statusCode, response, hasDependencies = false) => {
   }
 };
 
+// Record test execution results for reporting
 const recordTestResult = (testName, result, statusCode, response, hasDependencies = false) => {
   const validResponse = validateResponse(statusCode, response, hasDependencies);
   testResults.push({
@@ -75,6 +94,7 @@ const recordTestResult = (testName, result, statusCode, response, hasDependencie
   });
 };
 
+// Generate and print detailed test execution summary
 const printTestSummary = () => {
   console.log('\n=== Test Summary ===');
   console.log('\nStatus Code Validation:');
@@ -107,16 +127,20 @@ const printTestSummary = () => {
   console.log('===================\n');
 };
 
+// Main test suite implementation
 const runTests = () => {
+  // Reset mocks before each test
   beforeEach(() => {
     s3Mock.reset();
     testResults = [];
   });
 
+  // Print summary after all tests complete
   afterAll(() => {
     printTestSummary();
   });
 
+  // Test 1: Calculate package cost with dependencies
   it('t1 - Package Cost with Dependencies', async () => {
     try {
       s3Mock.on(HeadObjectCommand).resolves({
@@ -138,6 +162,7 @@ const runTests = () => {
     }
   });
 
+  // Test 2: Calculate package cost without dependencies
   it('t2 - Package Cost without Dependencies', async () => {
     try {
       s3Mock.on(HeadObjectCommand).resolves({
@@ -155,6 +180,7 @@ const runTests = () => {
     }
   });
 
+   // Test 3: Handle nonexistent package request
   it('t3 - Nonexistent Package', async () => {
     try {
       s3Mock.on(HeadObjectCommand).rejects(new Error('NoSuchKey'));
@@ -169,6 +195,7 @@ const runTests = () => {
     }
   });
 
+  // Test 4: Handle invalid package ID format
   it('t4 - Invalid Package ID Format', async () => {
     try {
       const r = await packageCostHandler({
@@ -182,6 +209,7 @@ const runTests = () => {
     }
   });
 
+  // Test 5: Handle missing package ID
   it('t5 - Missing Package ID', async () => {
     try {
       const r = await packageCostHandler({
@@ -194,6 +222,7 @@ const runTests = () => {
     }
   });
 
+   // Test 6: Test default dependency handling behavior
   it('t6 - Default Dependency Handling', async () => {
     try {
       s3Mock.on(HeadObjectCommand).resolves({
@@ -211,372 +240,6 @@ const runTests = () => {
   });
 };
 
+// Execute the test suite
 describe('Package Cost Handler Tests', runTests);
-
-// import { expect } from '@jest/globals';
-// import { packageCostHandler } from '../../lambda/costPackage/index.mjs';
-// import { S3Client, GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
-// import { mockClient } from "aws-sdk-client-mock";
-// import { Readable } from 'stream';
-
-// const s3Mock = mockClient(S3Client);
-
-// const testData = {
-//   n: "test-item",
-//   v: "1.0.0",
-//   d: { "express": "^4.17.1" }
-// };
-
-// const runTests = () => {
-//   beforeEach(() => {
-//     s3Mock.reset();
-//   });
-
-//   it('t1', async () => {
-//     s3Mock.on(HeadObjectCommand).resolves({
-//       ContentLength: 1048576,
-//       Metadata: { uploadvia: 'content' }
-//     });
-
-//     const buf = Buffer.from(JSON.stringify(testData));
-//     s3Mock.on(GetObjectCommand).resolves({
-//       Body: Readable.from([buf])
-//     });
-
-//     const r = await packageCostHandler({
-//       id: "cloudinary_npm--2.5.1",
-//       dependency: true
-//     });
-
-//     expect(r.statusCode).toBe(200);
-//     const d = JSON.parse(r.body);
-//     const i = d["cloudinary_npm--2.5.1"];
-//     expect(i).toBeDefined();
-//     expect(typeof i.standaloneCost).toBe('number');
-//     expect(typeof i.totalCost).toBe('number');
-//   });
-
-//   it('t2', async () => {
-//     s3Mock.on(HeadObjectCommand).resolves({
-//       ContentLength: 1048576,
-//       Metadata: { uploadvia: 'content' }
-//     });
-
-//     const r = await packageCostHandler({
-//       id: "cloudinary_npm--2.5.1",
-//       dependency: false
-//     });
-
-//     expect(r.statusCode).toBe(200);
-//     const d = JSON.parse(r.body);
-//     const i = d["cloudinary_npm--2.5.1"];
-//     expect(i).toBeDefined();
-//     expect(typeof i.totalCost).toBe('number');
-//     expect(i.totalCost).toBe(1);
-//   });
-
-//   it('t3', async () => {
-//     s3Mock.on(HeadObjectCommand).rejects(new Error('NoSuchKey'));
-
-//     const r = await packageCostHandler({
-//       id: "nonexistent-item--1.0.0",
-//       dependency: true
-//     });
-
-//     expect(r.statusCode).toBe(404);
-//     const d = JSON.parse(r.body);
-//     expect(d.message).toBe("Package does not exist.");
-//   });
-
-//   it('t4', async () => {
-//     const r = await packageCostHandler({
-//       id: "../invalid/id/format",
-//       dependency: true
-//     });
-
-//     expect(r.statusCode).toBe(400);
-//     const d = JSON.parse(r.body);
-//     expect(d.message).toBe("There is missing field(s) in the PackageID");
-//   });
-
-//   it('t5', async () => {
-//     const r = await packageCostHandler({
-//       dependency: true
-//     });
-
-//     expect(r.statusCode).toBe(400);
-//     const d = JSON.parse(r.body);
-//     expect(d.message).toBe("There is missing field(s) in the PackageID");
-//   });
-
-//   it('t6', async () => {
-//     s3Mock.on(HeadObjectCommand).resolves({
-//       ContentLength: 1048576,
-//       Metadata: { uploadvia: 'content' }
-//     });
-
-//     const r = await packageCostHandler({
-//       id: "cloudinary_npm--2.5.1"
-//     });
-
-//     expect(r.statusCode).toBe(200);
-//     const d = JSON.parse(r.body);
-//     const i = d["cloudinary_npm--2.5.1"];
-//     expect(i).toBeDefined();
-//     expect(typeof i.totalCost).toBe('number');
-//   });
-// };
-
-// describe('tests', runTests);
-
-// // Import necessary modules
-// import { expect } from '@jest/globals'; // Correctly import from Jest
-// import { packageCostHandler } from '../../lambda/costPackage/index.mjs'; // Import the function you are testing
-// import { S3Client, GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
-// import { mockClient } from "aws-sdk-client-mock";
-// import { Readable } from 'stream';
-
-// // Mock S3 Client
-// const s3Mock = mockClient(S3Client);
-
-// // Mock package data
-// const mockData = {
-//   name: "test-item",
-//   version: "1.0.0",
-//   dependencies: {
-//     "express": "^4.17.1",
-//     "lodash": "^4.17.21"
-//   },
-//   devDependencies: {
-//     "jest": "^27.0.6"
-//   }
-// };
-
-// describe('Cost Handler Tests', () => {
-//   beforeEach(() => {
-//     s3Mock.reset();
-//   });
-
-//   it('calculation with dependencies', async () => {
-//     s3Mock.on(HeadObjectCommand).resolves({
-//       ContentLength: 1048576,
-//       Metadata: {
-//         uploadvia: 'content'
-//       }
-//     });
-
-//     const mockContent = Buffer.from(JSON.stringify(mockData));
-//     s3Mock.on(GetObjectCommand).resolves({
-//       Body: Readable.from([mockContent]) // Simulating S3 Body stream
-//     });
-
-//     const response = await packageCostHandler({
-//       id: "cloudinary_npm--2.5.1",
-//       dependency: true
-//     });
-
-//     expect(response.statusCode).toBe(200);
-//     const body = JSON.parse(response.body);
-//     const result = body["cloudinary_npm--2.5.1"];
-//     expect(result).toBeDefined();
-//     expect(typeof result.standaloneCost).toBe('number');
-//     expect(typeof result.totalCost).toBe('number');
-//   });
-
-//   it('standalone calculation', async () => {
-//     s3Mock.on(HeadObjectCommand).resolves({
-//       ContentLength: 1048576,
-//       Metadata: {
-//         uploadvia: 'content'
-//       }
-//     });
-
-//     const response = await packageCostHandler({
-//       id: "cloudinary_npm--2.5.1",
-//       dependency: false
-//     });
-
-//     expect(response.statusCode).toBe(200);
-//     const body = JSON.parse(response.body);
-//     const result = body["cloudinary_npm--2.5.1"];
-//     expect(result).toBeDefined();
-//     expect(typeof result.totalCost).toBe('number');
-//     expect(result.totalCost).toBe(1);
-//   });
-
-//   it('nonexistent item handling', async () => {
-//     s3Mock.on(HeadObjectCommand).rejects(new Error('NoSuchKey'));
-
-//     const response = await packageCostHandler({
-//       id: "nonexistent-item--1.0.0",
-//       dependency: true
-//     });
-
-//     expect(response.statusCode).toBe(404);
-//     const body = JSON.parse(response.body);
-//     expect(body.message).toBe("Package does not exist.");
-//   });
-
-//   it('invalid id handling', async () => {
-//     const response = await packageCostHandler({
-//       id: "../invalid/id/format",
-//       dependency: true
-//     });
-//     expect(response.statusCode).toBe(400);
-//     const body = JSON.parse(response.body);
-//     expect(body.message).toBe("There is missing field(s) in the PackageID");
-//   });
-
-//   it('missing id handling', async () => {
-//     const response = await packageCostHandler({
-//       dependency: true
-//     });
-//     expect(response.statusCode).toBe(400);
-//     const body = JSON.parse(response.body);
-//     expect(body.message).toBe("There is missing field(s) in the PackageID");
-//   });
-
-//   it('missing dependency flag handling', async () => {
-//     s3Mock.on(HeadObjectCommand).resolves({
-//       ContentLength: 1048576,
-//       Metadata: {
-//         uploadvia: 'content'
-//       }
-//     });
-
-//     const response = await packageCostHandler({
-//       id: "cloudinary_npm--2.5.1"
-//     });
-//     expect(response.statusCode).toBe(200);
-//     const body = JSON.parse(response.body);
-//     const result = body["cloudinary_npm--2.5.1"];
-//     expect(result).toBeDefined();
-//     expect(typeof result.totalCost).toBe('number');
-//   });
-// });
-
-// // // Import necessary modules
-// // import { expect } from '@jest/globals'; // Correctly import from Jest
-// // import { packageCostHandler } from '../../lambda/costPackage/index.mjs'; // Import the function you are testing
-// // import { S3Client, GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
-// // import { mockClient } from "aws-sdk-client-mock";
-// // import { Readable } from 'stream';
-
-// // // Mock S3 Client
-// // const s3Mock = mockClient(S3Client);
-
-// // // Mock package data
-// // const mockData = {
-// //   name: "test-item",
-// //   version: "1.0.0",
-// //   dependencies: {
-// //     "express": "^4.17.1",
-// //     "lodash": "^4.17.21"
-// //   },
-// //   devDependencies: {
-// //     "jest": "^27.0.6"
-// //   }
-// // };
-
-// // describe('Cost Handler Tests', () => {
-// //   beforeEach(() => {
-// //     s3Mock.reset();
-// //   });
-
-// //   it('calculation with dependencies', async () => {
-// //     s3Mock.on(HeadObjectCommand).resolves({
-// //       ContentLength: 1048576,
-// //       Metadata: {
-// //         uploadvia: 'content'
-// //       }
-// //     });
-
-// //     const mockContent = Buffer.from(JSON.stringify(mockData));
-// //     s3Mock.on(GetObjectCommand).resolves({
-// //       Body: Readable.from([mockContent]) // Simulating S3 Body stream
-// //     });
-
-// //     const response = await packageCostHandler({
-// //       id: "cloudinary_npm--2.5.1",
-// //       dependency: true
-// //     });
-
-// //     expect(response.statusCode).toBe(200);
-// //     const body = JSON.parse(response.body);
-// //     const result = body["cloudinary_npm--2.5.1"];
-// //     expect(result).toBeDefined();
-// //     expect(typeof result.standaloneCost).toBe('number');
-// //     expect(typeof result.totalCost).toBe('number');
-// //   });
-
-// //   it('standalone calculation', async () => {
-// //     s3Mock.on(HeadObjectCommand).resolves({
-// //       ContentLength: 1048576,
-// //       Metadata: {
-// //         uploadvia: 'content'
-// //       }
-// //     });
-
-// //     const response = await packageCostHandler({
-// //       id: "cloudinary_npm--2.5.1",
-// //       dependency: false
-// //     });
-
-// //     expect(response.statusCode).toBe(200);
-// //     const body = JSON.parse(response.body);
-// //     const result = body["cloudinary_npm--2.5.1"];
-// //     expect(result).toBeDefined();
-// //     expect(typeof result.totalCost).toBe('number');
-// //     expect(result.totalCost).toBe(1);
-// //   });
-
-// //   it('nonexistent item handling', async () => {
-// //     s3Mock.on(HeadObjectCommand).rejects(new Error('NoSuchKey'));
-
-// //     const response = await packageCostHandler({
-// //       id: "nonexistent-item--1.0.0",
-// //       dependency: true
-// //     });
-
-// //     expect(response.statusCode).toBe(404);
-// //     const body = JSON.parse(response.body);
-// //     expect(body.message).toBe("Package does not exist.");
-// //   });
-
-// //   it('invalid id handling', async () => {
-// //     const response = await packageCostHandler({
-// //       id: "../invalid/id/format",
-// //       dependency: true
-// //     });
-// //     expect(response.statusCode).toBe(400);
-// //     const body = JSON.parse(response.body);
-// //     expect(body.message).toBe("There is missing field(s) in the PackageID");
-// //   });
-
-// //   it('missing id handling', async () => {
-// //     const response = await packageCostHandler({
-// //       dependency: true
-// //     });
-// //     expect(response.statusCode).toBe(400);
-// //     const body = JSON.parse(response.body);
-// //     expect(body.message).toBe("There is missing field(s) in the PackageID");
-// //   });
-
-// //   it('missing dependency flag handling', async () => {
-// //     s3Mock.on(HeadObjectCommand).resolves({
-// //       ContentLength: 1048576,
-// //       Metadata: {
-// //         uploadvia: 'content'
-// //       }
-// //     });
-
-// //     const response = await packageCostHandler({
-// //       id: "cloudinary_npm--2.5.1"
-// //     });
-// //     expect(response.statusCode).toBe(200);
-// //     const body = JSON.parse(response.body);
-// //     const result = body["cloudinary_npm--2.5.1"];
-// //     expect(result).toBeDefined();
-// //     expect(typeof result.totalCost).toBe('number');
-// //   });
-// // });
+ 

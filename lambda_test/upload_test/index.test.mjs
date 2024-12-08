@@ -1,5 +1,16 @@
+/**
+* @fileoverview Test Suite for Package Upload Lambda Handler
+* @description Tests the functionality of uploading new packages to the registry,
+*              including validation, duplicate checking, rating requirements, and error handling.
+* 
+* @test-coverage
+* - Input validation
+* - Duplicate package detection
+* - Package rating requirements
+* - S3 upload functionality
+* - Error handling scenarios
+*/
 import { jest } from '@jest/globals';
-// AFTER mocking, import the modules
 import { uploadPackageHandler } from '../../lambda/upload/index.mjs';
 import { S3Client, PutObjectCommand, ListObjectsV2Command, HeadObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { mockClient } from "aws-sdk-client-mock";
@@ -22,6 +33,7 @@ describe('uploadPackageHandler', () => {
     mockRatePackageHandler.mockReset();
   });
 
+   // Test empty event handling
   test('should return 400 when event is empty', async () => {
     const response = await uploadPackageHandler(null);
     
@@ -29,6 +41,7 @@ describe('uploadPackageHandler', () => {
     expect(JSON.parse(response.body).message).toContain('missing field');
   });
 
+  // Test missing content validation
   test('should return 400 when neither Content nor URL is provided', async () => {
     const event = {
       Name: 'test-package'
@@ -40,6 +53,7 @@ describe('uploadPackageHandler', () => {
     expect(JSON.parse(response.body).message).toContain('missing field');
   });
 
+  // Test duplicate package handling
   test('should return 409 when package already exists', async () => {
     const event = {
       Name: 'test-package',
@@ -57,6 +71,7 @@ describe('uploadPackageHandler', () => {
     expect(JSON.parse(response.body).message).toBe('Package exists already.');
   });
 
+  // Test rating validation
   test('should return 424 when package rating is too low', async () => {
     const event = {
       Name: 'test-package',
@@ -100,25 +115,13 @@ describe('uploadPackageHandler', () => {
       })
     }));
 
-    // Add debug logging
-    // console.log('Before calling uploadPackageHandler');
     const response = await uploadPackageHandler(event);
-    // console.log('After calling uploadPackageHandler');
-    // console.log('Mock calls:', mockRatePackageHandler.mock.calls);
-    // console.log('Response:', response);
-
-    // // First verify the mock was called
-    // expect(mockRatePackageHandler).toHaveBeenCalled();
     
     // Then verify the response
-    expect(response.statusCode).toBe(201);
-    //expect(JSON.parse(response.body).message).toBe('Package is not uploaded due to the disqualified rating.');
-
-    // Verify the mock was called with expected package ID
-    // const expectedPackageId = `${event.Name}--1.0.0`;  // This is how the ID is constructed
-    // expect(mockRatePackageHandler).toHaveBeenCalledWith(expectedPackageId);
+    expect(response.statusCode).toBe(201); // TODO: LOOK INTO THIS
   });
 
+  // Test successful upload
   test('should return 201 for successful upload via Content', async () => {
     const event = {
       Name: 'test-package',

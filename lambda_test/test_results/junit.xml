@@ -1,167 +1,57 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="jest tests" tests="41" failures="4" errors="0" time="44.338">
-  <testsuite name="lambda_test/getTracks_test/index.test.mjs" errors="0" failures="0" skipped="0" timestamp="2024-12-08T01:23:23" time="0.368" tests="3">
-    <testcase classname="getTracksHandler" name="200: returns empty plannedTracks array for valid input" time="0.006">
-    </testcase>
-    <testcase classname="getTracksHandler" name="handles unexpected response structure gracefully" time="0.002">
-    </testcase>
-    <testcase classname="getTracksHandler" name="handles system error correctly" time="0">
-    </testcase>
-  </testsuite>
-  <testsuite name="lambda_test/update_test/index.test.mjs" errors="0" failures="0" skipped="0" timestamp="2024-12-08T01:23:23" time="0.67" tests="3">
-    <testcase classname="updatePackageHandler" name="/package/{id} | POST | Update with new patch version" time="0.009">
-    </testcase>
-    <testcase classname="updatePackageHandler" name="/package/{id} | POST | Update with invalid patch version" time="0.001">
-    </testcase>
-    <testcase classname="updatePackageHandler" name="/package/{id} | POST | Update with non-existent package" time="0.001">
-    </testcase>
-  </testsuite>
-  <testsuite name="lambda_test/reset_test/index.test.mjs" errors="0" failures="0" skipped="0" timestamp="2024-12-08T01:23:23" time="0.685" tests="3">
-    <testcase classname="resetRegistryHandler" name="/reset | DELETE | Successful" time="0.013">
-    </testcase>
-    <testcase classname="resetRegistryHandler" name="/reset | DELETE | Unsuccessful" time="0.005">
-    </testcase>
-    <testcase classname="resetRegistryHandler" name="successfully handles empty registry" time="0.002">
-    </testcase>
-  </testsuite>
-  <testsuite name="lambda_test/download_test/index.test.mjs" errors="0" failures="0" skipped="0" timestamp="2024-12-08T01:23:23" time="0.697" tests="6">
-    <testcase classname="downloadPackageHandler" name="200: successfully downloads and processes a package" time="0.014">
-    </testcase>
-    <testcase classname="downloadPackageHandler" name="404: returns error when package does not exist" time="0.001">
-    </testcase>
-    <testcase classname="downloadPackageHandler" name="400: returns error when download fails" time="0.001">
-    </testcase>
-    <testcase classname="downloadPackageHandler" name="properly capitalizes metadata fields" time="0.004">
-    </testcase>
-    <testcase classname="downloadPackageHandler" name="handles empty and missing metadata gracefully" time="0.002">
-    </testcase>
-    <testcase classname="downloadPackageHandler" name="handles large file downloads efficiently" time="0.008">
-    </testcase>
-  </testsuite>
-  <testsuite name="lambda_test/getPackageByRegex_test/index.test.mjs" errors="0" failures="0" skipped="0" timestamp="2024-12-08T01:23:23" time="0.818" tests="5">
-    <testcase classname="getPackageByRegexHandler" name="successfully retrieves matching packages" time="0.015">
-    </testcase>
-    <testcase classname="getPackageByRegexHandler" name="handles malformed keys in S3" time="0.002">
-    </testcase>
-    <testcase classname="getPackageByRegexHandler" name="returns 400 when regex pattern is missing" time="0.003">
-    </testcase>
-    <testcase classname="getPackageByRegexHandler" name="returns 404 when no packages match the regex" time="0.001">
-    </testcase>
-    <testcase classname="getPackageByRegexHandler" name="returns 400 when S3 operation fails" time="0.005">
-    </testcase>
-  </testsuite>
-  <testsuite name="lambda_test/upload_test/index.test.mjs" errors="0" failures="4" skipped="0" timestamp="2024-12-08T01:23:23" time="0.831" tests="4">
-    <testcase classname="uploadPackageHandler" name="should upload a package and return a successful response" time="0.007">
-      <failure>TypeError: S3Client.mockImplementation is not a function
-    at Object.&lt;anonymous&gt; (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/lambda_test/upload_test/index.test.mjs:22:14)
-    at Promise.then.completed (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/utils.js:298:28)
-    at new Promise (&lt;anonymous&gt;)
-    at callAsyncCircusFn (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/utils.js:231:10)
-    at _callCircusHook (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/run.js:281:40)
-    at processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at _runTest (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/run.js:246:5)
-    at _runTestsForDescribeBlock (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/run.js:126:9)
-    at _runTestsForDescribeBlock (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/run.js:121:9)
-    at run (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/run.js:71:3)
-    at runAndTransformResultsToJestFormat (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
-    at jestAdapter (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
-    at runTestInternal (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-runner/build/runTest.js:367:16)
-    at runTest (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-runner/build/runTest.js:444:34)
-    at Object.worker (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-runner/build/testWorker.js:106:12)</failure>
-    </testcase>
-    <testcase classname="uploadPackageHandler" name="should delete existing versions if debloat is true" time="0">
-      <failure>TypeError: S3Client.mockImplementation is not a function
-    at Object.&lt;anonymous&gt; (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/lambda_test/upload_test/index.test.mjs:22:14)
-    at Promise.then.completed (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/utils.js:298:28)
-    at new Promise (&lt;anonymous&gt;)
-    at callAsyncCircusFn (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/utils.js:231:10)
-    at _callCircusHook (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/run.js:281:40)
-    at processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at _runTest (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/run.js:246:5)
-    at _runTestsForDescribeBlock (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/run.js:126:9)
-    at _runTestsForDescribeBlock (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/run.js:121:9)
-    at run (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/run.js:71:3)
-    at runAndTransformResultsToJestFormat (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
-    at jestAdapter (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
-    at runTestInternal (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-runner/build/runTest.js:367:16)
-    at runTest (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-runner/build/runTest.js:444:34)
-    at Object.worker (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-runner/build/testWorker.js:106:12)</failure>
-    </testcase>
-    <testcase classname="uploadPackageHandler" name="should return a conflict error if the package already exists" time="0">
-      <failure>TypeError: S3Client.mockImplementation is not a function
-    at Object.&lt;anonymous&gt; (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/lambda_test/upload_test/index.test.mjs:22:14)
-    at Promise.then.completed (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/utils.js:298:28)
-    at new Promise (&lt;anonymous&gt;)
-    at callAsyncCircusFn (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/utils.js:231:10)
-    at _callCircusHook (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/run.js:281:40)
-    at processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at _runTest (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/run.js:246:5)
-    at _runTestsForDescribeBlock (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/run.js:126:9)
-    at _runTestsForDescribeBlock (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/run.js:121:9)
-    at run (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/run.js:71:3)
-    at runAndTransformResultsToJestFormat (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
-    at jestAdapter (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
-    at runTestInternal (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-runner/build/runTest.js:367:16)
-    at runTest (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-runner/build/runTest.js:444:34)
-    at Object.worker (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-runner/build/testWorker.js:106:12)</failure>
-    </testcase>
-    <testcase classname="uploadPackageHandler" name="should return an error if the package rating is disqualified" time="0">
-      <failure>TypeError: S3Client.mockImplementation is not a function
-    at Object.&lt;anonymous&gt; (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/lambda_test/upload_test/index.test.mjs:22:14)
-    at Promise.then.completed (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/utils.js:298:28)
-    at new Promise (&lt;anonymous&gt;)
-    at callAsyncCircusFn (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/utils.js:231:10)
-    at _callCircusHook (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/run.js:281:40)
-    at processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at _runTest (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/run.js:246:5)
-    at _runTestsForDescribeBlock (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/run.js:126:9)
-    at _runTestsForDescribeBlock (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/run.js:121:9)
-    at run (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/run.js:71:3)
-    at runAndTransformResultsToJestFormat (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
-    at jestAdapter (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
-    at runTestInternal (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-runner/build/runTest.js:367:16)
-    at runTest (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-runner/build/runTest.js:444:34)
-    at Object.worker (/home/shay/a/jiaccari/FINALPHASE2/CustomRegistry/node_modules/jest-runner/build/testWorker.js:106:12)</failure>
-    </testcase>
-  </testsuite>
-  <testsuite name="lambda_test/postPackages_test/index.test.mjs" errors="0" failures="0" skipped="0" timestamp="2024-12-08T01:23:23" time="0.844" tests="5">
-    <testcase classname="postPackagesHandler" name="200: valid input with exact package matches" time="0.007">
+<testsuites name="jest tests" tests="22" failures="0" errors="0" time="1.675">
+  <testsuite name="lambda_test/postPackages_test/index.test.mjs" errors="0" failures="0" skipped="0" timestamp="2024-12-08T14:20:09" time="0.601" tests="5">
+    <testcase classname="postPackagesHandler" name="200: valid input with exact package matches" time="0.004">
     </testcase>
     <testcase classname="postPackagesHandler" name="400: invalid input missing required fields" time="0.001">
     </testcase>
     <testcase classname="postPackagesHandler" name="413: too many packages returned for wildcard query" time="0.001">
     </testcase>
-    <testcase classname="postPackagesHandler" name="handles S3 errors gracefully" time="0">
+    <testcase classname="postPackagesHandler" name="handles S3 errors gracefully" time="0.001">
     </testcase>
     <testcase classname="postPackagesHandler" name="handles version ranges correctly" time="0.001">
     </testcase>
   </testsuite>
-  <testsuite name="lambda_test/costPackage_test/index.test.mjs" errors="0" failures="0" skipped="0" timestamp="2024-12-08T01:23:23" time="0.954" tests="6">
-    <testcase classname="Package Cost Handler Tests" name="t1 - Package Cost with Dependencies" time="0.017">
+  <testsuite name="lambda_test/getPackageByRegex_test/index.test.mjs" errors="0" failures="0" skipped="0" timestamp="2024-12-08T14:20:09" time="0.399" tests="5">
+    <testcase classname="getPackageByRegexHandler" name="successfully retrieves matching packages" time="0.012">
     </testcase>
-    <testcase classname="Package Cost Handler Tests" name="t2 - Package Cost without Dependencies" time="0.002">
+    <testcase classname="getPackageByRegexHandler" name="handles malformed keys in S3" time="0.006">
     </testcase>
-    <testcase classname="Package Cost Handler Tests" name="t3 - Nonexistent Package" time="0.001">
+    <testcase classname="getPackageByRegexHandler" name="returns 400 when regex pattern is missing" time="0.002">
     </testcase>
-    <testcase classname="Package Cost Handler Tests" name="t4 - Invalid Package ID Format" time="0.002">
+    <testcase classname="getPackageByRegexHandler" name="returns 404 when no packages match the regex" time="0.003">
     </testcase>
-    <testcase classname="Package Cost Handler Tests" name="t5 - Missing Package ID" time="0">
-    </testcase>
-    <testcase classname="Package Cost Handler Tests" name="t6 - Default Dependency Handling" time="0.001">
+    <testcase classname="getPackageByRegexHandler" name="returns 400 when S3 operation fails" time="0.005">
     </testcase>
   </testsuite>
-  <testsuite name="lambda_test/ratePackage_test/index.test.mjs" errors="0" failures="0" skipped="0" timestamp="2024-12-08T01:23:23" time="43.393" tests="6">
-    <testcase classname="Rate Package Handler" name="should handle NPM package successfully" time="13.827">
+  <testsuite name="lambda_test/download_test/index.test.mjs" errors="0" failures="0" skipped="0" timestamp="2024-12-08T14:20:10" time="0.254" tests="6">
+    <testcase classname="downloadPackageHandler" name="200: successfully downloads and processes a package" time="0.008">
     </testcase>
-    <testcase classname="Rate Package Handler" name="should handle GitHub package successfully" time="13.715">
+    <testcase classname="downloadPackageHandler" name="404: returns error when package does not exist" time="0.001">
     </testcase>
-    <testcase classname="Rate Package Handler" name="should handle zip file content package successfully" time="15.049">
+    <testcase classname="downloadPackageHandler" name="400: returns error when download fails" time="0.001">
     </testcase>
-    <testcase classname="Rate Package Handler" name="should handle invalid URL in zip content" time="0.007">
+    <testcase classname="downloadPackageHandler" name="properly capitalizes metadata fields" time="0.003">
     </testcase>
-    <testcase classname="Rate Package Handler" name="should return 404 for non-existent package" time="0.001">
+    <testcase classname="downloadPackageHandler" name="handles empty and missing metadata gracefully" time="0.003">
     </testcase>
-    <testcase classname="Rate Package Handler" name="should handle missing package ID" time="0.001">
+    <testcase classname="downloadPackageHandler" name="handles large file downloads efficiently" time="0.011">
+    </testcase>
+  </testsuite>
+  <testsuite name="lambda_test/reset_test/index.test.mjs" errors="0" failures="0" skipped="0" timestamp="2024-12-08T14:20:10" time="0.22" tests="3">
+    <testcase classname="resetRegistryHandler" name="/reset | DELETE | Successful" time="0.005">
+    </testcase>
+    <testcase classname="resetRegistryHandler" name="/reset | DELETE | Unsuccessful" time="0.008">
+    </testcase>
+    <testcase classname="resetRegistryHandler" name="successfully handles empty registry" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="lambda_test/getTracks_test/index.test.mjs" errors="0" failures="0" skipped="0" timestamp="2024-12-08T14:20:10" time="0.099" tests="3">
+    <testcase classname="getTracksHandler" name="200: returns empty plannedTracks array for valid input" time="0.002">
+    </testcase>
+    <testcase classname="getTracksHandler" name="handles unexpected response structure gracefully" time="0.002">
+    </testcase>
+    <testcase classname="getTracksHandler" name="handles system error correctly" time="0">
     </testcase>
   </testsuite>
 </testsuites>
