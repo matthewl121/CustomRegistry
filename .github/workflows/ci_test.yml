@@ -43,6 +43,7 @@ jobs:
           npm run test:reset
           npm run test:regex
           npm run test:download
+          npm run test:cost
           
       - name: Upload Jest Reports
         if: always()
