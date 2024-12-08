@@ -16,17 +16,32 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20.x'  # Updated from 22.9.0 since it's not yet released
+          node-version: '20.x'
           
       - name: Install dependencies
         run: npm install
         
-      - name: Run tests
+      - name: Create test environment files
         run: |
+          mkdir -p phase1/data
+          touch phase1/data/url.txt
+          # Create any other necessary test directories and files
+          
+      - name: Setup test environment variables
+        run: |
+          echo "LOG_FILE=test.log" >> .env
+          echo "AWS_REGION=us-east-1" >> .env
+          
+      - name: Run tests
+        env:
+          NODE_OPTIONS: --experimental-vm-modules --experimental-modules
+          JEST_RUNTIME_ENV: node
+        run: |
+          # Run tests in sequence with proper jest configuration
           npm run test:rate
           npm run test:download
           npm run test:post
-          npm run test:update
+          npm run test:update -- --setupFiles=./jest.setup.js
           npm run test:cost
           npm run test:tracks
           npm run test:reset
@@ -34,8 +49,8 @@ jobs:
           npm run test:regex
           
       - name: Upload Jest Reports
+        if: always()
         uses: actions/upload-artifact@v3
-        if: always()  # Upload reports even if tests fail
         with:
           name: test-reports
           path: |
