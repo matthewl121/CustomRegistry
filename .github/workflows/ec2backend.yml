@@ -1,10 +1,44 @@
-name: Deploy to EC2 Backendv2
+name: CI/CD Pipeline to EC2 Backend
 on:
   push:
-    branches: [ dev_dirs ]
+    branches: 
+      - dev_dirs
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Create test environment files
+        run: |
+          mkdir -p phase1/data
+          touch phase1/data/url.txt
+
+      - name: Setup test environment variables
+        run: |
+          echo "LOG_FILE=test.log" >> .env
+          echo "AWS_REGION=us-east-1" >> .env
+
+      - name: Run tests with coverage
+        env:
+          NODE_OPTIONS: --experimental-vm-modules --experimental-modules
+          JEST_RUNTIME_ENV: node
+        run: |
+          npm run test:backend -- --coverage
+
   deploy:
+    needs: test
+    if: github.ref == 'refs/heads/dev_dirs' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -15,14 +49,14 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
-      
+
       - name: Create directories and .env file
         run: |
           mkdir -p phase1/repos
           echo "GITHUB_TOKEN=${{ secrets.TOKEN }}" >> phase1/.env
           echo "LOG_FILE=/home/ec2-user/backendv2/phase1/log/log_file.txt" >> phase1/.env
           echo "LOG_LEVEL=2" >> phase1/.env
-      
+
       - name: Deploy to EC2
         env:
           PRIVATE_KEY: ${{ secrets.ACME_PEM }}
@@ -33,12 +67,12 @@ jobs:
           chmod 600 private_key.pem
           # Create the deployment directory if it doesn't exist
           ssh -o StrictHostKeyChecking=no -i private_key.pem ${USER}@${HOST} '
-            mkdir -p ~/backendv2
+          mkdir -p ~/backendv2
           '
           # Copy the repository contents to EC2
           scp -o StrictHostKeyChecking=no -i private_key.pem -r ./* ${USER}@${HOST}:~/backendv2/
           # Optional: Add any post-deployment commands here
           ssh -o StrictHostKeyChecking=no -i private_key.pem ${USER}@${HOST} '
-            cd ~/backendv2
+          cd ~/backendv2
           '
           rm -f private_key.pem

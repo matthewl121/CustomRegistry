@@ -4,3 +4,4 @@ phase1/node_modules
 phase1/repos/*
 node_modules/
 ss.json
+test-report.html 
