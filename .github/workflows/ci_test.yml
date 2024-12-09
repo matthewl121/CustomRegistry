@@ -5,35 +5,38 @@ on:
     branches:
       - dev_dirs
       - main
+  pull_request:
+    branches:
+      - main
+
 jobs:
   test:
     runs-on: ubuntu-latest
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        
+
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20.x'
-          
+
       - name: Install dependencies
         run: npm install
-        
+
       - name: Create test environment files
         run: |
           mkdir -p phase1/data
           touch phase1/data/url.txt
-          
+
       - name: Setup test environment variables
         run: |
           echo "LOG_FILE=test.log" >> .env
           echo "AWS_REGION=us-east-1" >> .env
-          
+
       - name: Run tests with coverage
         env:
           NODE_OPTIONS: --experimental-vm-modules --experimental-modules
           JEST_RUNTIME_ENV: node
         run: |
-          npm run test:backend -- --coverage 
+          npm run test:backend -- --coverage
