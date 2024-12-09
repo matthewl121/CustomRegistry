@@ -22,6 +22,16 @@ jobs:
           echo "GITHUB_TOKEN=${{ secrets.TOKEN }}" >> phase1/.env
           echo "LOG_FILE=/home/ec2-user/backendv2/phase1/log/log_file.txt" >> phase1/.env
           echo "LOG_LEVEL=2" >> phase1/.env
+
+       - name: Install dependencies
+        run: npm install
+
+      - name: Run tests with coverage
+        env:
+          NODE_OPTIONS: --experimental-vm-modules --experimental-modules
+          JEST_RUNTIME_ENV: node
+        run: |
+          npm run test:backend -- --coverage 
       
       - name: Deploy to EC2
         env:
